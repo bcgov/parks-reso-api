@@ -1,2 +1,2 @@
-# parks_reso-api
+# parks-reso-api
 BC Parks Reservation System API
