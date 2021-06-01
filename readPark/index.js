@@ -8,8 +8,8 @@ exports.handler = async (event, context) => {
     try {
       let query = {
         "TableName": "parkreso", // Make a variable.
-        // "FilterExpression": "PostedBy = :val",
-        // "ExpressionAttributeValues": {":val": {"S": "joe@example.com"}},
+        "FilterExpression": "published = :val",
+        "ExpressionAttributeValues": {":val": {"BOOL": true}},
         "ReturnConsumedCapacity": "TOTAL"
       };
 

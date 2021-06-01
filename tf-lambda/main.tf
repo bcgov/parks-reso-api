@@ -69,7 +69,7 @@ resource "aws_api_gateway_deployment" "apideploy" {
    rest_api_id = aws_api_gateway_rest_api.apiLambda.id
 
    // TODO: Change this from prod to version??
-   stage_name  = "Prod"
+   stage_name  = var.deployEnvironment
 }
 
 resource "aws_lambda_permission" "readPermission" {

@@ -30,3 +30,5 @@ variable "common_tags" {
 }
 
 variable "s3_bucket" {}
+
+variable "deployEnvironment" {}
