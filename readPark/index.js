@@ -6,24 +6,33 @@ exports.handler = async (event, context) => {
     const dynamodb = new AWS.DynamoDB();
 
     let queryObj = {
-      ExpressionAttributeValues: {
-        ':name': { S: "park" }
-      },
-      KeyConditionExpression: 'pk =:name',
       TableName: process.env.TABLE_NAME
     };
 
     try {
-      // Filter by details info
-      if (event.queryStringParameters.details) {
-        queryObj.ExpressionAttributeValues[':sk'] = { S: "details" };
-        queryObj.KeyConditionExpression += ' AND sk =:sk';
-      }
-
-      // Filter by facilities
-      if (event.queryStringParameters.facilities) {
-        queryObj.ExpressionAttributeValues[':sk'] = { S: "facility" };
-        queryObj.KeyConditionExpression += ' AND sk =:sk';
+      if (!event.queryStringParameters) {
+        queryObj.ExpressionAttributeValues = {};
+        queryObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
+        queryObj.KeyConditionExpression = 'pk =:pk';
+      } else if (event.queryStringParameters.facilities && event.queryStringParameters.park) {
+        // Grab facilities for this park.
+        queryObj.ExpressionAttributeValues = {};
+        queryObj.ExpressionAttributeValues[':pk'] = { S: 'facility::' + event.queryStringParameters.park };
+        queryObj.KeyConditionExpression = 'pk =:pk';
+      } else if (event.queryStringParameters.details && event.queryStringParameters.park) {
+        // Grab details for this park.
+        queryObj.ExpressionAttributeValues = {};
+        queryObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
+        queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.park };
+        queryObj.KeyConditionExpression = 'pk =:pk and sk =:sk';
+      } else if (event.queryStringParameters.park) {
+        // Get all the parks, no specific things
+        queryObj.ExpressionAttributeValues = {};
+        queryObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
+        queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.park };
+        queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
+      } else {
+        return sendResponse(400, { msg: 'Invalid Request'});
       }
 
       try {
