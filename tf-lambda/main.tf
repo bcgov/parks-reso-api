@@ -17,6 +17,13 @@ data "archive_file" "readParkZip" {
     output_path = "readPark.zip"
 }
 
+// Auto pack lambda function.
+data "archive_file" "writeParkZip" {
+    type        = "zip"
+    source_dir  = "../writePark"
+    output_path = "writePark.zip"
+}
+
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "readParkLambda" {
    function_name = "readPark"
@@ -30,7 +37,35 @@ resource "aws_lambda_function" "readParkLambda" {
    handler = "index.handler"
    runtime = "nodejs12.x"
 
+   environment {
+    variables = {
+      TABLE_NAME = var.db_name
+    }
+  }
+
    role = aws_iam_role.readRole.arn
+}
+
+// Deploys the lambda via the zip above
+resource "aws_lambda_function" "writeParkLambda" {
+   function_name = "writePark"
+   filename = "writePark.zip"
+   source_code_hash = "${data.archive_file.writeParkZip.output_base64sha256}"
+
+#    This method is for deploying things outside of TF.
+#    s3_bucket = var.s3_bucket
+#    s3_key    = "v1.0.0/writePark.zip"
+
+   handler = "index.handler"
+   runtime = "nodejs12.x"
+
+   environment {
+    variables = {
+      TABLE_NAME = var.db_name
+    }
+  }
+
+   role = aws_iam_role.writeRole.arn
 }
 
 resource "aws_api_gateway_rest_api" "apiLambda" {
@@ -52,6 +87,14 @@ resource "aws_api_gateway_method" "readMethod" {
    authorization = "NONE"
 }
 
+// Defines the HTTP POST /park API
+resource "aws_api_gateway_method" "writeMethod" {
+   rest_api_id   = aws_api_gateway_rest_api.apiLambda.id
+   resource_id   = aws_api_gateway_resource.readResource.id
+   http_method   = "POST"
+   authorization = "NONE"
+}
+
 // Integrates the APIG to Lambda via POST method
 resource "aws_api_gateway_integration" "readIntegration" {
    rest_api_id = aws_api_gateway_rest_api.apiLambda.id
@@ -63,8 +106,19 @@ resource "aws_api_gateway_integration" "readIntegration" {
    uri                     = aws_lambda_function.readParkLambda.invoke_arn
 }
 
+// Integrates the APIG to Lambda via POST method
+resource "aws_api_gateway_integration" "writeIntegration" {
+   rest_api_id = aws_api_gateway_rest_api.apiLambda.id
+   resource_id = aws_api_gateway_resource.readResource.id
+   http_method = aws_api_gateway_method.writeMethod.http_method
+
+   integration_http_method = "POST"
+   type                    = "AWS_PROXY"
+   uri                     = aws_lambda_function.writeParkLambda.invoke_arn
+}
+
 resource "aws_api_gateway_deployment" "apideploy" {
-   depends_on = [ aws_api_gateway_integration.readIntegration]
+   depends_on = [ aws_api_gateway_integration.readIntegration, aws_api_gateway_integration.writeIntegration]
 
    rest_api_id = aws_api_gateway_rest_api.apiLambda.id
 
@@ -76,6 +130,14 @@ resource "aws_lambda_permission" "readPermission" {
    statement_id  = "AllowParksDayUsePassAPIInvoke"
    action        = "lambda:InvokeFunction"
    function_name = aws_lambda_function.readParkLambda.function_name
+   principal     = "apigateway.amazonaws.com"
+   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/*/*"
+}
+
+resource "aws_lambda_permission" "writePermission" {
+   statement_id  = "AllowParksDayUsePassAPIInvoke"
+   action        = "lambda:InvokeFunction"
+   function_name = aws_lambda_function.writeParkLambda.function_name
    principal     = "apigateway.amazonaws.com"
    source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/*/*"
 }
@@ -108,8 +170,13 @@ resource "aws_iam_policy" "lambda_logging" {
 EOF
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_logs" {
+resource "aws_iam_role_policy_attachment" "lambda_read_logs" {
   role       = aws_iam_role.readRole.name
+  policy_arn = aws_iam_policy.lambda_logging.arn
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_write_logs" {
+  role       = aws_iam_role.writeRole.name
   policy_arn = aws_iam_policy.lambda_logging.arn
 }
 

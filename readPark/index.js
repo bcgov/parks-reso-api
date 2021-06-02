@@ -2,27 +2,45 @@
 const AWS = require('aws-sdk');
 
 exports.handler = async (event, context) => {
-    console.log('Read Park');
+    console.log('Read Park', event);
     const dynamodb = new AWS.DynamoDB();
 
-    try {
-      let query = {
-        "TableName": "parkreso", // Make a variable.
-        "FilterExpression": "published = :val",
-        "ExpressionAttributeValues": {":val": {"BOOL": true}},
-        "ReturnConsumedCapacity": "TOTAL"
-      };
+    let queryObj = {
+      ExpressionAttributeValues: {
+        ':name': { S: "park" }
+      },
+      KeyConditionExpression: 'pk =:name',
+      TableName: process.env.TABLE_NAME
+    };
 
-      const data = await dynamodb.scan(query).promise();
-      console.log("data:", data);
-      var unMarshalled = data.Items.map(item => {
-        return AWS.DynamoDB.Converter.unmarshall(item);
-      });
-      console.log(unMarshalled);
-      return sendResponse(200, unMarshalled);
+    try {
+      // Filter by details info
+      if (event.queryStringParameters.details) {
+        queryObj.ExpressionAttributeValues[':sk'] = { S: "details" };
+        queryObj.KeyConditionExpression += ' AND sk =:sk';
+      }
+
+      // Filter by facilities
+      if (event.queryStringParameters.facilities) {
+        queryObj.ExpressionAttributeValues[':sk'] = { S: "facility" };
+        queryObj.KeyConditionExpression += ' AND sk =:sk';
+      }
+
+      try {
+        console.log("queryObj:", queryObj);
+        const data = await dynamodb.query(queryObj).promise();
+        console.log("data:", data);
+        var unMarshalled = data.Items.map(item => {
+          return AWS.DynamoDB.Converter.unmarshall(item);
+        });
+        console.log(unMarshalled);
+        return sendResponse(200, unMarshalled);
+      } catch (err) {
+        console.log(err);
+        return err;
+      }
     } catch (err) {
       console.log(err);
-      return err;
     }
 }
 
