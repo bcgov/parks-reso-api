@@ -1,9 +1,9 @@
 
 const AWS = require('aws-sdk');
+const dynamodb = new AWS.DynamoDB();
 
 exports.handler = async (event, context) => {
     console.log('Read Park', event);
-    const dynamodb = new AWS.DynamoDB();
 
     let queryObj = {
       TableName: process.env.TABLE_NAME
@@ -19,12 +19,6 @@ exports.handler = async (event, context) => {
         queryObj.ExpressionAttributeValues = {};
         queryObj.ExpressionAttributeValues[':pk'] = { S: 'facility::' + event.queryStringParameters.park };
         queryObj.KeyConditionExpression = 'pk =:pk';
-      } else if (event.queryStringParameters.details && event.queryStringParameters.park) {
-        // Grab details for this park.
-        queryObj.ExpressionAttributeValues = {};
-        queryObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
-        queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.park };
-        queryObj.KeyConditionExpression = 'pk =:pk and sk =:sk';
       } else if (event.queryStringParameters.park) {
         // Get all the parks, no specific things
         queryObj.ExpressionAttributeValues = {};

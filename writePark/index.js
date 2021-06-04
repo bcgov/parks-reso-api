@@ -1,58 +1,67 @@
-
 const AWS = require('aws-sdk');
+const dynamodb = new AWS.DynamoDB();
 
 exports.handler = async (event, context) => {
-  let res = {};
+  if (checkPermissions(event) === false) {
+    return sendResponse(403, { msg: 'Unauthorized'});
+  }
+  let parkObject = {
+    TableName: process.env.TABLE_NAME
+  };
 
+  try {
+    console.log(event.body);
+    let newObject = JSON.parse(event.body);
+
+    const { park, location, facilities, ...otherProps } = newObject;
+
+    parkObject.Item = {};
+    parkObject.Item['pk'] = { S: "park" };
+    parkObject.Item['sk'] = { S: park.name };
+    parkObject.Item['bcParksLink'] = { S: park.bcParksLink };
+    parkObject.Item['description'] = { S: location };
+    parkObject.Item['location'] = { S: location };
+    parkObject.Item['name'] = { S: park.name };
+    parkObject.Item['status'] = { S: 'open' };
+    parkObject.Item['type'] = { S: 'details' };
+
+    // Setup facilities
+    for(facility of facilities) {
+      console.log("Facility:", facility);
+      let facObject = {
+        TableName: process.env.TABLE_NAME
+      };
+      facObject.Item = {};
+      facObject.Item['pk'] = { S: "facility::" + park.name };
+      facObject.Item['sk'] = { S: facility.name };
+      facObject.Item['name'] = { S: facility.name };
+      facObject.Item['maxReservations'] = { S: facility.maxReservations };
+      facObject.Item['type'] = { S: facility.type };
+      facObject.Item['status'] = { M: AWS.DynamoDB.Converter.marshall(facility.status) };
+      facObject.Item['bookingTimes'] = { M: AWS.DynamoDB.Converter.marshall(facility.bookingTimes) };
+      console.log(facObject);
+      const facRes = await dynamodb.putItem(facObject).promise();
+      console.log("fRes:", facRes);
+      // TODO: Err handling
+    }
+
+    console.log("putting item:", parkObject);
+    const res = await dynamodb.putItem(parkObject).promise();
+    console.log("res:", res);
+    return sendResponse(200, res);
+  } catch (err) {
+    console.log("err", err);
+    return sendResponse(400, err);
+  }
+}
+
+const checkPermissions = function (event) {
   // TODO: Add keycloak decoding based on NRPTI prod
 
   // 1: check if sysadmin (pick a different role than sysadmin)
   // 2: reject if not
   // 3: insert item into DB.
-
-  try {
-    res = JSON.parse(event.body);
-  } catch (err) {
-    console.log("err", err);
-  }
-
-  return sendResponse(200, res);
-
-  // console.log('Write Park');
-  // const dynamodb = new AWS.DynamoDB();
-
-  // try {
-  //   // let query = {
-  //   //   TableName: "parkreso", // Make a variable.
-  //   //   FilterExpression: "rbac IN (:val1)",
-  //   //   // ExpressionAttributeNames: {
-  //   //   //   "#a": "rbac"
-  //   //   // },
-  //   //   "ExpressionAttributeValues": {
-  //   //     ":val1": { "S": "public" }
-  //   //   },
-  //   //   "ReturnConsumedCapacity": "TOTAL"
-  //   // };
-  //   var getTA = {
-  //     ExpressionAttributeValues: {
-  //         ':name': { S: "park" },
-  //         ':sk': { S: "details" }
-  //     },
-  //     KeyConditionExpression: 'pk =:name AND sk =:sk',
-  //     TableName: process.env.TABLE_NAME
-  //   };
-
-  //   const data = await dynamodb.query(getTA).promise();
-  //   console.log("data:", data);
-  //   var unMarshalled = data.Items.map(item => {
-  //     return AWS.DynamoDB.Converter.unmarshall(item);
-  //   });
-  //   console.log(unMarshalled);
-  //   return sendResponse(200, unMarshalled);
-  // } catch (err) {
-  //   console.log(err);
-  //   return err;
-  // }
+  return true;
 }
 
 var sendResponse = function (code, data) {
