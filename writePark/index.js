@@ -3,7 +3,7 @@ const dynamodb = new AWS.DynamoDB();
 
 exports.handler = async (event, context) => {
   if (checkPermissions(event) === false) {
-    return sendResponse(403, { msg: 'Unauthorized'});
+    return sendResponse(403, { msg: 'Unauthorized'}, context);
   }
   let parkObject = {
     TableName: process.env.TABLE_NAME
@@ -48,10 +48,10 @@ exports.handler = async (event, context) => {
     console.log("putting item:", parkObject);
     const res = await dynamodb.putItem(parkObject).promise();
     console.log("res:", res);
-    return sendResponse(200, res);
+    return sendResponse(200, res, context);
   } catch (err) {
     console.log("err", err);
-    return sendResponse(400, err);
+    return sendResponse(400, err, context);
   }
 }
 
@@ -64,14 +64,14 @@ const checkPermissions = function (event) {
   return true;
 }
 
-var sendResponse = function (code, data) {
+var sendResponse = function (code, data, context) {
   const response = {
     statusCode: code,
     headers: {
       'Content-Type': 'application/json',
-      "Access-Control-Allow-Headers": "'Content-Type'",
+      "Access-Control-Allow-Headers" : "Content-Type",
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "OPTIONS,GET"
+      "Access-Control-Allow-Methods": "OPTIONS,POST"
     },
     body: JSON.stringify(data)
   };

@@ -15,14 +15,22 @@ exports.handler = async (event, context) => {
         queryObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
         queryObj.KeyConditionExpression = 'pk =:pk';
         const parksData = await runQuery(queryObj);
-        return sendResponse(200, parksData);
+        return sendResponse(200, parksData, context);
       } else if (event.queryStringParameters.facilities && event.queryStringParameters.park) {
         // Grab facilities for this park.
         queryObj.ExpressionAttributeValues = {};
         queryObj.ExpressionAttributeValues[':pk'] = { S: 'facility::' + event.queryStringParameters.park };
         queryObj.KeyConditionExpression = 'pk =:pk';
         const facilityData = await runQuery(queryObj);
-        return sendResponse(200, facilityData);
+        return sendResponse(200, facilityData, context);
+      } else if (event.queryStringParameters.passes && event.queryStringParameters.park) {
+         // Get all the parks, no specific things
+         queryObj.ExpressionAttributeValues = {};
+         queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
+         queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.park };
+         queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
+         const passData = await runQuery(queryObj);
+         return sendResponse(200, passData, context);
       } else if (event.queryStringParameters.park) {
         // Get all the parks, no specific things
         queryObj.ExpressionAttributeValues = {};
@@ -30,15 +38,16 @@ exports.handler = async (event, context) => {
         queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.park };
         queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
         const parkData = await runQuery(queryObj);
-        return sendResponse(200, parkData);
+        return sendResponse(200, parkData, context);
       } else {
-        return sendResponse(400, { msg: 'Invalid Request'});
+        return sendResponse(400, { msg: 'Invalid Request'}, context);
       }
     } catch (err) {
       console.log(err);
-      return sendResponse(400, err);
+      return sendResponse(400, err, context);
     }
 }
+
 
 const runQuery = async function (query) {
   const data = await dynamodb.query(query).promise();
@@ -50,14 +59,14 @@ const runQuery = async function (query) {
   return unMarshalled;
 }
 
-var sendResponse = function (code, data) {
+var sendResponse = function (code, data, context) {
     const response = {
       statusCode: code,
       headers: {
         'Content-Type': 'application/json',
-        "Access-Control-Allow-Headers" : "'Content-Type'",
-        "Access-Control-Allow-Origin" : "*",
-        "Access-Control-Allow-Methods": "OPTIONS,GET"
+        "Access-Control-Allow-Headers" : "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "Access-Control-Allow-Origin" : "'*'",
+        "Access-Control-Allow-Methods": "'OPTIONS,GET'"
       },
       body: JSON.stringify(data)
     };
