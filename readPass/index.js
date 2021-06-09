@@ -19,7 +19,7 @@ exports.handler = async (event, context) => {
     if (event.queryStringParameters.passes && event.queryStringParameters.park) {
       console.log("Grab passes for this park");
       if (await checkPermissions(event) === false) {
-        return sendResponse(403, { msg: 'Unauthorized' });
+        return sendResponse(403, { msg: 'Unauthorized'});
       }
       // Grab passes for this park.
       queryObj.ExpressionAttributeValues = {};
@@ -30,24 +30,23 @@ exports.handler = async (event, context) => {
     } else if (event.queryStringParameters.passId && event.queryStringParameters.email && event.queryStringParameters.code) {
       console.log("Get the specific pass, this person is NOT authenticated");
       // Get the specific pass, this person is NOT authenticated
-      return sendResponse(200, { msg: 'Get the specific pass unauth TBI' }, context);
-    } else if (event.queryStringParameters.passId) {
+      // TODO:
+      return sendResponse(200, { msg: 'Get the specific pass unauth TBI'}, context);
+    } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
       if (await checkPermissions(event) === false) {
-        return sendResponse(403, { msg: 'Unauthorized!' });
+        return sendResponse(403, { msg: 'Unauthorized!'});
+      } else {
+        // Get the specific pass
+        queryObj.ExpressionAttributeValues = {};
+        queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
+        queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.passId };
+        queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
+        const passData = await runQuery(queryObj);
+        return sendResponse(200, passData, context);
       }
-      console.log("Get the specific pass authed only TBI");
-      // Get the specific pass
-
-      // TODO: If sysadmin, allow
-      return sendResponse(200, { msg: 'Get the specific pass authed only TBI' }, context);
-    }
-
-    // TODO: Get passes for specific facility, and/or am/pm/day based filter.
-
-
-    else {
+    } else {
       console.log("Invalid Request");
-      return sendResponse(400, { msg: 'Invalid Request' }, context);
+      return sendResponse(400, { msg: 'Invalid Request'}, context);
     }
   } catch (err) {
     console.log(err);
@@ -112,7 +111,6 @@ const sendResponse = function (code, data, context) {
   };
   return response;
 }
-
 
 const verifyToken = function (token, callback, sendError) {
   console.log('verifying token');
@@ -182,7 +180,7 @@ function verifySecret(currentScopes, tokenString, secret, callback, sendError) {
       }
     } else {
       // return the error in the callback if the JWT was not verified
-      defaultLog.warn('JWT Verification Error:', verificationError);
+      console.log('JWT Verification Error:', verificationError);
       return callback(sendError());
     }
   });
