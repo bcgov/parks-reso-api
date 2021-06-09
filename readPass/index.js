@@ -6,53 +6,53 @@ const SSO_ISSUER = process.env.SSO_ISSUER || 'https://oidc.gov.bc.ca/auth/realms
 const SSO_JWKSURI = 'https://oidc.gov.bc.ca/auth/realms/3l5nw6dk/protocol/openid-connect/certs';
 
 exports.handler = async (event, context) => {
-    console.log('Read Pass', event);
+  console.log('Read Pass', event);
 
-    let queryObj = {
-      TableName: process.env.TABLE_NAME
-    };
+  let queryObj = {
+    TableName: process.env.TABLE_NAME
+  };
 
-    try {
-      if (!event.queryStringParameters) {
-        return sendResponse(400, { msg: 'Invalid Request'}, context);
-      }
-      if (event.queryStringParameters.passes && event.queryStringParameters.park) {
-        console.log("Grab passes for this park");
-        if (await checkPermissions(event) === false) {
-          return sendResponse(403, { msg: 'Unauthorized'});
-        }
-        // Grab passes for this park.
-        queryObj.ExpressionAttributeValues = {};
-        queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
-        queryObj.KeyConditionExpression = 'pk =:pk';
-        const passData = await runQuery(queryObj);
-        return sendResponse(200, passData, context);
-      } else if (event.queryStringParameters.passId && event.queryStringParameters.email && event.queryStringParameters.code) {
-        console.log("Get the specific pass, this person is NOT authenticated");
-        // Get the specific pass, this person is NOT authenticated
-        return sendResponse(200, { msg: 'Get the specific pass unauth TBI'}, context);
-      } else if (event.queryStringParameters.passId) {
-        if (await checkPermissions(event) === false) {
-          return sendResponse(403, { msg: 'Unauthorized!'});
-        }
-        console.log("Get the specific pass authed only TBI");
-        // Get the specific pass
-
-        // TODO: If sysadmin, allow
-        return sendResponse(200, { msg: 'Get the specific pass authed only TBI'}, context);
-      }
-
-      // TODO: Get passes for specific facility, and/or am/pm/day based filter.
-
-
-      else {
-        console.log("Invalid Request");
-        return sendResponse(400, { msg: 'Invalid Request'}, context);
-      }
-    } catch (err) {
-      console.log(err);
-      return sendResponse(400, err, context);
+  try {
+    if (!event.queryStringParameters) {
+      return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
+    if (event.queryStringParameters.passes && event.queryStringParameters.park) {
+      console.log("Grab passes for this park");
+      if (await checkPermissions(event) === false) {
+        return sendResponse(403, { msg: 'Unauthorized' });
+      }
+      // Grab passes for this park.
+      queryObj.ExpressionAttributeValues = {};
+      queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
+      queryObj.KeyConditionExpression = 'pk =:pk';
+      const passData = await runQuery(queryObj);
+      return sendResponse(200, passData, context);
+    } else if (event.queryStringParameters.passId && event.queryStringParameters.email && event.queryStringParameters.code) {
+      console.log("Get the specific pass, this person is NOT authenticated");
+      // Get the specific pass, this person is NOT authenticated
+      return sendResponse(200, { msg: 'Get the specific pass unauth TBI' }, context);
+    } else if (event.queryStringParameters.passId) {
+      if (await checkPermissions(event) === false) {
+        return sendResponse(403, { msg: 'Unauthorized!' });
+      }
+      console.log("Get the specific pass authed only TBI");
+      // Get the specific pass
+
+      // TODO: If sysadmin, allow
+      return sendResponse(200, { msg: 'Get the specific pass authed only TBI' }, context);
+    }
+
+    // TODO: Get passes for specific facility, and/or am/pm/day based filter.
+
+
+    else {
+      console.log("Invalid Request");
+      return sendResponse(400, { msg: 'Invalid Request' }, context);
+    }
+  } catch (err) {
+    console.log(err);
+    return sendResponse(400, err, context);
+  }
 }
 
 const checkPermissions = async function (event) {
@@ -64,8 +64,8 @@ const checkPermissions = async function (event) {
     decoded = await new Promise(function (resolve) {
       verifyToken(token, function (data) {
         console.log("Data:", data);
-          resolve(data);
-        },
+        resolve(data);
+      },
         function (err) {
           console.log("error:", err);
           resolve(false);
@@ -99,13 +99,13 @@ const runQuery = async function (query) {
   return unMarshalled;
 }
 
-const sendResponse = function (code, data, context) {
+var sendResponse = function (code, data, context) {
   const response = {
     statusCode: code,
     headers: {
       'Content-Type': 'application/json',
-      "Access-Control-Allow-Headers" : "Content-Type",
-      "Access-Control-Allow-Origin" : "*",
+      "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+      "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "OPTIONS,GET"
     },
     body: JSON.stringify(data)
@@ -150,7 +150,7 @@ const verifyToken = function (token, callback, sendError) {
 };
 
 function verifySecret(currentScopes, tokenString, secret, callback, sendError) {
-  jwt.verify(tokenString, secret, function(verificationError, decodedToken) {
+  jwt.verify(tokenString, secret, function (verificationError, decodedToken) {
     // check if the JWT was verified correctly
     if (verificationError == null && Array.isArray(currentScopes) && decodedToken && decodedToken.realm_access.roles) {
       console.log('JWT decoded');
