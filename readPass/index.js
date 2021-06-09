@@ -7,6 +7,7 @@ const SSO_JWKSURI = 'https://oidc.gov.bc.ca/auth/realms/3l5nw6dk/protocol/openid
 
 exports.handler = async (event, context) => {
   console.log('Read Pass', event);
+  console.log('event.queryStringParameters', event.queryStringParameters);
 
   let queryObj = {
     TableName: process.env.TABLE_NAME
@@ -16,7 +17,19 @@ exports.handler = async (event, context) => {
     if (!event.queryStringParameters) {
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
-    if (event.queryStringParameters.passes && event.queryStringParameters.park) {
+    if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
+      if (await checkPermissions(event) === false) {
+        return sendResponse(403, { msg: 'Unauthorized'});
+      }
+      // Get all the passes for a specific facility
+      queryObj.ExpressionAttributeValues = {};
+      queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
+      queryObj.ExpressionAttributeValues[':facilityName'] = { S: event.queryStringParameters.facilityName };
+      queryObj.KeyConditionExpression = 'pk =:pk';
+      queryObj.FilterExpression = 'facilityName =:facilityName';
+      const passData = await runQuery(queryObj);
+      return sendResponse(200, passData, context);
+    } else if (event.queryStringParameters.passes && event.queryStringParameters.park) {
       console.log("Grab passes for this park");
       if (await checkPermissions(event) === false) {
         return sendResponse(403, { msg: 'Unauthorized'});

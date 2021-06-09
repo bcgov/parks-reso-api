@@ -23,14 +23,6 @@ exports.handler = async (event, context) => {
         queryObj.KeyConditionExpression = 'pk =:pk';
         const facilityData = await runQuery(queryObj);
         return sendResponse(200, facilityData, context);
-      } else if (event.queryStringParameters.passes && event.queryStringParameters.park) {
-         // Get all the parks, no specific things
-         queryObj.ExpressionAttributeValues = {};
-         queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
-         queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.park };
-         queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
-         const passData = await runQuery(queryObj);
-         return sendResponse(200, passData, context);
       } else if (event.queryStringParameters.park) {
         // Get all the parks, no specific things
         queryObj.ExpressionAttributeValues = {};
