@@ -3,7 +3,7 @@ const dynamodb = new AWS.DynamoDB();
 
 exports.handler = async (event, context) => {
   if (checkPermissions(event) === false) {
-    return sendResponse(403, { msg: 'Unauthorized'}, context);
+    return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
   let parkObject = {
     TableName: process.env.TABLE_NAME
@@ -26,7 +26,7 @@ exports.handler = async (event, context) => {
     parkObject.Item['type'] = { S: 'details' };
 
     // Setup facilities
-    for(facility of facilities) {
+    for (facility of facilities) {
       console.log("Facility:", facility);
       let facObject = {
         TableName: process.env.TABLE_NAME
@@ -64,12 +64,12 @@ const checkPermissions = function (event) {
   return true;
 }
 
-var sendResponse = function (code, data, context) {
+const sendResponse = function (code, data, context) {
   const response = {
     statusCode: code,
     headers: {
       'Content-Type': 'application/json',
-      "Access-Control-Allow-Headers" : "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type",
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "OPTIONS,POST"
     },
