@@ -59,7 +59,7 @@ const runQuery = async function (query) {
   return unMarshalled;
 }
 
-var sendResponse = function (code, data, context) {
+const sendResponse = function (code, data, context) {
     const response = {
       statusCode: code,
       headers: {
