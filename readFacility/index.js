@@ -14,9 +14,6 @@ exports.handler = async (event, context) => {
     }
     if (event.queryStringParameters.facilities && event.queryStringParameters.park) {
       console.log("Grab facilities for this park");
-      if (checkPermissions(event) === false) {
-        return sendResponse(403, { msg: 'Unauthorized' });
-      }
       // Grab facilities for this park.
       queryObj.ExpressionAttributeValues = {};
       queryObj.ExpressionAttributeValues[':pk'] = { S: 'facility::' + event.queryStringParameters.park };
@@ -24,12 +21,8 @@ exports.handler = async (event, context) => {
       const facilityData = await runQuery(queryObj);
       return sendResponse(200, facilityData, context);
     } else if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
-      if (checkPermissions(event) === false) {
-        return sendResponse(403, { msg: 'Unauthorized!' });
-      }
       console.log("Get the specific Facility");
       // Get the specific Facility
-
       queryObj.ExpressionAttributeValues = {};
       queryObj.ExpressionAttributeValues[':pk'] = { S: 'facility::' + event.queryStringParameters.park };
       queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.facilityName };
@@ -45,15 +38,6 @@ exports.handler = async (event, context) => {
     console.log(err);
     return sendResponse(400, err, context);
   }
-}
-
-const checkPermissions = function (event) {
-  // TODO: Add keycloak decoding based on NRPTI prod
-
-  // 1: check if sysadmin (pick a different role than sysadmin)
-  // 2: reject if not
-  // 3: insert item into DB.
-  return true;
 }
 
 const runQuery = async function (query) {
