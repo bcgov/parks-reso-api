@@ -17,7 +17,7 @@ exports.handler = async (event, context) => {
     console.log(event.body);
     let newObject = JSON.parse(event.body);
 
-    const { park, location, facilities, ...otherProps } = newObject;
+    const { park, location, facilities, visible, ...otherProps } = newObject;
 
     parkObject.Item = {};
     parkObject.Item['pk'] = { S: "park" };
@@ -28,6 +28,7 @@ exports.handler = async (event, context) => {
     parkObject.Item['name'] = { S: park.name };
     parkObject.Item['status'] = { S: 'open' };
     parkObject.Item['type'] = { S: 'details' };
+    parkObject.Item['visible'] = { BOOL: visible };
 
     // Setup facilities
     for (facility of facilities) {
