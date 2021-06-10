@@ -121,7 +121,8 @@ resource "aws_api_gateway_deployment" "apideploy" {
    depends_on = [ aws_api_gateway_integration.readIntegration,
                   aws_api_gateway_integration.writeIntegration,
                   aws_api_gateway_integration.readPassIntegration,
-                  aws_api_gateway_integration.writePassIntegration]
+                  aws_api_gateway_integration.writePassIntegration,
+                  aws_api_gateway_integration.deletePassIntegration]
 
    rest_api_id = aws_api_gateway_rest_api.apiLambda.id
 
@@ -180,6 +181,11 @@ resource "aws_iam_role_policy_attachment" "lambda_read_logs" {
 
 resource "aws_iam_role_policy_attachment" "lambda_write_logs" {
   role       = aws_iam_role.writeRole.name
+  policy_arn = aws_iam_policy.lambda_logging.arn
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_delete_logs" {
+  role       = aws_iam_role.deleteRole.name
   policy_arn = aws_iam_policy.lambda_logging.arn
 }
 

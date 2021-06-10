@@ -28,7 +28,6 @@ exports.handler = async (event, context) => {
     parkObject.Item['description'] = { S: description };
     parkObject.Item['name'] = { S: park.name };
     parkObject.Item['status'] = { S: 'open' };
-    parkObject.Item['type'] = { S: 'details' };
     parkObject.Item['visible'] = { BOOL: visible };
 
     // Setup facilities

@@ -1,87 +1,65 @@
 const AWS = require('aws-sdk');
 const dynamodb = new AWS.DynamoDB();
 const jwt = require('jsonwebtoken');
-const jwksClient = require('jwks-rsa');
-const SSO_ISSUER = process.env.SSO_ISSUER || 'https://oidc.gov.bc.ca/auth/realms/3l5nw6dk';
-const SSO_JWKSURI = 'https://oidc.gov.bc.ca/auth/realms/3l5nw6dk/protocol/openid-connect/certs';
 
 exports.handler = async (event, context) => {
-  console.log('Read Pass', event);
+  console.log('Delete Pass', event);
   console.log('event.queryStringParameters', event.queryStringParameters);
-
-  let queryObj = {
-    TableName: process.env.TABLE_NAME
-  };
 
   try {
     if (!event.queryStringParameters) {
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
-    if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
-      if (await checkPermissions(event) === false) {
-        return sendResponse(403, { msg: 'Unauthorized'});
+    if (event.queryStringParameters.passId && event.queryStringParameters.park && event.queryStringParameters.code) {
+      console.log("Get the specific pass, this person is NOT authenticated but has a code");
+
+      let decodedToken = jwt.verify(event.queryStringParameters.code, process.env.JWT_SECRET);
+      console.log(decodedToken)
+
+      if (decodedToken === null) {
+        return sendResponse(400, { msg: 'Invalid request'});
       }
-      // Get all the passes for a specific facility
-      queryObj.ExpressionAttributeValues = {};
-      queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
-      queryObj.ExpressionAttributeValues[':facilityName'] = { S: event.queryStringParameters.facilityName };
-      queryObj.KeyConditionExpression = 'pk =:pk';
-      queryObj.FilterExpression = 'facilityName =:facilityName';
-      const passData = await runQuery(queryObj);
-      return sendResponse(200, passData, context);
-    } else if (event.queryStringParameters.passes && event.queryStringParameters.park) {
-      console.log("Grab passes for this park");
-      if (await checkPermissions(event) === false) {
-        return sendResponse(403, { msg: 'Unauthorized'});
-      }
-      // Grab passes for this park.
-      queryObj.ExpressionAttributeValues = {};
-      queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
-      queryObj.KeyConditionExpression = 'pk =:pk';
-      const passData = await runQuery(queryObj);
-      return sendResponse(200, passData, context);
-    } else if (event.queryStringParameters.passId && event.queryStringParameters.email && event.queryStringParameters.park) {
-      console.log("Get the specific pass, this person is NOT authenticated");
+
       // Get the specific pass, this person is NOT authenticated
-      queryObj.ExpressionAttributeValues = {};
-      queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
-      queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.passId };
-      queryObj.ExpressionAttributeValues[':email'] = { S: event.queryStringParameters.email };
-      queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
-      queryObj.FilterExpression = 'email =:email';
-      console.log("queryObj", queryObj);
-      const passData = await runQuery(queryObj);
-      console.log("passData", passData);
-
-      //
-      //  REMOVE THIS BLOCK
-      //
-      const claims = {
-        iss: 'bcparks-lambda',
-        sub: 'readPass',
-        passId: event.queryStringParameters.passId,
-        parkName: event.queryStringParameters.park
-      }
-      const token = jwt.sign(claims, process.env.JWT_SECRET, { expiresIn: '15m' });
-
-      // Redacted passData
-      const redacted = {
-        registrationNumber: passData[0].registrationNumber,
-        token: token
+      let updatePass = {
+        Key: {
+          'pk': { S: 'pass::' + event.queryStringParameters.park },
+          'sk': { S: event.queryStringParameters.passId }
+        },
+        ExpressionAttributeValues: {
+          ":cancelled": { S:"cancelled" },
+        },
+        ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',
+        UpdateExpression: "SET passStatus = :cancelled",
+        ReturnValues: "ALL_NEW",
+        TableName: process.env.TABLE_NAME
       };
-
-      return sendResponse(200, redacted, context);
+      console.log("updatePass:", updatePass);
+      const facilityRes = await dynamodb.updateItem(updatePass).promise();
+      console.log("FacRes:", facilityRes);
+      return sendResponse(200, { msg: 'Cancelled'}, context);
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
       if (await checkPermissions(event) === false) {
         return sendResponse(403, { msg: 'Unauthorized!'});
       } else {
-        // Get the specific pass
-        queryObj.ExpressionAttributeValues = {};
-        queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
-        queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.passId };
-        queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
-        const passData = await runQuery(queryObj);
-        return sendResponse(200, passData, context);
+         // Get the specific pass, this person is NOT authenticated
+        let updatePass = {
+          Key: {
+            'pk': { S: 'pass::' + event.queryStringParameters.park },
+            'sk': { S: event.queryStringParameters.passId }
+          },
+          ExpressionAttributeValues: {
+            ":cancelled": { S:"cancelled" },
+          },
+          ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',
+          UpdateExpression: "SET passStatus = :cancelled",
+          ReturnValues: "ALL_NEW",
+          TableName: process.env.TABLE_NAME
+        };
+        console.log("updatePass:", updatePass);
+        const facilityRes = await dynamodb.updateItem(updatePass).promise();
+        console.log("FacRes:", facilityRes);
+        return sendResponse(200, { msg: 'Cancelled'}, context);
       }
     } else {
       console.log("Invalid Request");
@@ -89,12 +67,11 @@ exports.handler = async (event, context) => {
     }
   } catch (err) {
     console.log(err);
-    return sendResponse(400, err, context);
+    return sendResponse(400, { msg: 'Invalid Request'}, context);
   }
 }
 
 const checkPermissions = async function (event) {
-  // TODO: Add keycloak decoding based on NRPTI prod
   const token = event.headers.Authorization;
 
   let decoded = null;
@@ -125,16 +102,6 @@ const checkPermissions = async function (event) {
     console.log("err p:", e);
     return false;
   }
-}
-
-const runQuery = async function (query) {
-  const data = await dynamodb.query(query).promise();
-  console.log("data:", data);
-  var unMarshalled = data.Items.map(item => {
-    return AWS.DynamoDB.Converter.unmarshall(item);
-  });
-  console.log(unMarshalled);
-  return unMarshalled;
 }
 
 const sendResponse = function (code, data, context) {

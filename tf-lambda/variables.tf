@@ -22,6 +22,11 @@ variable "db_name" {
   default     = "parkreso"
 }
 
+variable "jwtSecret" {
+  description = "JWT Secret"
+  default     = "todo-changeme"
+}
+
 variable "common_tags" {
   description = "Common tags for created resources"
   default = {
