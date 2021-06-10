@@ -40,11 +40,25 @@ exports.handler = async (event, context) => {
       queryObj.KeyConditionExpression = 'pk =:pk';
       const passData = await runQuery(queryObj);
       return sendResponse(200, passData, context);
-    } else if (event.queryStringParameters.passId && event.queryStringParameters.email && event.queryStringParameters.code) {
+    } else if (event.queryStringParameters.passId && event.queryStringParameters.email && event.queryStringParameters.park) {
       console.log("Get the specific pass, this person is NOT authenticated");
       // Get the specific pass, this person is NOT authenticated
-      // TODO:
-      return sendResponse(200, { msg: 'Get the specific pass unauth TBI'}, context);
+      queryObj.ExpressionAttributeValues = {};
+      queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
+      queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.passId };
+      queryObj.ExpressionAttributeValues[':email'] = { S: event.queryStringParameters.email };
+      queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
+      queryObj.FilterExpression = 'email =:email';
+      console.log("queryObj", queryObj);
+      const passData = await runQuery(queryObj);
+      console.log("passData", passData);
+
+      // Redacted passData
+      const redacted = {
+        registrationNumber: passData[0].registrationNumber
+      };
+
+      return sendResponse(200, redacted, context);
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
       if (await checkPermissions(event) === false) {
         return sendResponse(403, { msg: 'Unauthorized!'});

@@ -31,14 +31,6 @@ exports.handler = async (event, context) => {
           })
           return sendResponse(200, list, context);
         }
-      } else if (event.queryStringParameters.facilities && event.queryStringParameters.park) {
-        // Grab facilities for this park.
-        queryObj.ExpressionAttributeValues = {};
-        queryObj.ExpressionAttributeValues[':pk'] = { S: 'facility::' + event.queryStringParameters.park };
-        queryObj.KeyConditionExpression = 'pk =:pk';
-        queryObj = visibleFilter(queryObj, isAdmin);
-        const facilityData = await runQuery(queryObj);
-        return sendResponse(200, facilityData, context);
       } else if (event.queryStringParameters.park) {
         // Get specific park.
         queryObj.ExpressionAttributeValues = {};
