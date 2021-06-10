@@ -68,11 +68,11 @@ exports.handler = async (event, context) => {
       return sendResponse(200, res);
     } else {
       // Not allowed for whatever reason.
-      return sendResponse(400, res);
+      return sendResponse(400, { msg: 'Operation Failed' });
     }
   } catch (err) {
     console.log("err", err);
-    return sendResponse(400, err);
+    return sendResponse(400, { msg: 'Operation Failed' });
   }
 }
 
