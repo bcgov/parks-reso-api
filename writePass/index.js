@@ -65,6 +65,10 @@ exports.handler = async (event, context) => {
       console.log("putting item:", passObject);
       const res = await dynamodb.putItem(passObject).promise();
       console.log("res:", res);
+
+      // TODO: ***SEND EMAIL TO CONFIRM
+
+
       return sendResponse(200, res);
     } else {
       // Not allowed for whatever reason.
