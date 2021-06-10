@@ -12,6 +12,13 @@ data "archive_file" "writePassZip" {
     output_path = "writePass.zip"
 }
 
+// Auto pack lambda function.
+data "archive_file" "deletePassZip" {
+    type        = "zip"
+    source_dir  = "../deletePass"
+    output_path = "deletePass.zip"
+}
+
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "readPassLambda" {
    function_name = "readPass"
@@ -27,7 +34,8 @@ resource "aws_lambda_function" "readPassLambda" {
 
    environment {
     variables = {
-      TABLE_NAME = var.db_name
+      TABLE_NAME = var.db_name,
+      JWT_SECRET = var.jwtSecret
     }
   }
 
@@ -49,11 +57,35 @@ resource "aws_lambda_function" "writePassLambda" {
 
    environment {
     variables = {
-      TABLE_NAME = var.db_name
+      TABLE_NAME = var.db_name,
+      JWT_SECRET = var.jwtSecret
     }
   }
 
    role = aws_iam_role.writeRole.arn
+}
+
+// Deploys the lambda via the zip above
+resource "aws_lambda_function" "deletePassLambda" {
+   function_name = "deletePass"
+   filename = "deletePass.zip"
+   source_code_hash = "${data.archive_file.deletePassZip.output_base64sha256}"
+
+#    This method is for deploying things outside of TF.
+#    s3_bucket = var.s3_bucket
+#    s3_key    = "v1.0.0/deletePass.zip"
+
+   handler = "index.handler"
+   runtime = "nodejs12.x"
+
+   environment {
+    variables = {
+      TABLE_NAME = var.db_name,
+      JWT_SECRET = var.jwtSecret
+    }
+  }
+
+   role = aws_iam_role.deleteRole.arn
 }
 
 resource "aws_api_gateway_resource" "passResource" {
@@ -75,6 +107,14 @@ resource "aws_api_gateway_method" "writePassMethod" {
    rest_api_id   = aws_api_gateway_rest_api.apiLambda.id
    resource_id   = aws_api_gateway_resource.passResource.id
    http_method   = "POST"
+   authorization = "NONE"
+}
+
+// Defines the HTTP POST /pass API
+resource "aws_api_gateway_method" "deletePassMethod" {
+   rest_api_id   = aws_api_gateway_rest_api.apiLambda.id
+   resource_id   = aws_api_gateway_resource.passResource.id
+   http_method   = "DELETE"
    authorization = "NONE"
 }
 
@@ -100,6 +140,17 @@ resource "aws_api_gateway_integration" "writePassIntegration" {
    uri                     = aws_lambda_function.writePassLambda.invoke_arn
 }
 
+// Integrates the APIG to Lambda via POST method
+resource "aws_api_gateway_integration" "deletePassIntegration" {
+   rest_api_id = aws_api_gateway_rest_api.apiLambda.id
+   resource_id = aws_api_gateway_resource.passResource.id
+   http_method = aws_api_gateway_method.deletePassMethod.http_method
+
+   integration_http_method = "POST"
+   type                    = "AWS_PROXY"
+   uri                     = aws_lambda_function.deletePassLambda.invoke_arn
+}
+
 resource "aws_lambda_permission" "readPassPermission" {
    statement_id  = "AllowParksDayUsePassAPIInvoke"
    action        = "lambda:InvokeFunction"
@@ -112,6 +163,14 @@ resource "aws_lambda_permission" "writePassPermission" {
    statement_id  = "AllowParksDayUsePassAPIInvoke"
    action        = "lambda:InvokeFunction"
    function_name = aws_lambda_function.writePassLambda.function_name
+   principal     = "apigateway.amazonaws.com"
+   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/*/*"
+}
+
+resource "aws_lambda_permission" "deletePassPermission" {
+   statement_id  = "AllowParksDayUsePassAPIInvoke"
+   action        = "lambda:InvokeFunction"
+   function_name = aws_lambda_function.deletePassLambda.function_name
    principal     = "apigateway.amazonaws.com"
    source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/*/*"
 }
