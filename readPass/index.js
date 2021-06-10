@@ -69,6 +69,12 @@ exports.handler = async (event, context) => {
         registrationNumber: passData[0].registrationNumber,
         token: token
       };
+      
+      // TODO: ********SEND EMAIL INSTEAD
+      // Public page after 200OK should show 'check your email'
+    
+
+
 
       return sendResponse(200, redacted, context);
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
