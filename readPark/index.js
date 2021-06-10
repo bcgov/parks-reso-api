@@ -21,9 +21,16 @@ exports.handler = async (event, context) => {
         queryObj.ExpressionAttributeValues = {};
         queryObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
         queryObj.KeyConditionExpression = 'pk =:pk';
-        queryObj = visibleFilter(queryObj, isAdmin);
+
         const parksData = await runQuery(queryObj);
-        return sendResponse(200, parksData, context);
+        if (isAdmin) {
+          return sendResponse(200, parksData, context);
+        } else {
+          const list = parksData.filter( item => {
+            return item.visible === true;
+          })
+          return sendResponse(200, list, context);
+        }
       } else if (event.queryStringParameters.facilities && event.queryStringParameters.park) {
         // Grab facilities for this park.
         queryObj.ExpressionAttributeValues = {};
@@ -51,6 +58,7 @@ exports.handler = async (event, context) => {
 }
 
 const visibleFilter = function (queryObj, isAdmin) {
+  console.log("visibleFilter:", queryObj, isAdmin);
   if (!isAdmin) {
     queryObj.ExpressionAttributeValues[':visible'] = { BOOL: true };
     queryObj.FilterExpression = 'visible =:visible';
@@ -167,6 +175,7 @@ function verifySecret(currentScopes, tokenString, secret, callback, sendError) {
 }
 
 const runQuery = async function (query) {
+  console.log("query:", query);
   const data = await dynamodb.query(query).promise();
   console.log("data:", data);
   var unMarshalled = data.Items.map(item => {
