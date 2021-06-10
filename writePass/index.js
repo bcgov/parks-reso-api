@@ -45,14 +45,16 @@ exports.handler = async (event, context) => {
           'sk': { S: facilityName }
         },
         ExpressionAttributeValues: {
-          ":inc":{ N:"1" }
+          ":inc": { N:"1" },
         },
         ExpressionAttributeNames: {
           '#booking': 'bookingTimes',
           '#type': type,
-          '#currentCount': 'currentCount'
+          '#currentCount': 'currentCount',
+          '#maximum': 'max'
         },
         UpdateExpression: "SET #booking.#type.#currentCount = #booking.#type.#currentCount + :inc",
+        ConditionExpression: "#booking.#type.#currentCount < #booking.#type.#maximum",
         ReturnValues: "ALL_NEW",
         TableName: process.env.TABLE_NAME
       };
