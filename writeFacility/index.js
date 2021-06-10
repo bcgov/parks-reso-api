@@ -17,13 +17,12 @@ exports.handler = async (event, context) => {
     console.log(event.body);
     let newObject = JSON.parse(event.body);
 
-    const { parkName, bookingTimes, maxReservations, name, status, type, ...otherProps } = newObject;
+    const { parkName, bookingTimes, name, status, type, ...otherProps } = newObject;
 
     facilityObject.Item = {};
     facilityObject.Item['pk'] = { S: "facility::" + parkName };
     facilityObject.Item['sk'] = { S: name };
     facilityObject.Item['bookingTimes'] = { M: AWS.DynamoDB.Converter.marshall(bookingTimes) };
-    facilityObject.Item['maxReservations'] = { S: maxReservations };
     facilityObject.Item['name'] = { S: name };
     facilityObject.Item['status'] = { M: AWS.DynamoDB.Converter.marshall(status) };
     facilityObject.Item['type'] = { S: type };

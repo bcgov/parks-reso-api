@@ -17,13 +17,13 @@ exports.handler = async (event, context) => {
     console.log(event.body);
     let newObject = JSON.parse(event.body);
 
-    const { park, location, facilities, visible, ...otherProps } = newObject;
+    const { park, location, facilities, visible, description, ...otherProps } = newObject;
 
     parkObject.Item = {};
     parkObject.Item['pk'] = { S: "park" };
     parkObject.Item['sk'] = { S: park.name };
     parkObject.Item['bcParksLink'] = { S: park.bcParksLink };
-    parkObject.Item['description'] = { S: location };
+    parkObject.Item['description'] = { S: description };
     parkObject.Item['location'] = { S: location };
     parkObject.Item['name'] = { S: park.name };
     parkObject.Item['status'] = { S: 'open' };
@@ -40,7 +40,6 @@ exports.handler = async (event, context) => {
       facObject.Item['pk'] = { S: "facility::" + park.name };
       facObject.Item['sk'] = { S: facility.name };
       facObject.Item['name'] = { S: facility.name };
-      facObject.Item['maxReservations'] = { S: facility.maxReservations };
       facObject.Item['type'] = { S: facility.type };
       facObject.Item['status'] = { M: AWS.DynamoDB.Converter.marshall(facility.status) };
       facObject.Item['bookingTimes'] = { M: AWS.DynamoDB.Converter.marshall(facility.bookingTimes) };

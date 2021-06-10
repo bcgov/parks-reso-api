@@ -75,7 +75,6 @@ const parkVisible = async function (park, isAdmin) {
       return false;
     }
   }
-  return queryObj;
 }
 
 const checkPermissions = async function (event) {
