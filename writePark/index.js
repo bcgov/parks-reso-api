@@ -27,6 +27,9 @@ exports.handler = async (event, context) => {
     }
     parkObject.Item['description'] = { S: description };
     parkObject.Item['name'] = { S: park.name };
+    if (park.capacity) {
+      parkObject.Item['capacity'] = AWS.DynamoDB.Converter.input(park.capacity);
+    }
     parkObject.Item['status'] = { S: park.status };
     parkObject.Item['visible'] = { BOOL: visible };
 
