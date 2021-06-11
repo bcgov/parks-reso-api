@@ -22,9 +22,29 @@ variable "db_name" {
   default     = "parkreso"
 }
 
-variable "jwtSecret" {
+variable "jwt_secret" {
   description = "JWT Secret"
   default     = "todo-changeme"
+}
+
+variable "gc_notify_api_path" {
+  description = "Path to GC Notify email API endpoint"
+  default = "https://cgnotify.com/path/to/email/endpoint"
+}
+
+variable "gc_notify_api_key" {
+  description = "Authorization key for GC Notify"
+  default = "ApiKey-v1 123-abc"
+}
+
+variable "gc_notify_receipt_template_id" {
+  description = "ID of the email template to use on GC Notify"
+  default = "123-abc-your-template-id"
+}
+
+variable "gc_notify_cancel_template_id" {
+  description = "ID of the email template to use on GC Notify"
+  default = "123-abc-your-template-id"
 }
 
 variable "common_tags" {

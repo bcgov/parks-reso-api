@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const { exec } = require("child_process");
 const dynamodb = new AWS.DynamoDB();
 
 exports.handler = async (event, context) => {
@@ -66,8 +67,30 @@ exports.handler = async (event, context) => {
       const res = await dynamodb.putItem(passObject).promise();
       console.log("res:", res);
 
-      // TODO: ***SEND EMAIL TO CONFIRM
-
+      // SEND EMAIL TO CONFIRM
+      exec ( "curl --location --request POST '" + process.env.GC_NOTIFY_API_PATH + "'\
+        --header 'Authorization: " + process.env.GC_NOTIFY_API_KEY + "'\
+        --header 'Content-Type: application/json' --data-raw '{\
+          \"email_address\": \"" + passObject.Item['email'] + "\",\
+          \"template_id\": \"" + process.env.GC_NOTIFY_RECEIPT_TEMPLATE_ID + "\",\
+          \"personalisation\": {\
+            \"fistName\" : \"" + passObject.Item['firstName'] + "\",\
+            \"lastName\" : \"" + passObject.Item['lastName'] + "\",\
+            \"date\" : \"" + passObject.Item['date'] + "\",\
+            \"facilityName\" : \"" + passObject.Item['facilityName'] + "\",\
+            \"registrationNumber\" : \"" + passObject.Item['registrationNumber'] + "\"\
+          }\
+        }'", (error, stdout, stderr) => {
+          if (error) {
+              console.log(`error: ${error.message}`);
+              return;
+          }
+          if (stderr) {
+              console.log(`stderr: ${stderr}`);
+              return;
+          }
+          console.log(`stdout: ${stdout}`);
+      });
 
       return sendResponse(200, res);
     } else {
@@ -78,6 +101,9 @@ exports.handler = async (event, context) => {
     console.log("err", err);
     return sendResponse(400, { msg: 'Operation Failed' });
   }
+}
+
+const sendEmail = async function () {
 }
 
 const runQuery = async function (query) {
