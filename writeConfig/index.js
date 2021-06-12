@@ -9,7 +9,7 @@ exports.handler = async (event, context) => {
   if (await checkPermissions(event) === false) {
     return sendResponse(403, { msg: 'Unauthorized'}, context);
   }
-  let facilityObject = {
+  let configObject = {
     TableName: process.env.TABLE_NAME
   };
 
@@ -17,19 +17,13 @@ exports.handler = async (event, context) => {
     console.log(event.body);
     let newObject = JSON.parse(event.body);
 
-    const { parkName, bookingTimes, name, status, type, visible, ...otherProps } = newObject;
+    configObject.Item = {};
+    configObject.Item['pk'] = { S: "config" };
+    configObject.Item['sk'] = { S: "config" };
+    configObject.Item['configData'] = { M: AWS.DynamoDB.Converter.marshall(newObject) };
 
-    facilityObject.Item = {};
-    facilityObject.Item['pk'] = { S: "facility::" + parkName };
-    facilityObject.Item['sk'] = { S: name };
-    facilityObject.Item['bookingTimes'] = { M: AWS.DynamoDB.Converter.marshall(bookingTimes) };
-    facilityObject.Item['name'] = { S: name };
-    facilityObject.Item['status'] = { M: AWS.DynamoDB.Converter.marshall(status) };
-    facilityObject.Item['type'] = { S: type };
-    facilityObject.Item['visible'] = { BOOL: visible };
-
-    console.log("putting item:", facilityObject);
-    const res = await dynamodb.putItem(facilityObject).promise();
+    console.log("putting item:", configObject);
+    const res = await dynamodb.putItem(configObject).promise();
     console.log("res:", res);
     return sendResponse(200, res);
   } catch (err) {

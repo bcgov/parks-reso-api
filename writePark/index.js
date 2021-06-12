@@ -43,6 +43,7 @@ exports.handler = async (event, context) => {
       facObject.Item['pk'] = { S: "facility::" + park.name };
       facObject.Item['sk'] = { S: facility.name };
       facObject.Item['name'] = { S: facility.name };
+      facObject.Item['visible'] = { BOOL: facility.visible };
       facObject.Item['type'] = { S: facility.type };
       facObject.Item['status'] = { M: AWS.DynamoDB.Converter.marshall(facility.status) };
       facObject.Item['bookingTimes'] = { M: AWS.DynamoDB.Converter.marshall(facility.bookingTimes) };
