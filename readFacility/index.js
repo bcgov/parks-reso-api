@@ -26,6 +26,7 @@ exports.handler = async (event, context) => {
       queryObj.ExpressionAttributeValues[':pk'] = { S: 'facility::' + event.queryStringParameters.park };
       queryObj.KeyConditionExpression = 'pk =:pk';
       if (await parkVisible(event.queryStringParameters.park, isAdmin)) {
+        queryObj = visibleFilter(queryObj, isAdmin);
         const facilityData = await runQuery(queryObj);
         return sendResponse(200, facilityData, context);
       } else {
@@ -39,6 +40,7 @@ exports.handler = async (event, context) => {
       queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.facilityName };
       queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
       if (await parkVisible(event.queryStringParameters.park, isAdmin)) {
+        queryObj = visibleFilter(queryObj, isAdmin);
         const facilityData = await runQuery(queryObj);
         return sendResponse(200, facilityData, context);
       } else {
@@ -75,6 +77,15 @@ const parkVisible = async function (park, isAdmin) {
       return false;
     }
   }
+}
+
+const visibleFilter = function (queryObj, isAdmin) {
+  console.log("visibleFilter:", queryObj, isAdmin);
+  if (!isAdmin) {
+    queryObj.ExpressionAttributeValues[':visible'] = { BOOL: true };
+    queryObj.FilterExpression = 'visible =:visible';
+  }
+  return queryObj;
 }
 
 const checkPermissions = async function (event) {
