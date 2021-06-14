@@ -12,7 +12,7 @@ exports.handler = async (event, context) => {
 
     const registrationNumber = generate(10);
 
-    const { parkName, firstName, lastName, facilityName, email, date, type, numberOfGuests, ...otherProps } = newObject;
+    const { parkName, firstName, lastName, facilityName, email, date, type, numberOfGuests, phoneNumber, facilityType, license, ...otherProps } = newObject;
 
     passObject.Item = {};
     passObject.Item['pk'] = { S: "pass::" + parkName };
@@ -24,7 +24,11 @@ exports.handler = async (event, context) => {
     passObject.Item['date'] = { S: date };
     passObject.Item['type'] = { S: type };
     passObject.Item['registrationNumber'] = { S: registrationNumber };
-    passObject.Item['numberOfGuests'] = { S: numberOfGuests };
+    passObject.Item['numberOfGuests'] = AWS.DynamoDB.Converter.input(numberOfGuests);
+    passObject.Item['passStatus'] = { S: 'active' };
+    passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
+    passObject.Item['facilityType'] = { S: facilityType };
+    passObject.Item['license'] = { S: license };
 
     // Only let pass come through if there's enough room
     let parkObj = {
