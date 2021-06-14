@@ -1,6 +1,9 @@
 const AWS = require('aws-sdk');
 const dynamodb = new AWS.DynamoDB();
 const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-rsa');
+const SSO_ISSUER = process.env.SSO_ISSUER || 'https://oidc.gov.bc.ca/auth/realms/3l5nw6dk';
+const SSO_JWKSURI = 'https://oidc.gov.bc.ca/auth/realms/3l5nw6dk/protocol/openid-connect/certs';
 
 exports.handler = async (event, context) => {
   console.log('Delete Pass', event);
@@ -42,7 +45,6 @@ exports.handler = async (event, context) => {
       if (await checkPermissions(event) === false) {
         return sendResponse(403, { msg: 'Unauthorized!'});
       } else {
-         // Get the specific pass, this person is NOT authenticated
         let updatePass = {
           Key: {
             'pk': { S: 'pass::' + event.queryStringParameters.park },
