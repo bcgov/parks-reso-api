@@ -28,7 +28,10 @@ exports.handler = async (event, context) => {
     passObject.Item['passStatus'] = { S: 'active' };
     passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
     passObject.Item['facilityType'] = { S: facilityType };
-    passObject.Item['license'] = { S: license };
+    // Mandatory if parking.
+    if (facilityType === 'Parking') {
+      passObject.Item['license'] = { S: license };
+    }
 
     // Only let pass come through if there's enough room
     let parkObj = {
@@ -73,7 +76,7 @@ exports.handler = async (event, context) => {
       // TODO: ***SEND EMAIL TO CONFIRM
 
 
-      return sendResponse(200, res);
+      return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
     } else {
       // Not allowed for whatever reason.
       return sendResponse(400, { msg: 'Operation Failed' });
