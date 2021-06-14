@@ -13,7 +13,7 @@ exports.handler = async (event, context) => {
 
     const registrationNumber = generate(10);
 
-    const { parkName, firstName, lastName, facilityName, email, date, type, numberOfGuests, ...otherProps } = newObject;
+    const { parkName, firstName, lastName, facilityName, email, date, type, numberOfGuests, phoneNumber, facilityType, license, ...otherProps } = newObject;
 
     passObject.Item = {};
     passObject.Item['pk'] = { S: "pass::" + parkName };
@@ -25,7 +25,14 @@ exports.handler = async (event, context) => {
     passObject.Item['date'] = { S: date };
     passObject.Item['type'] = { S: type };
     passObject.Item['registrationNumber'] = { S: registrationNumber };
-    passObject.Item['numberOfGuests'] = { S: numberOfGuests };
+    passObject.Item['numberOfGuests'] = AWS.DynamoDB.Converter.input(numberOfGuests);
+    passObject.Item['passStatus'] = { S: 'active' };
+    passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
+    passObject.Item['facilityType'] = { S: facilityType };
+    // Mandatory if parking.
+    if (facilityType === 'Parking') {
+      passObject.Item['license'] = { S: license };
+    }
 
     // Only let pass come through if there's enough room
     let parkObj = {
@@ -90,7 +97,7 @@ exports.handler = async (event, context) => {
           console.log(`stdout: ${stdout}`);
       });
 
-      return sendResponse(200, res);
+      return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
     } else {
       // Not allowed for whatever reason.
       return sendResponse(400, { msg: 'Operation Failed' });
@@ -125,7 +132,7 @@ const sendResponse = function (code, data) {
     statusCode: code,
     headers: {
       'Content-Type': 'application/json',
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers" : "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "OPTIONS,POST"
     },

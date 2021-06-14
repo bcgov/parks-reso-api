@@ -23,10 +23,21 @@ exports.handler = async (event, context) => {
       }
       // Get all the passes for a specific facility
       queryObj.ExpressionAttributeValues = {};
+
+      
       queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
       queryObj.ExpressionAttributeValues[':facilityName'] = { S: event.queryStringParameters.facilityName };
       queryObj.KeyConditionExpression = 'pk =:pk';
       queryObj.FilterExpression = 'facilityName =:facilityName';
+
+      if (event.queryStringParameters.passType) {
+        queryObj.ExpressionAttributeValues[':passType'] = AWS.DynamoDB.Converter.input(event.queryStringParameters.passType);
+        queryObj.ExpressionAttributeNames = {};
+        queryObj.ExpressionAttributeNames['#theType'] = 'type';
+        queryObj.FilterExpression += ' AND #theType =:passType';
+      }
+
+      console.log('queryObj:', queryObj)
       const passData = await runQuery(queryObj);
       return sendResponse(200, passData, context);
     } else if (event.queryStringParameters.passes && event.queryStringParameters.park) {
