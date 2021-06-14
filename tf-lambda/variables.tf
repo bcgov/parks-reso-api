@@ -22,7 +22,7 @@ variable "db_name" {
   default     = "parkreso"
 }
 
-variable "jwt_secret" {
+variable "jwtSecret" {
   description = "JWT Secret"
   default     = "todo-changeme"
 }
