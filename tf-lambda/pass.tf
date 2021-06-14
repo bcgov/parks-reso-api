@@ -64,7 +64,8 @@ resource "aws_lambda_function" "writePassLambda" {
       JWT_SECRET = var.jwt_secret,
       GC_NOTIFY_API_PATH = var.gc_notify_api_path,
       GC_NOTIFY_API_KEY = var.gc_notify_api_key,
-      GC_NOTIFY_RECEIPT_TEMPLATE_ID = var.gc_notify_receipt_template_id
+      GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID = var.gc_notify_parking_receipt_template_id
+      GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID = var.gc_notify_trail_receipt_template_id
     }
   }
 

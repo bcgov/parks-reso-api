@@ -37,8 +37,13 @@ variable "gc_notify_api_key" {
   default = "ApiKey-v1 123-abc"
 }
 
-variable "gc_notify_receipt_template_id" {
-  description = "ID of the email template to use on GC Notify"
+variable "gc_notify_parking_receipt_template_id" {
+  description = "ID of the email template to use on GC Notify vehicle passess"
+  default = "123-abc-your-template-id"
+}
+
+variable "gc_notify_trail_receipt_template_id" {
+  description = "ID of the email template to use on GC Notify individual passess"
   default = "123-abc-your-template-id"
 }
 
