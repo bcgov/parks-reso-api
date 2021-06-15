@@ -23,8 +23,6 @@ exports.handler = async (event, context) => {
       }
       // Get all the passes for a specific facility
       queryObj.ExpressionAttributeValues = {};
-
-      
       queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
       queryObj.ExpressionAttributeValues[':facilityName'] = { S: event.queryStringParameters.facilityName };
       queryObj.KeyConditionExpression = 'pk =:pk';
@@ -36,6 +34,8 @@ exports.handler = async (event, context) => {
         queryObj.ExpressionAttributeNames['#theType'] = 'type';
         queryObj.FilterExpression += ' AND #theType =:passType';
       }
+
+      queryObj = paginationHandler(queryObj, event);
 
       console.log('queryObj:', queryObj)
       const passData = await runQuery(queryObj);
@@ -49,6 +49,7 @@ exports.handler = async (event, context) => {
       queryObj.ExpressionAttributeValues = {};
       queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
       queryObj.KeyConditionExpression = 'pk =:pk';
+      queryObj = paginationHandler(queryObj, event);
       const passData = await runQuery(queryObj);
       return sendResponse(200, passData, context);
     } else if (event.queryStringParameters.passId && event.queryStringParameters.email && event.queryStringParameters.park) {
@@ -61,6 +62,7 @@ exports.handler = async (event, context) => {
       queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
       queryObj.FilterExpression = 'email =:email';
       console.log("queryObj", queryObj);
+      queryObj = paginationHandler(queryObj, event);
       const passData = await runQuery(queryObj);
       console.log("passData", passData);
 
@@ -77,7 +79,7 @@ exports.handler = async (event, context) => {
 
       // Redacted passData
       const redacted = {
-        registrationNumber: passData[0].registrationNumber,
+        registrationNumber: passData.data[0].registrationNumber,
         token: token
       };
       
@@ -108,6 +110,17 @@ exports.handler = async (event, context) => {
     console.log(err);
     return sendResponse(400, err, context);
   }
+}
+
+const paginationHandler = function(queryObj, event) {
+  if (event.queryStringParameters.ExclusiveStartKeyPK && event.queryStringParameters.ExclusiveStartKeySK) {
+    // Add the next page.
+    queryObj.ExclusiveStartKey = {
+      "pk": AWS.DynamoDB.Converter.input(event.queryStringParameters.ExclusiveStartKeyPK),
+      "sk": AWS.DynamoDB.Converter.input(event.queryStringParameters.ExclusiveStartKeySK)
+    }
+  }
+  return queryObj;
 }
 
 const checkPermissions = async function (event) {
@@ -151,7 +164,10 @@ const runQuery = async function (query) {
     return AWS.DynamoDB.Converter.unmarshall(item);
   });
   console.log(unMarshalled);
-  return unMarshalled;
+  return {
+    LastEvaluatedKey: data.LastEvaluatedKey,
+    data: unMarshalled
+  }
 }
 
 const sendResponse = function (code, data, context) {
