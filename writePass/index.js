@@ -62,9 +62,71 @@ exports.handler = async (event, context) => {
     parkObj.ExpressionAttributeValues[':sk'] = { S: parkName };
     parkObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
 
+    const theDate = new Date(date);
+    var month = ('0' + (theDate.getMonth()+1)).slice(-2);
+    var day = ('0' + (theDate.getUTCDate())).slice(-2);
+    var year = theDate.getUTCFullYear();
+    const dateselector = year + '' + month + '' + day;
+
     const parkData = await runQuery(parkObj);
     console.log("ParkData:", parkData);
     if (parkData[0].visible === true) {
+
+      try {
+        // Make sure the key for the reservation exists
+        let updateReservationObject = {
+          Key: {
+            'pk': { S: 'facility::' + parkName },
+            'sk': { S: facilityName }
+          },
+          ExpressionAttributeValues: {
+            ':dateSelectorInitialValue': { M: {} }
+          },
+          ExpressionAttributeNames: {
+            '#booking': 'bookingTimes',
+            '#dateselector': dateselector
+          },
+          UpdateExpression: "SET #booking.reservations.#dateselector = :dateSelectorInitialValue",
+          ConditionExpression: 'attribute_not_exists(#booking.reservations.#dateselector)',
+          ReturnValues: "ALL_NEW",
+          TableName: process.env.TABLE_NAME
+        };
+        console.log("updateReservationObject:", updateReservationObject);
+        const updateReservationObjectRes = await dynamodb.updateItem(updateReservationObject).promise();
+        console.log("updateReservationObjectRes:", updateReservationObjectRes);
+      } catch (e) {
+        // Already there.
+        console.log("dateSelectorInitialValue exists", e);
+      }
+
+      try {
+        // Add the type into the map
+        let addingProperty = {
+          Key: {
+            'pk': { S: 'facility::' + parkName },
+            'sk': { S: facilityName }
+          },
+          ExpressionAttributeValues: {
+            ':dateSelectorInitialValue': { N: '0' }
+          },
+          ExpressionAttributeNames: {
+            '#booking': 'bookingTimes',
+            '#dateselector': dateselector,
+            "#type": type
+          },
+          UpdateExpression: "SET #booking.reservations.#dateselector.#type = :dateSelectorInitialValue",
+          ConditionExpression: 'attribute_not_exists(#booking.reservations.#dateselector.#type)',
+          ReturnValues: "ALL_NEW",
+          TableName: process.env.TABLE_NAME
+        };
+        console.log("addingProperty:", addingProperty);
+        const addingPropertyRes = await dynamodb.updateItem(addingProperty).promise();
+        console.log("addingPropertyRes:", AWS.DynamoDB.Converter.unmarshall(addingPropertyRes));
+      } catch (e) {
+        // Already there.
+        console.log("Type Prop exists", e);
+      }
+
       let updateFacility = {
         Key: {
           'pk': { S: 'facility::' + parkName },
@@ -72,15 +134,16 @@ exports.handler = async (event, context) => {
         },
         ExpressionAttributeValues: {
           ":inc": { N:"1" },
+          ':start': AWS.DynamoDB.Converter.input(0),
         },
         ExpressionAttributeNames: {
           '#booking': 'bookingTimes',
           '#type': type,
-          '#currentCount': 'currentCount',
+          '#dateselector': dateselector,
           '#maximum': 'max'
         },
-        UpdateExpression: "SET #booking.#type.#currentCount = #booking.#type.#currentCount + :inc",
-        ConditionExpression: "#booking.#type.#currentCount < #booking.#type.#maximum",
+        UpdateExpression: "SET #booking.reservations.#dateselector.#type = if_not_exists(#booking.reservations.#dateselector.#type, :start) + :inc",
+        ConditionExpression: "#booking.#type.#maximum > #booking.reservations.#dateselector.#type",
         ReturnValues: "ALL_NEW",
         TableName: process.env.TABLE_NAME
       };
