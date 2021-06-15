@@ -184,9 +184,6 @@ exports.handler = async (event, context) => {
   }
 }
 
-const sendEmail = async function () {
-}
-
 const runQuery = async function (query) {
   console.log("query:", query);
   const data = await dynamodb.query(query).promise();
