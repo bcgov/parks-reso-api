@@ -27,6 +27,31 @@ variable "jwtSecret" {
   default     = "todo-changeme"
 }
 
+variable "gc_notify_api_path" {
+  description = "Path to GC Notify email API endpoint"
+  default = "https://cgnotify.com/path/to/email/endpoint"
+}
+
+variable "gc_notify_api_key" {
+  description = "Authorization key for GC Notify"
+  default = "ApiKey-v1 123-abc"
+}
+
+variable "gc_notify_parking_receipt_template_id" {
+  description = "ID of the email template to use on GC Notify vehicle passess"
+  default = "123-abc-your-template-id"
+}
+
+variable "gc_notify_trail_receipt_template_id" {
+  description = "ID of the email template to use on GC Notify individual passess"
+  default = "123-abc-your-template-id"
+}
+
+variable "gc_notify_cancel_template_id" {
+  description = "ID of the email template to use on GC Notify"
+  default = "123-abc-your-template-id"
+}
+
 variable "common_tags" {
   description = "Common tags for created resources"
   default = {

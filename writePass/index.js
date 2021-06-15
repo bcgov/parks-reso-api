@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const axios = require('axios');
 const dynamodb = new AWS.DynamoDB();
 
 exports.handler = async (event, context) => {
@@ -28,9 +29,26 @@ exports.handler = async (event, context) => {
     passObject.Item['passStatus'] = { S: 'active' };
     passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
     passObject.Item['facilityType'] = { S: facilityType };
+
+    // TODO: populate this cancellation link with user data and make it environment dependant
+    // currently links to public dev
+    const cancellationLink = 'https://d2t1f5f2ci2kiu.cloudfront.net/pass-lookup';
+    let gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
+    let personalisation =  {
+      'firstName' : firstName,
+      'lastName' : lastName,
+      'date' : date,
+      'facilityName' : facilityName,
+      'numberOfGuests': numberOfGuests.toString(),
+      'registrationNumber' : registrationNumber.toString(),
+      'cancellationLink': cancellationLink
+    };
+
     // Mandatory if parking.
     if (facilityType === 'Parking') {
       passObject.Item['license'] = { S: license };
+      gcNotifyTemplate = process.env.GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID;
+      personalisation["license"] = license;
     }
 
     // Only let pass come through if there's enough room
@@ -136,10 +154,25 @@ exports.handler = async (event, context) => {
       const res = await dynamodb.putItem(passObject).promise();
       console.log("res:", res);
 
-      // TODO: ***SEND EMAIL TO CONFIRM
+      const emailRes = await axios({
+        method: 'post',
+        url: process.env.GC_NOTIFY_API_PATH,
+        headers: {
+          'Authorization': process.env.GC_NOTIFY_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        data: {
+          'email_address': email,
+          'template_id': gcNotifyTemplate,
+          'personalisation': personalisation
+        }
+      });
 
-
-      return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
+      if (emailRes.status === 201) {
+        return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
+      } else {
+        return sendResponse(400, { msg: 'Email Failed to Send' });
+      }
     } else {
       // Not allowed for whatever reason.
       return sendResponse(400, { msg: 'Operation Failed' });
