@@ -2,6 +2,14 @@ variable "target_env" {
   description = "AWS workload account env (e.g. dev, test, prod, sandbox, unclass)"
 }
 
+variable "dev_public_frontnd" {
+  description = "full url to the base of the public dev environmnet front end"
+}
+
+variable "test_public_frontnd" {
+  description = "full url to the base of the public test environmnet front end"
+}
+
 variable "target_aws_account_id" {
   description = "AWS workload account id"
 }
@@ -50,6 +58,11 @@ variable "gc_notify_trail_receipt_template_id" {
 variable "gc_notify_cancel_template_id" {
   description = "ID of the email template to use on GC Notify"
   default = "123-abc-your-template-id"
+}
+
+variable "pass_cancellation_route" {
+  description = "route to public frontend to cancel a pass"
+  default = "/pass-lookup"
 }
 
 variable "common_tags" {

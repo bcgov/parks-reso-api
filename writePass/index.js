@@ -7,6 +7,8 @@ exports.handler = async (event, context) => {
     TableName: process.env.TABLE_NAME
   };
 
+  const env = process.env.TARGET_ENV
+
   try {
     console.log(event.body);
     let newObject = JSON.parse(event.body);
@@ -30,9 +32,14 @@ exports.handler = async (event, context) => {
     passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
     passObject.Item['facilityType'] = { S: facilityType };
 
-    // TODO: populate this cancellation link with user data and make it environment dependant
-    // currently links to public dev
-    const cancellationLink = 'https://d2t1f5f2ci2kiu.cloudfront.net/pass-lookup';
+    let cancellationLink = '';
+    if (env === 'prod') {
+      // TODO: prod environment
+    } else if (env === 'test') {
+      cancellationLink = process.env.TEST_PUBLIC_FRONTEND + process.env.PASS_CANCELLATION_ROUTE;
+    } else {
+      cancellationLink = process.env.DEV_PUBLIC_FRONTEND + process.env.PASS_CANCELLATION_ROUTE;
+    }
     let gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
     let personalisation =  {
       'firstName' : firstName,
@@ -154,24 +161,26 @@ exports.handler = async (event, context) => {
       const res = await dynamodb.putItem(passObject).promise();
       console.log("res:", res);
 
-      const emailRes = await axios({
-        method: 'post',
-        url: process.env.GC_NOTIFY_API_PATH,
-        headers: {
-          'Authorization': process.env.GC_NOTIFY_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        data: {
-          'email_address': email,
-          'template_id': gcNotifyTemplate,
-          'personalisation': personalisation
-        }
-      });
+      try {
+        const emailRes = await axios({
+          method: 'post',
+          url: process.env.GC_NOTIFY_API_PATH,
+          headers: {
+            'Authorization': process.env.GC_NOTIFY_API_KEY,
+            'Content-Type': 'application/json'
+          },
+          data: {
+            'email_address': email,
+            'template_id': gcNotifyTemplate,
+            'personalisation': personalisation
+          }
+        });
 
-      if (emailRes.status === 201) {
         return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
-      } else {
-        return sendResponse(400, { msg: 'Email Failed to Send' });
+      } catch  (err) {
+        let errRes = AWS.DynamoDB.Converter.unmarshall(passObject.Item);
+        errRes["err"] = "Email Failed to Send";
+        return sendResponse(200, errRes);
       }
     } else {
       // Not allowed for whatever reason.

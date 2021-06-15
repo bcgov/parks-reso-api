@@ -60,12 +60,16 @@ resource "aws_lambda_function" "writePassLambda" {
 
    environment {
     variables = {
+      TARGET_ENV = var.target_env,
       TABLE_NAME = var.db_name,
       JWT_SECRET = var.jwtSecret,
+      DEV_PUBLIC_FRONTEND = var.dev_public_frontnd,
+      TEST_PUBLIC_FRONTEND = var.test_public_frontnd,
       GC_NOTIFY_API_PATH = var.gc_notify_api_path,
       GC_NOTIFY_API_KEY = var.gc_notify_api_key,
       GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID = var.gc_notify_parking_receipt_template_id
-      GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID = var.gc_notify_trail_receipt_template_id
+      GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID = var.gc_notify_trail_receipt_template_id,
+      PASS_CANCELLATION_ROUTE = var.pass_cancellation_route
     }
   }
 
