@@ -35,7 +35,10 @@ resource "aws_lambda_function" "readPassLambda" {
    environment {
     variables = {
       TABLE_NAME = var.db_name,
-      JWT_SECRET = var.jwtSecret
+      JWT_SECRET = var.jwtSecret,
+      GC_NOTIFY_API_PATH = var.gc_notify_api_path,
+      GC_NOTIFY_API_KEY = var.gc_notify_api_key,
+      GC_NOTIFY_CANCEL_TEMPLATE_ID = var.gc_notify_cancel_template_id
     }
   }
 
@@ -58,7 +61,13 @@ resource "aws_lambda_function" "writePassLambda" {
    environment {
     variables = {
       TABLE_NAME = var.db_name,
-      JWT_SECRET = var.jwtSecret
+      JWT_SECRET = var.jwtSecret,
+      PUBLIC_FRONTEND = var.public_frontend,
+      GC_NOTIFY_API_PATH = var.gc_notify_api_path,
+      GC_NOTIFY_API_KEY = var.gc_notify_api_key,
+      GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID = var.gc_notify_parking_receipt_template_id
+      GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID = var.gc_notify_trail_receipt_template_id,
+      PASS_CANCELLATION_ROUTE = var.pass_cancellation_route
     }
   }
 
