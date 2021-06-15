@@ -2,12 +2,8 @@ variable "target_env" {
   description = "AWS workload account env (e.g. dev, test, prod, sandbox, unclass)"
 }
 
-variable "dev_public_frontnd" {
-  description = "full url to the base of the public dev environmnet front end"
-}
-
-variable "test_public_frontnd" {
-  description = "full url to the base of the public test environmnet front end"
+variable "public_frontend" {
+  description = "full url to the base of the public front end"
 }
 
 variable "target_aws_account_id" {

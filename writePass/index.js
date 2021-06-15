@@ -6,9 +6,7 @@ exports.handler = async (event, context) => {
   let passObject = {
     TableName: process.env.TABLE_NAME
   };
-
-  const env = process.env.TARGET_ENV
-
+  
   try {
     console.log(event.body);
     let newObject = JSON.parse(event.body);
@@ -32,14 +30,8 @@ exports.handler = async (event, context) => {
     passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
     passObject.Item['facilityType'] = { S: facilityType };
 
-    let cancellationLink = '';
-    if (env === 'prod') {
-      // TODO: prod environment
-    } else if (env === 'test') {
-      cancellationLink = process.env.TEST_PUBLIC_FRONTEND + process.env.PASS_CANCELLATION_ROUTE;
-    } else {
-      cancellationLink = process.env.DEV_PUBLIC_FRONTEND + process.env.PASS_CANCELLATION_ROUTE;
-    }
+    let cancellationLink = process.env.PUBLIC_FRONTEND + process.env.PASS_CANCELLATION_ROUTE;
+
     let gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
     let personalisation =  {
       'firstName' : firstName,
