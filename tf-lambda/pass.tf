@@ -36,9 +36,11 @@ resource "aws_lambda_function" "readPassLambda" {
     variables = {
       TABLE_NAME = var.db_name,
       JWT_SECRET = var.jwtSecret,
+      PUBLIC_FRONTEND = var.public_frontend,
       GC_NOTIFY_API_PATH = var.gc_notify_api_path,
       GC_NOTIFY_API_KEY = var.gc_notify_api_key,
-      GC_NOTIFY_CANCEL_TEMPLATE_ID = var.gc_notify_cancel_template_id
+      GC_NOTIFY_CANCEL_TEMPLATE_ID = var.gc_notify_cancel_template_id,
+      PASS_CANCELLATION_ROUTE = var.pass_cancellation_route
     }
   }
 

@@ -2,6 +2,7 @@ const AWS = require('aws-sdk');
 const dynamodb = new AWS.DynamoDB();
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
+const axios = require('axios');
 const SSO_ISSUER = process.env.SSO_ISSUER || 'https://oidc.gov.bc.ca/auth/realms/3l5nw6dk';
 const SSO_JWKSURI = 'https://oidc.gov.bc.ca/auth/realms/3l5nw6dk/protocol/openid-connect/certs';
 
@@ -66,9 +67,7 @@ exports.handler = async (event, context) => {
       const passData = await runQuery(queryObj);
       console.log("passData", passData);
 
-      //
-      //  REMOVE THIS BLOCK
-      //
+      // Build cancellation email payload
       const claims = {
         iss: 'bcparks-lambda',
         sub: 'readPass',
@@ -77,19 +76,42 @@ exports.handler = async (event, context) => {
       }
       const token = jwt.sign(claims, process.env.JWT_SECRET, { expiresIn: '15m' });
 
-      // Redacted passData
-      const redacted = {
-        registrationNumber: passData.data[0].registrationNumber,
-        token: token
+      const cancellationLink = process.env.PUBLIC_FRONTEND
+      + process.env.PASS_CANCELLATION_ROUTE
+      + "?passId=" + passData.data[0].registrationNumber
+      + "&email=" + passData.data[0].email
+      + "&code=" + token;
+
+      const encodedCancellationLink = encodeURI(cancellationLink);
+
+      let personalisation =  {
+        'registrationNumber': passData.data[0].registrationNumber.toString(),
+        'link': encodedCancellationLink
       };
-      
-      // TODO: ********SEND EMAIL INSTEAD
+
+      // Send email
       // Public page after 200OK should show 'check your email'
-    
+      try {
+        const emailRes = await axios({
+          method: 'post',
+          url: process.env.GC_NOTIFY_API_PATH,
+          headers: {
+            'Authorization': process.env.GC_NOTIFY_API_KEY,
+            'Content-Type': 'application/json'
+          },
+          data: {
+            'email_address': passData.data[0].email,
+            'template_id': process.env.GC_NOTIFY_CANCEL_TEMPLATE_ID,
+            'personalisation': personalisation
+          }
+        });
 
-
-
-      return sendResponse(200, redacted, context);
+        return sendResponse(200, personalisation);
+      } catch  (err) {
+        let errRes = personalisation;
+        errRes["err"] = "Email Failed to Send";
+        return sendResponse(200, errRes);
+      }
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
       if (await checkPermissions(event) === false) {
         return sendResponse(403, { msg: 'Unauthorized!'});

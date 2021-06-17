@@ -6,7 +6,7 @@ exports.handler = async (event, context) => {
   let passObject = {
     TableName: process.env.TABLE_NAME
   };
-  
+
   try {
     console.log(event.body);
     let newObject = JSON.parse(event.body);
@@ -30,9 +30,16 @@ exports.handler = async (event, context) => {
     passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
     passObject.Item['facilityType'] = { S: facilityType };
 
-    let cancellationLink = process.env.PUBLIC_FRONTEND + process.env.PASS_CANCELLATION_ROUTE;
+    const cancellationLink = process.env.PUBLIC_FRONTEND
+      + process.env.PASS_CANCELLATION_ROUTE
+      + "?passId=" + registrationNumber
+      + "&email=" + email
+      + "&park=" + parkName;
+
+    const encodedCancellationLink = encodeURI(cancellationLink);
 
     let gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
+
     let personalisation =  {
       'firstName' : firstName,
       'lastName' : lastName,
@@ -40,7 +47,7 @@ exports.handler = async (event, context) => {
       'facilityName' : facilityName,
       'numberOfGuests': numberOfGuests.toString(),
       'registrationNumber' : registrationNumber.toString(),
-      'cancellationLink': cancellationLink
+      'cancellationLink': encodedCancellationLink
     };
 
     // Mandatory if parking.
