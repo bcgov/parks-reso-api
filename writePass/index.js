@@ -13,7 +13,7 @@ exports.handler = async (event, context) => {
 
     const registrationNumber = generate(10);
 
-    const { parkName, firstName, lastName, facilityName, email, date, type, numberOfGuests, phoneNumber, facilityType, license, ...otherProps } = newObject;
+    let { parkName, firstName, lastName, facilityName, email, date, type, numberOfGuests, phoneNumber, facilityType, license, ...otherProps } = newObject;
 
     // Enforce maximum limit per pass
     if (facilityType === 'Trail' && numberOfGuests > 4) {
