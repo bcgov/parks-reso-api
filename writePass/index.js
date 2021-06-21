@@ -13,7 +13,16 @@ exports.handler = async (event, context) => {
 
     const registrationNumber = generate(10);
 
-    const { parkName, firstName, lastName, facilityName, email, date, type, numberOfGuests, phoneNumber, facilityType, license, ...otherProps } = newObject;
+    let { parkName, firstName, lastName, facilityName, email, date, type, numberOfGuests, phoneNumber, facilityType, license, ...otherProps } = newObject;
+
+    // Enforce maximum limit per pass
+    if (facilityType === 'Trail' && numberOfGuests > 4) {
+      return sendResponse(400, { msg: 'Operation Failed' });
+    }
+
+    if (facilityType === 'Parking') {
+      numberOfGuests = 1;
+    }
 
     passObject.Item = {};
     passObject.Item['pk'] = { S: "pass::" + parkName };
@@ -138,7 +147,7 @@ exports.handler = async (event, context) => {
           'sk': { S: facilityName }
         },
         ExpressionAttributeValues: {
-          ":inc": { N:"1" },
+          ":inc": AWS.DynamoDB.Converter.input(numberOfGuests),
           ':start': AWS.DynamoDB.Converter.input(0),
         },
         ExpressionAttributeNames: {

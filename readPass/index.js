@@ -31,11 +31,41 @@ exports.handler = async (event, context) => {
 
       if (event.queryStringParameters.passType) {
         queryObj.ExpressionAttributeValues[':passType'] = AWS.DynamoDB.Converter.input(event.queryStringParameters.passType);
-        queryObj.ExpressionAttributeNames = {};
+        queryObj = checkAddExpressionAttributeNames(queryObj);
         queryObj.ExpressionAttributeNames['#theType'] = 'type';
         queryObj.FilterExpression += ' AND #theType =:passType';
       }
 
+      // Filter Date
+      if (event.queryStringParameters.date) {
+        const theDate = new Date(event.queryStringParameters.date);
+        var month = ('0' + (theDate.getMonth()+1)).slice(-2);
+        var day = ('0' + (theDate.getUTCDate())).slice(-2);
+        var year = theDate.getUTCFullYear();
+        const dateselector = year + '-' + month + '-' + day;
+        queryObj = checkAddExpressionAttributeNames(queryObj);
+        queryObj.ExpressionAttributeNames['#theDate'] = 'date';
+        queryObj.ExpressionAttributeValues[':theDate'] = AWS.DynamoDB.Converter.input(dateselector);
+        queryObj.FilterExpression += ' AND contains(#theDate, :theDate)';
+      }
+      // Filter reservation number
+      if (event.queryStringParameters.reservationNumber) {
+        queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.reservationNumber };
+        queryObj.KeyConditionExpression += ' AND sk =:sk';
+      }
+      // Filter first/last
+      if (event.queryStringParameters.firstName) {
+        queryObj = checkAddExpressionAttributeNames(queryObj);
+        queryObj.ExpressionAttributeNames['#firstName'] = 'firstName';
+        queryObj.ExpressionAttributeValues[':firstName'] = AWS.DynamoDB.Converter.input(event.queryStringParameters.firstName);
+        queryObj.FilterExpression += ' AND #firstName =:firstName';
+      }
+      if (event.queryStringParameters.lastName) {
+        queryObj = checkAddExpressionAttributeNames(queryObj);
+        queryObj.ExpressionAttributeNames['#lastName'] = 'lastName';
+        queryObj.ExpressionAttributeValues[':lastName'] = AWS.DynamoDB.Converter.input(event.queryStringParameters.lastName);
+        queryObj.FilterExpression += ' AND #lastName =:lastName';
+      }
       queryObj = paginationHandler(queryObj, event);
 
       console.log('queryObj:', queryObj)
@@ -136,6 +166,13 @@ exports.handler = async (event, context) => {
     console.log(err);
     return sendResponse(400, err, context);
   }
+}
+
+const checkAddExpressionAttributeNames = function(queryObj) {
+  if (!queryObj.ExpressionAttributeNames) {
+    queryObj.ExpressionAttributeNames = {};
+  }
+  return queryObj;
 }
 
 const paginationHandler = function(queryObj, event) {
