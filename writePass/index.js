@@ -161,7 +161,7 @@ exports.handler = async (event, context) => {
       console.log("res:", res);
 
       try {
-        const emailRes = await axios({
+        await axios({
           method: 'post',
           url: process.env.GC_NOTIFY_API_PATH,
           headers: {

@@ -93,7 +93,7 @@ exports.handler = async (event, context) => {
         // Send email
         // Public page after 200OK should show 'check your email'
         try {
-          const emailRes = await axios({
+          await axios({
             method: 'post',
             url: process.env.GC_NOTIFY_API_PATH,
             headers: {
