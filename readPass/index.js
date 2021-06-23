@@ -110,7 +110,7 @@ exports.handler = async (event, context) => {
         const cancellationLink = process.env.PUBLIC_FRONTEND
           + process.env.PASS_CANCELLATION_ROUTE
           + "?passId=" + passData.data[0].registrationNumber
-          + "&email=" + passData.data[0].email
+          + "&park=" + event.queryStringParameters.park
           + "&code=" + token;
 
         const encodedCancellationLink = encodeURI(cancellationLink);
