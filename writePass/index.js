@@ -35,7 +35,7 @@ exports.handler = async (event, context) => {
     passObject.Item['type'] = { S: type };
     passObject.Item['registrationNumber'] = { S: registrationNumber };
     passObject.Item['numberOfGuests'] = AWS.DynamoDB.Converter.input(numberOfGuests);
-    passObject.Item['passStatus'] = { S: 'active' };
+    passObject.Item['passStatus'] = { S: 'reserved' };
     passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
     passObject.Item['facilityType'] = { S: facilityType };
 
