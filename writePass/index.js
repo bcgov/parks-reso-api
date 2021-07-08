@@ -77,7 +77,7 @@ exports.handler = async (event, context) => {
     parkObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
 
     const theDate = new Date(date);
-    var month = ('0' + (theDate.getMonth())).slice(-2);
+    var month = ('0' + (theDate.getMonth()+1)).slice(-2);
     var day = ('0' + (theDate.getUTCDate())).slice(-2);
     var year = theDate.getUTCFullYear();
     const dateselector = year + '' + month + '' + day;
@@ -97,11 +97,10 @@ exports.handler = async (event, context) => {
             ':dateSelectorInitialValue': { M: {} }
           },
           ExpressionAttributeNames: {
-            '#booking': 'bookingTimes',
             '#dateselector': dateselector
           },
-          UpdateExpression: "SET #booking.reservations.#dateselector = :dateSelectorInitialValue",
-          ConditionExpression: 'attribute_not_exists(#booking.reservations.#dateselector)',
+          UpdateExpression: "SET reservations.#dateselector = :dateSelectorInitialValue",
+          ConditionExpression: 'attribute_not_exists(reservations.#dateselector)',
           ReturnValues: "ALL_NEW",
           TableName: process.env.TABLE_NAME
         };
@@ -124,12 +123,11 @@ exports.handler = async (event, context) => {
             ':dateSelectorInitialValue': { N: '0' }
           },
           ExpressionAttributeNames: {
-            '#booking': 'bookingTimes',
             '#dateselector': dateselector,
             "#type": type
           },
-          UpdateExpression: "SET #booking.reservations.#dateselector.#type = :dateSelectorInitialValue",
-          ConditionExpression: 'attribute_not_exists(#booking.reservations.#dateselector.#type)',
+          UpdateExpression: "SET reservations.#dateselector.#type = :dateSelectorInitialValue",
+          ConditionExpression: 'attribute_not_exists(reservations.#dateselector.#type)',
           ReturnValues: "ALL_NEW",
           TableName: process.env.TABLE_NAME
         };
@@ -156,8 +154,8 @@ exports.handler = async (event, context) => {
           '#dateselector': dateselector,
           '#maximum': 'max'
         },
-        UpdateExpression: "SET #booking.reservations.#dateselector.#type = if_not_exists(#booking.reservations.#dateselector.#type, :start) + :inc",
-        ConditionExpression: "#booking.#type.#maximum > #booking.reservations.#dateselector.#type",
+        UpdateExpression: "SET reservations.#dateselector.#type = if_not_exists(reservations.#dateselector.#type, :start) + :inc",
+        ConditionExpression: "#booking.#type.#maximum > reservations.#dateselector.#type",
         ReturnValues: "ALL_NEW",
         TableName: process.env.TABLE_NAME
       };
