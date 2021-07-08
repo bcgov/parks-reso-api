@@ -17,7 +17,10 @@ exports.handler = async (event, context) => {
     console.log(event.body);
     let newObject = JSON.parse(event.body);
 
-    const { parkName, bookingTimes, name, status, type, visible, ...otherProps } = newObject;
+    let { parkName, bookingTimes, name, status, type, visible, ...otherProps } = newObject;
+
+    // Add reservations property to bookingtimes.
+    bookingTimes['reservations'] = {};
 
     facilityObject.Item = {};
     facilityObject.Item['pk'] = { S: "facility::" + parkName };
