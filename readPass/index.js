@@ -83,7 +83,9 @@ exports.handler = async (event, context) => {
       queryObj = paginationHandler(queryObj, event);
       const passData = await runQuery(queryObj);
       return sendResponse(200, passData, context);
-    } else if (event.queryStringParameters.passId && event.queryStringParameters.email && event.queryStringParameters.park) {
+    } else if (event.queryStringParameters.passId
+               && event.queryStringParameters.email
+               && event.queryStringParameters.park) {
       console.log("Get the specific pass, this person is NOT authenticated");
       // Get the specific pass, this person is NOT authenticated
       queryObj.ExpressionAttributeValues = {};
@@ -98,12 +100,23 @@ exports.handler = async (event, context) => {
       console.log("passData", passData);
 
       if (passData && passData.data && passData.data.length !== 0) {
+
+        const theDate = new Date(date);
+        var month = ('0' + (theDate.getMonth()+1)).slice(-2);
+        var day = ('0' + (theDate.getUTCDate())).slice(-2);
+        var year = theDate.getUTCFullYear();
+        const dateselector = year + '' + month + '' + day;
+
         // Build cancellation email payload
         const claims = {
           iss: 'bcparks-lambda',
           sub: 'readPass',
           passId: event.queryStringParameters.passId,
-          parkName: event.queryStringParameters.park
+          facilityName: passData.data[0].facilityName,
+          numberOfGuests: passData.data[0].numberOfGuests,
+          dateselector: passData.data[0].dateselector,
+          type: passData.data[0].type,
+          parkName: passData.data[0].park
         }
         const token = jwt.sign(claims, process.env.JWT_SECRET, { expiresIn: '15m' });
 
