@@ -101,7 +101,7 @@ exports.handler = async (event, context) => {
 
       if (passData && passData.data && passData.data.length !== 0) {
 
-        const theDate = new Date(passData.data[0]);
+        const theDate = new Date(passData.data[0].date);
         var month = ('0' + (theDate.getMonth()+1)).slice(-2);
         var day = ('0' + (theDate.getUTCDate())).slice(-2);
         var year = theDate.getUTCFullYear();
