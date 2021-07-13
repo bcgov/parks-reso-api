@@ -114,9 +114,9 @@ exports.handler = async (event, context) => {
           passId: event.queryStringParameters.passId,
           facilityName: passData.data[0].facilityName,
           numberOfGuests: passData.data[0].numberOfGuests,
-          dateselector: passData.data[0].dateselector,
+          dateselector: dateselector,
           type: passData.data[0].type,
-          parkName: passData.data[0].park
+          parkName: passData.data[0].pk.split('::')[1]
         }
         const token = jwt.sign(claims, process.env.JWT_SECRET, { expiresIn: '15m' });
 
