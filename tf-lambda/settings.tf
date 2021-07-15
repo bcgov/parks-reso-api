@@ -97,7 +97,7 @@ resource "aws_lambda_permission" "readConfigPermission" {
    action        = "lambda:InvokeFunction"
    function_name = aws_lambda_function.readConfigLambda.function_name
    principal     = "apigateway.amazonaws.com"
-   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/*/*"
+   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/GET/config"
 }
 
 resource "aws_lambda_permission" "writeConfigPermission" {
@@ -105,5 +105,5 @@ resource "aws_lambda_permission" "writeConfigPermission" {
    action        = "lambda:InvokeFunction"
    function_name = aws_lambda_function.writeConfigLambda.function_name
    principal     = "apigateway.amazonaws.com"
-   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/*/*"
+   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/POST/config"
 }

@@ -2,6 +2,7 @@ terraform {
   required_providers {
     aws = {
       source = "hashicorp/aws"
+      version = "3.46.0"
     }
   }
 }
@@ -135,7 +136,7 @@ resource "aws_lambda_permission" "readPermission" {
    action        = "lambda:InvokeFunction"
    function_name = aws_lambda_function.readParkLambda.function_name
    principal     = "apigateway.amazonaws.com"
-   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/*/*"
+   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/GET/park"
 }
 
 resource "aws_lambda_permission" "writePermission" {
@@ -143,7 +144,7 @@ resource "aws_lambda_permission" "writePermission" {
    action        = "lambda:InvokeFunction"
    function_name = aws_lambda_function.writeParkLambda.function_name
    principal     = "apigateway.amazonaws.com"
-   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/*/*"
+   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/POST/park"
 }
 
 // Tells us what our api endpoint is in the CLI

@@ -105,7 +105,7 @@ resource "aws_lambda_permission" "readFacilityPermission" {
    action        = "lambda:InvokeFunction"
    function_name = aws_lambda_function.readFacilityLambda.function_name
    principal     = "apigateway.amazonaws.com"
-   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/*/*"
+   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/GET/facility"
 }
 
 resource "aws_lambda_permission" "writeFacilityPermission" {
@@ -113,5 +113,5 @@ resource "aws_lambda_permission" "writeFacilityPermission" {
    action        = "lambda:InvokeFunction"
    function_name = aws_lambda_function.writeFacilityLambda.function_name
    principal     = "apigateway.amazonaws.com"
-   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/*/*"
+   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/POST/facility"
 }
