@@ -1,0 +1,63 @@
+name: Push
+
+on:
+  push:
+    branches: [main]
+
+env:
+  TF_VERSION: 0.14.7
+  TG_VERSION: 0.26.7
+  TG_SRC_PATH: terraform
+  TFC_WORKSPACE: dev
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-20.04
+    environment: dev
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Archive build
+        if: success()
+        uses: actions/upload-artifact@v1
+        with:
+          name: deploy_dist
+          path: dist
+
+      - name: setup terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TFC_TEAM_TOKEN }}
+
+      - uses: peter-murray/terragrunt-github-action@v1.0.0
+        with:
+          terragrunt_version: ${{ env.TG_VERSION }}
+
+      - name: Terragrunt Apply
+        working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
+        env:
+          app_version: ${{ github.run_number }}
+          s3_bucket: ${{ secrets.AWS_S3_BUCKET }}
+        run: terragrunt apply-all --terragrunt-non-interactive
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 900
+          role-session-name: parks-reso-admin-dev-gh-action
+          role-skip-session-tagging: true
+
+      - name: Deploy to DEV S3
+        env:
+          s3_bucket: "${{ secrets.AWS_S3_BUCKET }}-dev"
+          dir_name: ${{github.run_number}}
+        run: |
+          aws s3 sync dist/ s3://$s3_bucket/$dir_name/
