@@ -41,7 +41,6 @@ jobs:
         working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
         env:
           app_version: ${{ github.run_number }}
-          s3_bucket: ${{ secrets.AWS_S3_BUCKET }}
         run: terragrunt apply-all --terragrunt-non-interactive
 
       - name: Configure AWS credentials
@@ -54,10 +53,3 @@ jobs:
           role-duration-seconds: 900
           role-session-name: parks-reso-admin-dev-gh-action
           role-skip-session-tagging: true
-
-      - name: Deploy to DEV S3
-        env:
-          s3_bucket: "${{ secrets.AWS_S3_BUCKET }}-dev"
-          dir_name: ${{github.run_number}}
-        run: |
-          aws s3 sync dist/ s3://$s3_bucket/$dir_name/

@@ -8,7 +8,6 @@ include {
 
 locals {
   app_version = get_env("app_version", "")
-  s3_bucket = get_env("s3_bucket", "")
 }
 
 generate "prod_tfvars" {
@@ -17,6 +16,5 @@ generate "prod_tfvars" {
   disable_signature = true
   contents          = <<-EOF
 app_version = "${local.app_version}"
-s3_bucket = "${local.s3_bucket}"
 EOF
 }

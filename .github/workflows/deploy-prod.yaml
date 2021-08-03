@@ -25,13 +25,6 @@ jobs:
         run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/tags/})"
         id: extract_branch
 
-      - name: Archive build
-        if: success()
-        uses: actions/upload-artifact@v1
-        with:
-          name: deploy_dist
-          path: dist/parks-reso-api
-
       - uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ env.TF_VERSION }}
@@ -47,10 +40,3 @@ jobs:
           app_version: ${{ steps.extract_branch.outputs.tag }}
           s3_bucket: ${{ secrets.AWS_S3_BUCKET }}
         run: terragrunt apply-all --terragrunt-non-interactive
-
-      - name: Deploy to DEV S3
-        env:
-          s3_bucket: "${{ secrets.AWS_S3_BUCKET }}-prod"
-          dir_name: ${{ steps.extract_branch.outputs.tag }}
-        run: |
-          aws s3 sync dist/parks-reso-api/ s3://$s3_bucket/$dir_name/
