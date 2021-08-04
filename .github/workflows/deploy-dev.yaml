@@ -20,13 +20,6 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v2
 
-      - name: Archive build
-        if: success()
-        uses: actions/upload-artifact@v1
-        with:
-          name: deploy_dist
-          path: dist
-
       - name: setup terraform
         uses: hashicorp/setup-terraform@v1
         with:

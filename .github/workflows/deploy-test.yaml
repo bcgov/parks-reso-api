@@ -38,5 +38,4 @@ jobs:
         working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
         env:
           app_version: ${{ steps.extract_branch.outputs.tag }}
-          s3_bucket: ${{ secrets.AWS_S3_BUCKET }}
         run: terragrunt apply-all --terragrunt-non-interactive
