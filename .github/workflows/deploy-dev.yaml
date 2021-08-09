@@ -34,8 +34,8 @@ jobs:
         working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
         env:
           app_version: ${{ github.run_number }}
-          public_frontend: ${{ secrets.PUBLIC_FRONTEND_URL }}
-          deployEnvironment: 'dev'
+          public_frontend: ${{ secrets.PUBLIC_FRONTEND }}
+          deploy_environment: ${{ secrets.DEPLOY_ENVIRONMENT }}
           gc_notify_api_path: ${{ secrets.GC_NOTIFY_API_PATH }}
           gc_notify_api_key: ${{ secrets.GC_NOTIFY_API_KEY }}
           gc_notify_parking_receipt_template_id: ${{ secrets.PARKING_TEMPLATE_ID }}
