@@ -31,6 +31,7 @@ jobs:
           terragrunt_version: ${{ env.TG_VERSION }}
 
       - name: Terragrunt Apply
+        working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
         env:
           app_version: ${{ github.run_number }}
         run: terragrunt apply-all --terragrunt-non-interactive
