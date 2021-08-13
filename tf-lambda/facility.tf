@@ -16,7 +16,7 @@ data "archive_file" "writeFacilityZip" {
 resource "aws_lambda_function" "readFacilityLambda" {
    function_name = "readFacility"
    filename = "readFacility.zip"
-   source_code_hash = "data.archive_file.readFacilityZip.output_base64sha256"
+   source_code_hash = data.archive_file.readFacilityZip.output_base64sha256
 
 #    This method is for deploying things outside of TF.
 #    s3_bucket = var.s3_bucket
@@ -38,7 +38,7 @@ resource "aws_lambda_function" "readFacilityLambda" {
 resource "aws_lambda_function" "writeFacilityLambda" {
    function_name = "writeFacility"
    filename = "writeFacility.zip"
-   source_code_hash = "data.archive_file.writeFacilityZip.output_base64sha256"
+   source_code_hash = data.archive_file.writeFacilityZip.output_base64sha256
 
 #    This method is for deploying things outside of TF.
 #    s3_bucket = var.s3_bucket
