@@ -54,3 +54,11 @@ variable "pass_cancellation_route" {
 variable "target_env" {
   description = "target environment"
 }
+
+variable "api_gateway_domain"{
+  description = "gateway domain"
+}
+
+variable "app_version"{
+  description = "app version"
+}
