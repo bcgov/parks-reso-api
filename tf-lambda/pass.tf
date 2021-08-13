@@ -23,7 +23,7 @@ data "archive_file" "deletePassZip" {
 resource "aws_lambda_function" "readPassLambda" {
    function_name = "readPass"
    filename = "readPass.zip"
-   source_code_hash = "${data.archive_file.readPassZip.output_base64sha256}"
+   source_code_hash = data.archive_file.readPassZip.output_base64sha256
 
 #    This method is for deploying things outside of TF.
 #    s3_bucket = var.s3_bucket
@@ -51,7 +51,7 @@ resource "aws_lambda_function" "readPassLambda" {
 resource "aws_lambda_function" "writePassLambda" {
    function_name = "writePass"
    filename = "writePass.zip"
-   source_code_hash = "${data.archive_file.writePassZip.output_base64sha256}"
+   source_code_hash = data.archive_file.writePassZip.output_base64sha256
 
 #    This method is for deploying things outside of TF.
 #    s3_bucket = var.s3_bucket
@@ -80,7 +80,7 @@ resource "aws_lambda_function" "writePassLambda" {
 resource "aws_lambda_function" "deletePassLambda" {
    function_name = "deletePass"
    filename = "deletePass.zip"
-   source_code_hash = "${data.archive_file.deletePassZip.output_base64sha256}"
+   source_code_hash = data.archive_file.deletePassZip.output_base64sha256
 
 #    This method is for deploying things outside of TF.
 #    s3_bucket = var.s3_bucket
