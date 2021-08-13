@@ -7,7 +7,7 @@ data "archive_file" "checkActivationZip" {
 resource "aws_lambda_function" "check_activation" {
    function_name = "checkActivation"
    filename = "checkActivation.zip"
-   source_code_hash = "${data.archive_file.checkActivationZip.output_base64sha256}"
+   source_code_hash = "data.archive_file.checkActivationZip.output_base64sha256"
 
    handler = "index.handler"
    runtime = "nodejs12.x"
