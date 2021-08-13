@@ -28,8 +28,10 @@ jobs:
         run: |
           echo "::set-output name=FILELIST::$(ls ./lambda)"
 
-      - name: Processing my found files from output
+      - name: Install Zip
         uses: montudor/action-zip@v0.1.0
+
+      - name: Processing my found files from output
         run: |
           IFS="," read -a myarray <<< ${{ steps.finding-files.outputs.FILELIST }}
           for i in "${myarray[@]}"; do
