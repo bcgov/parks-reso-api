@@ -1,7 +1,7 @@
 data "archive_file" "checkExpiryZip" {
     type        = "zip"
-    source_dir  = "${abspath(path.root)}/checkExpiry"
-    output_path = "${path.root}/checkExpiry.zip"
+    source_dir  = "${abspath(path.root)}/dev/checkExpiry"
+    output_path = "checkExpiry.zip"
 }
 
 resource "aws_lambda_function" "check_expiry" {
