@@ -84,7 +84,7 @@ resource "aws_iam_role_policy" "park_reso_dynamodb" {
               "dynamodb:Update*",
               "dynamodb:PutItem"
           ],
-          "Resource": aws_dynamodb_table.park_dup_table.arn
+          "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
         }
     ]
   }
@@ -114,7 +114,7 @@ resource "aws_iam_role_policy" "dynamoDBWriteRole" {
               "dynamodb:Update*",
               "dynamodb:PutItem"
           ],
-          "Resource": aws_dynamodb_table.park_dup_table.arn
+          "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
         }
     ]
   }
@@ -138,7 +138,7 @@ resource "aws_iam_role_policy" "dynamoDBDeleteRole" {
               "dynamodb:Update*",
               "dynamodb:PutItem"
           ],
-          "Resource": aws_dynamodb_table.park_dup_table.arn
+          "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
         }
     ]
   }
