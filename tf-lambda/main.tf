@@ -30,7 +30,7 @@ data "archive_file" "writeParkZip" {
 resource "aws_lambda_function" "readParkLambda" {
    function_name = "readPark"
    filename = "readPark.zip"
-   source_code_hash = "${data.archive_file.readParkZip.output_base64sha256}"
+   source_code_hash = data.archive_file.readParkZip.output_base64sha256
 
 #    This method is for deploying things outside of TF.
 #    s3_bucket = var.s3_bucket
@@ -52,7 +52,7 @@ resource "aws_lambda_function" "readParkLambda" {
 resource "aws_lambda_function" "writeParkLambda" {
    function_name = "writePark"
    filename = "writePark.zip"
-   source_code_hash = "${data.archive_file.writeParkZip.output_base64sha256}"
+   source_code_hash = data.archive_file.writeParkZip.output_base64sha256
 
 #    This method is for deploying things outside of TF.
 #    s3_bucket = var.s3_bucket
