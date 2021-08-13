@@ -28,7 +28,7 @@ resource "aws_cloudwatch_event_rule" "every_morning_at_7am" {
 }
 
 resource "aws_cloudwatch_event_target" "check_activation_every_morning_at_7am" {
-    rule = "${aws_cloudwatch_event_rule.every_morning_at_7am.name}"
+    rule = "aws_cloudwatch_event_rule.every_morning_at_7am.name"
     target_id = "check_activation"
     arn = "${aws_lambda_function.check_activation.arn}"
 }
