@@ -1,6 +1,6 @@
 data "archive_file" "checkExpiryZip" {
     type        = "zip"
-    source_dir  = "${path.module}/../checkExpiry"
+    source_dir  = "../../checkExpiry"
     output_path = "${path.root}/checkExpiry.zip"
 }
 
