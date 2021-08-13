@@ -19,6 +19,7 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
+        working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
 
       - name: setup terraform
         uses: hashicorp/setup-terraform@v1
