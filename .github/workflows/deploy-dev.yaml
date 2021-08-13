@@ -20,6 +20,31 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v2
 
+      - name: Make artifact directory
+        run: mkdir -p ./artifacts/${{ github.repository }}
+
+      - name: Finding files and store to output
+        id: finding-files
+        run: |
+          echo "::set-output name=FILELIST::$(ls ./lambda)"
+
+      - name: Processing my found files from output
+        uses: montudor/action-zip@v0.1.0
+        run: |
+          IFS="," read -a myarray <<< ${{ steps.finding-files.outputs.FILELIST }}
+          for i in "${myarray[@]}"; do
+            zip -r ${i}.zip ./lambda/${i}
+          done
+
+      - name: Push Zip to S3
+        uses: jakejarvis/s3-sync-action@v0.3.1
+        env:
+        SOURCE_DIR: './artifacts'
+        AWS_REGION: ${{secrets.AWS_REGION}}
+        AWS_S3_BUCKET: ${{secrets.AWS_S3_BUCKET}}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
       - name: setup terraform
         uses: hashicorp/setup-terraform@v1
         with:
