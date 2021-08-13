@@ -1,6 +1,6 @@
 data "archive_file" "checkExpiryZip" {
     type        = "zip"
-    source_dir  = abspath(path.root) + "/checkExpiry"
+    source_dir  = "${abspath(path.root)}/checkExpiry"
     output_path = "${path.root}/checkExpiry.zip"
 }
 
