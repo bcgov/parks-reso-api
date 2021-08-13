@@ -7,7 +7,7 @@ data "archive_file" "checkExpiryZip" {
 resource "aws_lambda_function" "check_expiry" {
    function_name = "checkExpiry"
    filename = "checkExpiry.zip"
-   source_code_hash = "${data.archive_file.checkExpiryZip.output_base64sha256}"
+   source_code_hash = "data.archive_file.checkExpiryZip.output_base64sha256"
 
    handler = "index.handler"
    runtime = "nodejs12.x"
