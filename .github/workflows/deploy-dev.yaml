@@ -35,7 +35,7 @@ jobs:
         run: |
           IFS="," read -a myarray <<< ${{ steps.finding-files.outputs.FILELIST }}
           for i in "${myarray[@]}"; do
-            zip -r ${i}.zip ./lambda/${i}
+            zip -r ./artifacts/${i}.zip ./lambda/${i}
           done
 
       - name: Push Zip to S3
