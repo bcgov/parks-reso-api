@@ -12,6 +12,15 @@ provider "aws" {
   region = "ca-central-1"
 }
 
+resource null_resource "pwd" {
+  triggers {
+    always_run = "${uuid()}"
+  }
+  provisioner "local-exec" {
+    command = "echo $(ls ../../) >> somefile.txt"
+  }
+}
+
 // Auto pack lambda function.
 data "archive_file" "readParkZip" {
     type        = "zip"
