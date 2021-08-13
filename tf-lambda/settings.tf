@@ -16,7 +16,7 @@ data "archive_file" "writeConfigZip" {
 resource "aws_lambda_function" "readConfigLambda" {
    function_name = "readConfig"
    filename = "readConfig.zip"
-   source_code_hash = "${data.archive_file.readConfigZip.output_base64sha256}"
+   source_code_hash = data.archive_file.readConfigZip.output_base64sha256
 
    handler = "index.handler"
    runtime = "nodejs12.x"
@@ -34,7 +34,7 @@ resource "aws_lambda_function" "readConfigLambda" {
 resource "aws_lambda_function" "writeConfigLambda" {
    function_name = "writeConfig"
    filename = "writeConfig.zip"
-   source_code_hash = "${data.archive_file.writeConfigZip.output_base64sha256}"
+   source_code_hash = data.archive_file.writeConfigZip.output_base64sha256
 
    handler = "index.handler"
    runtime = "nodejs12.x"
