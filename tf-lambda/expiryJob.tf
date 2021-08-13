@@ -28,7 +28,7 @@ resource "aws_cloudwatch_event_rule" "every_morning_at_12am" {
 }
 
 resource "aws_cloudwatch_event_target" "check_expiry_every_morning_at_12am" {
-    rule = "${aws_cloudwatch_event_rule.every_morning_at_12am.name}"
+    rule = "aws_cloudwatch_event_rule.every_morning_at_12am.name"
     target_id = "check_expiry"
     arn = "aws_lambda_function.check_expiry.arn"
 }
