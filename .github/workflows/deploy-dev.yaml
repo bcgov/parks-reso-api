@@ -42,7 +42,7 @@ jobs:
           for i in "${myarray[@]}"; do
             cd ./lambda/${i} && \
             npm i && \
-            cd . && \
+            cd ../../ && \
             zip -r ./artifacts/${i}.zip ./lambda/${i}
           done
 
