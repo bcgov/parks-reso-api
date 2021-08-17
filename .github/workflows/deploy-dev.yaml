@@ -40,9 +40,9 @@ jobs:
         run: |
           IFS="," read -a myarray <<< ${{ steps.finding-files.outputs.FILELIST }}
           for i in "${myarray[@]}"; do
-            cd ${i} &&
-            npm i &&
-            cd .. &&
+            cd ./lambda/${i} && \
+            npm i && \
+            cd . && \
             zip -r ./artifacts/${i}.zip ./lambda/${i}
           done
 
