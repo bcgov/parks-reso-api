@@ -47,9 +47,10 @@ jobs:
 
       - name: Processing my found files from output
         run: |
+          mkdir artifacts && \
           cd ./lambda && \
           for d in */ ; do
-            zip -qq -r artifacts/${d::-1}.zip $d
+            zip -qq -r ./artifacts/${d::-1}.zip $d
           done
 
       - name: Configure AWS credentials
