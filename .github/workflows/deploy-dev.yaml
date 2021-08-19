@@ -49,7 +49,7 @@ jobs:
         run: |
           cd ./lambda && \
           for d in */ ; do
-            zip -r ./artifacts/$d.zip $d
+            zip -r ./artifacts/${d::-1}.zip $d
           done
 
       - name: Configure AWS credentials
