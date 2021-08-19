@@ -47,6 +47,7 @@ jobs:
 
       - name: Processing my found files from output
         run: |
+          mkdir artifacts && \
           cd ./lambda && \
           for d in */ ; do
             zip -r ./artifacts/${d::-1}.zip $d
