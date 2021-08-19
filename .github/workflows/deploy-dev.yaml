@@ -20,14 +20,6 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v2
 
-      - name: Make artifact directory
-        run: mkdir -p ./artifacts/${{ github.repository }}
-
-      - name: Finding files and store to output
-        id: finding-files
-        run: |
-          echo "::set-output name=FILELIST::$(ls ./lambda)"
-
       - name: Setup node
         uses: actions/setup-node@v2
         with:
@@ -45,9 +37,11 @@ jobs:
       - name: Install Zip
         uses: montudor/action-zip@v0.1.0
 
+      - name: Make artifact directory
+        run: mkdir artifacts
+
       - name: Processing my found files from output
         run: |
-          mkdir artifacts && \
           cd ./lambda && \
           for d in */ ; do
             zip -qq -r ./artifacts/${d::-1}.zip $d
