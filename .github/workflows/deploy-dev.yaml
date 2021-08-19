@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: 10
 
-      - name: install packages
+      - name: Install packages
         run: |
           cd ./lambda && \
           for d in */ ; do
@@ -47,9 +47,9 @@ jobs:
 
       - name: Processing my found files from output
         run: |
-          IFS="," read -a myarray <<< ${{ steps.finding-files.outputs.FILELIST }}
-          for i in "${myarray[@]}"; do
-            zip -r ./artifacts/${i}.zip ./lambda/${i}
+          cd ./lambda && \
+          for d in */ ; do
+            zip -r ./artifacts/$d.zip $d
           done
 
       - name: Configure AWS credentials
