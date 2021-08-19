@@ -40,8 +40,9 @@ jobs:
         run: |
           cd ./lambda && \
           for d in */ ; do
-            echo "$d" && \
-            npm i
+            cd $d && \
+            npm i && \
+            cd ..
           done
 
       - name: Processing my found files from output
