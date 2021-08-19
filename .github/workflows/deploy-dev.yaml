@@ -36,13 +36,18 @@ jobs:
         with:
           node-version: 10
 
+      - name: install packages
+        run: |
+          cd ./lambda && \
+          for d in */ ; do
+            echo "$d" && \
+            npm i
+          done
+
       - name: Processing my found files from output
         run: |
           IFS="," read -a myarray <<< ${{ steps.finding-files.outputs.FILELIST }}
           for i in "${myarray[@]}"; do
-            cd ./lambda/${i} && \
-            npm i && \
-            cd ../../ && \
             zip -r ./artifacts/${i}.zip ./lambda/${i}
           done
 
