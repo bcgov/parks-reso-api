@@ -28,9 +28,6 @@ jobs:
         run: |
           echo "::set-output name=FILELIST::$(ls ./lambda)"
 
-      - name: Install Zip
-        uses: montudor/action-zip@v0.1.0
-
       - name: Setup node
         uses: actions/setup-node@v2
         with:
@@ -45,12 +42,14 @@ jobs:
             cd ..
           done
 
+      - name: Install Zip
+        uses: montudor/action-zip@v0.1.0
+
       - name: Processing my found files from output
         run: |
-          mkdir artifacts && \
           cd ./lambda && \
           for d in */ ; do
-            zip -r ./artifacts/${d::-1}.zip $d
+            zip -qq -r ./artifacts/${d::-1}.zip $d
           done
 
       - name: Configure AWS credentials
