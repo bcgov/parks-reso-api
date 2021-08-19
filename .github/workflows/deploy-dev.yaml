@@ -35,7 +35,7 @@ jobs:
           done
 
       - name: Install Zip
-        uses: montudor/action-zip@v0.1.0
+        uses: montudor/action-zip@v1
 
       - name: Make artifact directory
         run: mkdir artifacts
@@ -44,7 +44,7 @@ jobs:
         run: |
           cd ./lambda && \
           for d in */ ; do
-            zip -qq -r ./artifacts/${d::-1}.zip $d
+            zip -qq -r ../artifacts/${d::-1}.zip $d
           done
 
       - name: Configure AWS credentials
