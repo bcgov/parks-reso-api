@@ -9,22 +9,22 @@ terraform {
 
 provider "aws" {
   alias  = "ca"
-  region = "ca-central-1"
+  region = var.aws_region
 }
 
 // Auto pack lambda function.
-data "archive_file" "readParkZip" {
-    type        = "zip"
-    source_dir  = "../readPark"
-    output_path = "readPark.zip"
-}
+# data "archive_file" "readParkZip" {
+#     type        = "zip"
+#     source_dir  = "../readPark"
+#     output_path = "readPark.zip"
+# }
 
 // Auto pack lambda function.
-data "archive_file" "writeParkZip" {
-    type        = "zip"
-    source_dir  = "../writePark"
-    output_path = "writePark.zip"
-}
+# data "archive_file" "writeParkZip" {
+#     type        = "zip"
+#     source_dir  = "../writePark"
+#     output_path = "writePark.zip"
+# }
 
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "readParkLambda" {
@@ -33,8 +33,8 @@ resource "aws_lambda_function" "readParkLambda" {
    source_code_hash = data.archive_file.readParkZip.output_base64sha256
 
 #    This method is for deploying things outside of TF.
-#    s3_bucket = var.s3_bucket
-#    s3_key    = "v1.0.0/readPark.zip"
+   s3_bucket = var.s3_bucket
+   s3_key    = "readPark.zip"
 
    handler = "index.handler"
    runtime = "nodejs12.x"

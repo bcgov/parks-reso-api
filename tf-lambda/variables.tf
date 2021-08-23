@@ -62,3 +62,7 @@ variable "api_gateway_domain"{
 variable "app_version"{
   description = "app version"
 }
+
+variable "s3_bucket"{
+  description = "app version"
+}

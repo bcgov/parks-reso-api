@@ -58,11 +58,11 @@ jobs:
           role-session-name: parks-reso-admin-dev-gh-action
           role-skip-session-tagging: true
 
-      - name: Copy files to the test website with the AWS CLI
+      - name: Upload zips to S3
         run: |
           aws s3 sync ./artifacts s3://${{secrets.AWS_S3_BUCKET_DEV}}
 
-      - name: setup terraform
+      - name: Setup terraform
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ env.TF_VERSION }}
