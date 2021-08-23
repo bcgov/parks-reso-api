@@ -47,7 +47,7 @@ resource "aws_s3_bucket_object" "readParkZip" {
 # }
 
 module "lambda_function_existing_package_s3" {
-  source = ""
+  source = "terraform-aws-modules/lambda/aws"
 
   function_name = "readPark"
   description   = "Read park lambda"
