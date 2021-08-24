@@ -1,35 +1,35 @@
 // Auto pack lambda function.
-data "archive_file" "readFacilityZip" {
-    type        = "zip"
-    source_dir  = "../readFacility"
-    output_path = "readFacility.zip"
-}
+# data "archive_file" "readFacilityZip" {
+#     type        = "zip"
+#     source_dir  = "../readFacility"
+#     output_path = "readFacility.zip"
+# }
 
 // Auto pack lambda function.
-data "archive_file" "writeFacilityZip" {
-    type        = "zip"
-    source_dir  = "../writeFacility"
-    output_path = "writeFacility.zip"
-}
+# data "archive_file" "writeFacilityZip" {
+#     type        = "zip"
+#     source_dir  = "../writeFacility"
+#     output_path = "writeFacility.zip"
+# }
 
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "readFacilityLambda" {
    function_name = "readFacility"
-   filename = "readFacility.zip"
-   source_code_hash = data.archive_file.readFacilityZip.output_base64sha256
+   # filename = "readFacility.zip"
+   # source_code_hash = data.archive_file.readFacilityZip.output_base64sha256
 
-#    This method is for deploying things outside of TF.
-#    s3_bucket = var.s3_bucket
-#    s3_key    = "v1.0.0/readFacility.zip"
+   #    This method is for deploying things outside of TF.
+   s3_bucket = var.s3_bucket
+   s3_key    = "readFacility.zip"
 
    handler = "index.handler"
    runtime = "nodejs12.x"
 
    environment {
-    variables = {
-      TABLE_NAME = var.db_name
-    }
-  }
+      variables = {
+         TABLE_NAME = var.db_name   
+      }
+   }
 
    role = aws_iam_role.readRole.arn
 }
@@ -37,12 +37,12 @@ resource "aws_lambda_function" "readFacilityLambda" {
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "writeFacilityLambda" {
    function_name = "writeFacility"
-   filename = "writeFacility.zip"
-   source_code_hash = data.archive_file.writeFacilityZip.output_base64sha256
+   # filename = "writeFacility.zip"
+   # source_code_hash = data.archive_file.writeFacilityZip.output_base64sha256
 
 #    This method is for deploying things outside of TF.
-#    s3_bucket = var.s3_bucket
-#    s3_key    = "v1.0.0/writeFacility.zip"
+   s3_bucket = var.s3_bucket
+   s3_key    = "writeFacility.zip"
 
    handler = "index.handler"
    runtime = "nodejs12.x"

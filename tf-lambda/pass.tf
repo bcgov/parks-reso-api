@@ -1,33 +1,33 @@
 // Auto pack lambda function.
-data "archive_file" "readPassZip" {
-    type        = "zip"
-    source_dir  = "../readPass"
-    output_path = "readPass.zip"
-}
+# data "archive_file" "readPassZip" {
+#     type        = "zip"
+#     source_dir  = "../readPass"
+#     output_path = "readPass.zip"
+# }
 
 // Auto pack lambda function.
-data "archive_file" "writePassZip" {
-    type        = "zip"
-    source_dir  = "../writePass"
-    output_path = "writePass.zip"
-}
+# data "archive_file" "writePassZip" {
+#     type        = "zip"
+#     source_dir  = "../writePass"
+#     output_path = "writePass.zip"
+# }
 
 // Auto pack lambda function.
-data "archive_file" "deletePassZip" {
-    type        = "zip"
-    source_dir  = "../deletePass"
-    output_path = "deletePass.zip"
-}
+# data "archive_file" "deletePassZip" {
+#     type        = "zip"
+#     source_dir  = "../deletePass"
+#     output_path = "deletePass.zip"
+# }
 
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "readPassLambda" {
    function_name = "readPass"
-   filename = "readPass.zip"
-   source_code_hash = data.archive_file.readPassZip.output_base64sha256
+   # filename = "readPass.zip"
+   # source_code_hash = data.archive_file.readPassZip.output_base64sha256
 
 #    This method is for deploying things outside of TF.
-#    s3_bucket = var.s3_bucket
-#    s3_key    = "v1.0.0/readPass.zip"
+   s3_bucket = var.s3_bucket
+   s3_key    = "readPass.zip"
 
    handler = "index.handler"
    runtime = "nodejs12.x"
@@ -50,12 +50,12 @@ resource "aws_lambda_function" "readPassLambda" {
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "writePassLambda" {
    function_name = "writePass"
-   filename = "writePass.zip"
-   source_code_hash = data.archive_file.writePassZip.output_base64sha256
+   # filename = "writePass.zip"
+   # source_code_hash = data.archive_file.writePassZip.output_base64sha256
 
 #    This method is for deploying things outside of TF.
-#    s3_bucket = var.s3_bucket
-#    s3_key    = "v1.0.0/writePass.zip"
+   s3_bucket = var.s3_bucket
+   s3_key    = "writePass.zip"
 
    handler = "index.handler"
    runtime = "nodejs12.x"
@@ -79,12 +79,12 @@ resource "aws_lambda_function" "writePassLambda" {
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "deletePassLambda" {
    function_name = "deletePass"
-   filename = "deletePass.zip"
-   source_code_hash = data.archive_file.deletePassZip.output_base64sha256
+   # filename = "deletePass.zip"
+   # source_code_hash = data.archive_file.deletePassZip.output_base64sha256
 
 #    This method is for deploying things outside of TF.
-#    s3_bucket = var.s3_bucket
-#    s3_key    = "v1.0.0/deletePass.zip"
+   s3_bucket = var.s3_bucket
+   s3_key    = "deletePass.zip"
 
    handler = "index.handler"
    runtime = "nodejs12.x"

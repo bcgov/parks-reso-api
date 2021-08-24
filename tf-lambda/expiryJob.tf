@@ -1,22 +1,25 @@
-data "archive_file" "checkExpiryZip" {
-    type        = "zip"
-    source_dir  = "${abspath(path.root)}/dev/checkExpiry"
-    output_path = "checkExpiry.zip"
-}
+# data "archive_file" "checkExpiryZip" {
+#     type        = "zip"
+#     source_dir  = "${abspath(path.root)}/dev/checkExpiry"
+#     output_path = "checkExpiry.zip"
+# }
 
 resource "aws_lambda_function" "check_expiry" {
-   function_name = "checkExpiry"
-   filename = "checkExpiry.zip"
-   source_code_hash = data.archive_file.checkExpiryZip.output_base64sha256
+    function_name = "checkExpiry"
+    #    filename = "checkExpiry.zip"
+    #    source_code_hash = data.archive_file.checkExpiryZip.output_base64sha256
 
-   handler = "index.handler"
-   runtime = "nodejs12.x"
+    s3_bucket = var.s3_bucket
+    s3_key    = "checkExpiry.zip"
 
-   environment {
-    variables = {
-      TABLE_NAME = var.db_name
+    handler = "index.handler"
+    runtime = "nodejs12.x"
+
+    environment {
+        variables = {
+            TABLE_NAME = var.db_name
+        }
     }
-  }
 
    role = aws_iam_role.readRole.arn
 }

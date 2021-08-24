@@ -1,25 +1,28 @@
 // Auto pack lambda function.
-data "archive_file" "readConfigZip" {
-    type        = "zip"
-    source_dir  = "../readConfig"
-    output_path = "readConfig.zip"
-}
+# data "archive_file" "readConfigZip" {
+#     type        = "zip"
+#     source_dir  = "../readConfig"
+#     output_path = "readConfig.zip"
+# }
 
 // Auto pack lambda function.
-data "archive_file" "writeConfigZip" {
-    type        = "zip"
-    source_dir  = "../writeConfig"
-    output_path = "writeConfig.zip"
-}
+# data "archive_file" "writeConfigZip" {
+#     type        = "zip"
+#     source_dir  = "../writeConfig"
+#     output_path = "writeConfig.zip"
+# }
 
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "readConfigLambda" {
    function_name = "readConfig"
-   filename = "readConfig.zip"
-   source_code_hash = data.archive_file.readConfigZip.output_base64sha256
+#    filename = "readConfig.zip"
+#    source_code_hash = data.archive_file.readConfigZip.output_base64sha256
 
-   handler = "index.handler"
-   runtime = "nodejs12.x"
+    s3_bucket = var.s3_bucket
+    s3_key    = "readConfig.zip"
+
+    handler = "index.handler"
+    runtime = "nodejs12.x"
 
    environment {
     variables = {
@@ -33,8 +36,11 @@ resource "aws_lambda_function" "readConfigLambda" {
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "writeConfigLambda" {
    function_name = "writeConfig"
-   filename = "writeConfig.zip"
-   source_code_hash = data.archive_file.writeConfigZip.output_base64sha256
+#    filename = "writeConfig.zip"
+#    source_code_hash = data.archive_file.writeConfigZip.output_base64sha256
+
+    s3_bucket = var.s3_bucket
+    s3_key    = "writeConfig.zip"
 
    handler = "index.handler"
    runtime = "nodejs12.x"
