@@ -12,18 +12,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-// Auto pack lambda function.
-# data "archive_file" "readParkZip" {
-#     type        = "zip"
-#     source_dir  = "../readPark"
-#     output_path = "readPark.zip"
-# }
-
-# resource "aws_s3_bucket_object" "readParkZip" {
-#   bucket = var.s3_bucket
-#   key    = "readPark.zip"
-# }
-
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "readParkLambda" {
   function_name = "readPark"
@@ -44,18 +32,9 @@ resource "aws_lambda_function" "readParkLambda" {
    role = aws_iam_role.readRole.arn
 }
 
-// Auto pack lambda function.
-# data "archive_file" "writeParkZip" {
-#     type        = "zip"
-#     source_dir  = "../writePark"
-#     output_path = "writePark.zip"
-# }
-
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "writeParkLambda" {
   function_name = "writePark"
-  #  filename = "writePark.zip"
-  #  source_code_hash = data.archive_file.writeParkZip.output_base64sha256
 
   # This method is for deploying things outside of TF.
   s3_bucket = var.s3_bucket

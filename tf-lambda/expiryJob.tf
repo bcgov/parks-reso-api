@@ -1,13 +1,5 @@
-# data "archive_file" "checkExpiryZip" {
-#     type        = "zip"
-#     source_dir  = "${abspath(path.root)}/dev/checkExpiry"
-#     output_path = "checkExpiry.zip"
-# }
-
 resource "aws_lambda_function" "check_expiry" {
     function_name = "checkExpiry"
-    #    filename = "checkExpiry.zip"
-    #    source_code_hash = data.archive_file.checkExpiryZip.output_base64sha256
 
     s3_bucket = var.s3_bucket
     s3_key    = "checkExpiry.zip"

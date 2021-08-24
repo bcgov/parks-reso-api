@@ -1,13 +1,5 @@
-# data "archive_file" "checkActivationZip" {
-#     type        = "zip"
-#     source_dir  = "../checkActivation"
-#     output_path = "checkActivation.zip"
-# }
-
 resource "aws_lambda_function" "check_activation" {
     function_name = "checkActivation"
-#    filename = "checkActivation.zip"
-#    source_code_hash = data.archive_file.checkActivationZip.output_base64sha256
 
     s3_bucket = var.s3_bucket
     s3_key    = "checkActivation.zip"
