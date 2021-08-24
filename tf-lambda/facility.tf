@@ -4,7 +4,7 @@ resource "aws_lambda_function" "readFacilityLambda" {
 
    #    This method is for deploying things outside of TF.
    s3_bucket = var.s3_bucket
-   s3_key    = "readFacility.zip"
+   s3_key    = "${var.app_version}/readFacility.zip"
 
    handler = "index.handler"
    runtime = "nodejs12.x"
@@ -24,7 +24,7 @@ resource "aws_lambda_function" "writeFacilityLambda" {
 
    # This method is for deploying things outside of TF.
    s3_bucket = var.s3_bucket
-   s3_key    = "writeFacility.zip"
+   s3_key    = "${var.app_version}/writeFacility.zip"
 
    handler = "index.handler"
    runtime = "nodejs12.x"

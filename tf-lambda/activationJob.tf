@@ -2,7 +2,7 @@ resource "aws_lambda_function" "check_activation" {
     function_name = "checkActivation"
 
     s3_bucket = var.s3_bucket
-    s3_key    = "checkActivation.zip"
+    s3_key    = "${var.app_version}/checkActivation.zip"
 
     handler = "index.handler"
     runtime = "nodejs12.x"

@@ -18,7 +18,7 @@ resource "aws_lambda_function" "readParkLambda" {
 
   # This method is for deploying things outside of TF.
   s3_bucket = var.s3_bucket
-  s3_key    = "readPark.zip"
+  s3_key    = "${var.app_version}/readPark.zip"
 
   handler = "index.handler"
   runtime = "nodejs12.x"
