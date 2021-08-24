@@ -53,24 +53,24 @@ data "archive_file" "writeParkZip" {
 
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "writeParkLambda" {
-   function_name = "writePark"
-   filename = "writePark.zip"
+  function_name = "writePark"
+  #  filename = "writePark.zip"
   #  source_code_hash = data.archive_file.writeParkZip.output_base64sha256
 
   # This method is for deploying things outside of TF.
-   s3_bucket = var.s3_bucket
-   s3_key    = "writePark.zip"
+  s3_bucket = var.s3_bucket
+  s3_key    = "writePark.zip"
 
-   handler = "index.handler"
-   runtime = "nodejs12.x"
+  handler = "index.handler"
+  runtime = "nodejs12.x"
 
-   environment {
+  environment {
     variables = {
       TABLE_NAME = var.db_name
     }
   }
 
-   role = aws_iam_role.writeRole.arn
+  role = aws_iam_role.writeRole.arn
 }
 
 resource "aws_api_gateway_rest_api" "apiLambda" {
