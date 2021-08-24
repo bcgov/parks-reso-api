@@ -25,41 +25,39 @@ resource "aws_s3_bucket_object" "readParkZip" {
 }
 
 // Deploys the lambda via the zip above
-# resource "aws_lambda_function" "readParkLambda" {
-#    function_name = "readPark"
-#    filename = "readPark.zip"
-#    source_code_hash = data.archive_file.readParkZip.output_base64sha256
-
-# #    This method is for deploying things outside of TF.
-#    s3_bucket = var.s3_bucket
-#    s3_key    = "readPark.zip"
-
-#    handler = "index.handler"
-#    runtime = "nodejs12.x"
-
-#    environment {
-#     variables = {
-#       TABLE_NAME = var.db_name
-#     }
-#   }
-
-#    role = aws_iam_role.readRole.arn
-# }
-
-module "lambda_function_existing_package_s3" {
-  source = "terraform-aws-modules/lambda/aws"
-
+resource "aws_lambda_function" "readParkLambda" {
   function_name = "readPark"
-  description   = "Read park lambda"
+
+  # This method is for deploying things outside of TF.
+  s3_bucket = var.s3_bucket
+  s3_key    = "readPark.zip"
+
   handler = "index.handler"
   runtime = "nodejs12.x"
 
-  create_package      = false
-  s3_existing_package = {
-    bucket = var.s3_bucket
-    key    = "readPark.zip"
+  environment {
+    variables = {
+      TABLE_NAME = var.db_name
+    }
   }
+
+   role = aws_iam_role.readRole.arn
 }
+
+# module "lambda_function_existing_package_s3" {
+#   source = "terraform-aws-modules/lambda/aws"
+
+#   function_name = "readPark"
+#   description   = "Read park lambda"
+#   handler = "index.handler"
+#   runtime = "nodejs12.x"
+
+#   create_package      = false
+#   s3_existing_package = {
+#     bucket = var.s3_bucket
+#     key    = "readPark.zip"
+#   }
+# }
 
 // Auto pack lambda function.
 data "archive_file" "writeParkZip" {
