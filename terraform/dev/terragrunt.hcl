@@ -16,5 +16,6 @@ generate "dev_tfvars" {
   disable_signature = true
   contents          = <<-EOF
 app_version = "${local.app_version}"
+s3_bucket = "${local.s3_bucket}"
 EOF
 }
