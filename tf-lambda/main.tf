@@ -19,10 +19,10 @@ provider "aws" {
 #     output_path = "readPark.zip"
 # }
 
-resource "aws_s3_bucket_object" "readParkZip" {
-  bucket = var.s3_bucket
-  key    = "readPark.zip"
-}
+# resource "aws_s3_bucket_object" "readParkZip" {
+#   bucket = var.s3_bucket
+#   key    = "readPark.zip"
+# }
 
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "readParkLambda" {
@@ -44,21 +44,6 @@ resource "aws_lambda_function" "readParkLambda" {
    role = aws_iam_role.readRole.arn
 }
 
-# module "lambda_function_existing_package_s3" {
-#   source = "terraform-aws-modules/lambda/aws"
-
-#   function_name = "readPark"
-#   description   = "Read park lambda"
-#   handler = "index.handler"
-#   runtime = "nodejs12.x"
-
-#   create_package      = false
-#   s3_existing_package = {
-#     bucket = var.s3_bucket
-#     key    = "readPark.zip"
-#   }
-# }
-
 // Auto pack lambda function.
 data "archive_file" "writeParkZip" {
     type        = "zip"
@@ -70,11 +55,11 @@ data "archive_file" "writeParkZip" {
 resource "aws_lambda_function" "writeParkLambda" {
    function_name = "writePark"
    filename = "writePark.zip"
-   source_code_hash = data.archive_file.writeParkZip.output_base64sha256
+  #  source_code_hash = data.archive_file.writeParkZip.output_base64sha256
 
-#    This method is for deploying things outside of TF.
-#    s3_bucket = var.s3_bucket
-#    s3_key    = "v1.0.0/writePark.zip"
+  # This method is for deploying things outside of TF.
+   s3_bucket = var.s3_bucket
+   s3_key    = "writePark.zip"
 
    handler = "index.handler"
    runtime = "nodejs12.x"
