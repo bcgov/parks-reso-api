@@ -76,5 +76,5 @@ jobs:
         working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
         env:
           app_version: ${{ github.run_number }}
-          s3_bucket: ${{ secrets.AWS_S3_BUCKET }}
+          s3_bucket: ${{ secrets.AWS_S3_BUCKET_DEV }}
         run: terragrunt apply-all --terragrunt-non-interactive
