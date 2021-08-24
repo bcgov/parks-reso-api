@@ -42,9 +42,11 @@ jobs:
 
       - name: Zip function directories
         run: |
-          cd ./lambda && \
+          cd ./lambda/ && \
           for d in */ ; do
-            zip -qq -r ../artifacts/${d::-1}.zip $d
+            cd &d && \
+            zip -r ../../artifacts/${d::-1}.zip ./ && \
+            cd ..
           done
 
       - name: Configure AWS credentials
