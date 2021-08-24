@@ -60,7 +60,7 @@ jobs:
 
       - name: Upload zips to S3
         run: |
-          aws s3 sync ./artifacts s3://${{secrets.AWS_S3_BUCKET_DEV}}
+          aws s3 sync ./artifacts s3://${{github.run_number}}/${{secrets.AWS_S3_BUCKET_DEV}}
 
       - name: Setup terraform
         uses: hashicorp/setup-terraform@v1
@@ -76,4 +76,5 @@ jobs:
         working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
         env:
           app_version: ${{ github.run_number }}
+          s3_bucket: ${{ secrets.AWS_S3_BUCKET }}
         run: terragrunt apply-all --terragrunt-non-interactive
