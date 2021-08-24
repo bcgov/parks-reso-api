@@ -12,7 +12,7 @@ env:
 
 jobs:
   ci:
-    name: ci
+    name: Push to AWS Lambda
     runs-on: ubuntu-20.04
     environment: dev
 
@@ -40,7 +40,7 @@ jobs:
       - name: Make artifact directory
         run: mkdir artifacts
 
-      - name: Processing my found files from output
+      - name: Zip function directories
         run: |
           cd ./lambda && \
           for d in */ ; do
