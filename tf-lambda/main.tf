@@ -45,11 +45,11 @@ resource "aws_lambda_function" "readParkLambda" {
 }
 
 // Auto pack lambda function.
-data "archive_file" "writeParkZip" {
-    type        = "zip"
-    source_dir  = "../writePark"
-    output_path = "writePark.zip"
-}
+# data "archive_file" "writeParkZip" {
+#     type        = "zip"
+#     source_dir  = "../writePark"
+#     output_path = "writePark.zip"
+# }
 
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "writeParkLambda" {
