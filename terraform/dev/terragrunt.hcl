@@ -8,6 +8,7 @@ include {
 
 locals {
   app_version = get_env("app_version", "")
+  s3_bucket = get_env("s3_bucket", "")
 }
 
 generate "dev_tfvars" {
