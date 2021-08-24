@@ -57,7 +57,7 @@ resource "aws_lambda_function" "deletePassLambda" {
 
    # This method is for deploying things outside of TF.
    s3_bucket = var.s3_bucket
-   s3_key    = "deletePass.zip"
+   s3_key    = "${var.app_version}/deletePass.zip"
 
    handler = "index.handler"
    runtime = "nodejs12.x"
