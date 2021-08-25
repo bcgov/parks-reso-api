@@ -53,14 +53,14 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_DEV }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-duration-seconds: 900
           role-session-name: parks-reso-admin-dev-gh-action
           role-skip-session-tagging: true
 
       - name: Upload zips to S3
         run: |
-          aws s3 sync ./artifacts s3://${{secrets.AWS_S3_BUCKET_DEV}}/${{github.run_number}}
+          aws s3 sync ./artifacts s3://${{secrets.AWS_S3_BUCKET}}/${{github.run_number}}
 
       - name: Setup terraform
         uses: hashicorp/setup-terraform@v1
@@ -76,5 +76,5 @@ jobs:
         working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
         env:
           app_version: ${{ github.run_number }}
-          s3_bucket: ${{ secrets.AWS_S3_BUCKET_DEV }}
+          s3_bucket: ${{ secrets.AWS_S3_BUCKET }}
         run: terragrunt apply-all --terragrunt-non-interactive
