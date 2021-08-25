@@ -1,5 +1,5 @@
 terraform {
-  source = "git::https://github.com/bcgov/parks-reso-api-terraform.git//?ref=main"
+  source = "../../tf-lambda"
 }
 
 include {
