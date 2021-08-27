@@ -1,5 +1,5 @@
 terraform {
-  source = "../../tf-lambda"
+  source = "../src"
 }
 
 include {
