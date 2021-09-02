@@ -64,5 +64,5 @@ variable "app_version"{
 }
 
 variable "s3_bucket"{
-  description = "app version"
+  description = "Name of the S3 bucket that holds zipped lambda functions"
 }
