@@ -9,6 +9,7 @@ include {
 locals {
   app_version = get_env("app_version", "")
   s3_bucket = get_env("s3_bucket", "")
+  target_env = get_env("target_env", "")
 }
 
 generate "dev_tfvars" {
@@ -18,5 +19,6 @@ generate "dev_tfvars" {
   contents          = <<-EOF
 app_version = "${local.app_version}"
 s3_bucket = "${local.s3_bucket}"
+target_env = "${local.target_env}"
 EOF
 }
