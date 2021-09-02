@@ -8,24 +8,63 @@ env:
   TF_VERSION: 0.14.7
   TG_VERSION: 0.26.7
   TG_SRC_PATH: terraform
-  TFC_WORKSPACE: test
+  TFC_WORKSPACE: dev
+  TARGET_ENV: dev
 
 jobs:
-  cd:
-    name: cd
+  ci:
+    name: Push to AWS Lambda
     runs-on: ubuntu-20.04
-    environment: test
+    environment: dev
 
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
 
-      - name: Extract branch name
-        shell: bash
-        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/tags/})"
-        id: extract_branch
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 10
 
-      - uses: hashicorp/setup-terraform@v1
+      - name: Install packages
+        run: |
+          cd ./lambda && \
+          for d in */ ; do
+            cd $d && \
+            npm i && \
+            cd ..
+          done
+
+      - name: Install Zip
+        uses: montudor/action-zip@v1
+
+      - name: Make artifact directory
+        run: mkdir artifacts
+
+      - name: Zip function directories
+        run: |
+          cd ./lambda/ && \
+          for d in */ ; do
+            cd $d && zip -r ../../artifacts/${d::-1}.zip ./ && cd ..
+          done
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 900
+          role-session-name: parks-reso-admin-dev-gh-action
+          role-skip-session-tagging: true
+
+      - name: Upload zips to S3
+        run: |
+          aws s3 sync ./artifacts s3://${{ secrets.AWS_S3_BUCKET }}-${{ env.TARGET_ENV }}/${{github.run_number}}
+
+      - name: Setup terraform
+        uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ env.TF_VERSION }}
           cli_config_credentials_token: ${{ secrets.TFC_TEAM_TOKEN }}
@@ -37,5 +76,7 @@ jobs:
       - name: Terragrunt Apply
         working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
         env:
-          app_version: ${{ steps.extract_branch.outputs.tag }}
+          app_version: ${{ github.run_number }}
+          s3_bucket: ${{ secrets.AWS_S3_BUCKET }}-${{ env.TARGET_ENV }}
+          target_env: ${{ env.TARGET_ENV }}
         run: terragrunt apply-all --terragrunt-non-interactive
