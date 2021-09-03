@@ -16,7 +16,7 @@ exports.handler = async (event, context) => {
       queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
 
       const configData = await runQuery(queryObj);
-      return sendResponse(200, configData[0].configData, context);
+      return sendResponse(200, configData[0], context);
     } catch (err) {
       console.log(err);
       return sendResponse(400, err, context);
