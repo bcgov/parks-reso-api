@@ -2,7 +2,7 @@
 resource "aws_lambda_function" "readConfigLambda" {
    function_name = "readConfig"
 
-    s3_bucket = var.s3_bucket
+    s3_bucket = "${var.s3_bucket}-${var.target_env}"
     s3_key    = "${var.app_version}/readConfig.zip"
 
     handler = "index.handler"
@@ -21,7 +21,7 @@ resource "aws_lambda_function" "readConfigLambda" {
 resource "aws_lambda_function" "writeConfigLambda" {
    function_name = "writeConfig"
 
-    s3_bucket = var.s3_bucket
+    s3_bucket = "${var.s3_bucket}-${var.target_env}"
     s3_key    = "${var.app_version}/writeConfig.zip"
 
    handler = "index.handler"

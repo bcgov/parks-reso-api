@@ -17,7 +17,7 @@ resource "aws_lambda_function" "readParkLambda" {
   function_name = "readPark"
 
   # This method is for deploying things outside of TF.
-  s3_bucket = var.s3_bucket
+  s3_bucket = "${var.s3_bucket}-${var.target_env}"
   s3_key    = "${var.app_version}/readPark.zip"
 
   handler = "index.handler"
@@ -37,7 +37,7 @@ resource "aws_lambda_function" "writeParkLambda" {
   function_name = "writePark"
 
   # This method is for deploying things outside of TF.
-  s3_bucket = var.s3_bucket
+  s3_bucket = "${var.s3_bucket}-${var.target_env}"
   s3_key    =  "${var.app_version}/writePark.zip"
 
   handler = "index.handler"

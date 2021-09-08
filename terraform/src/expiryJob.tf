@@ -1,7 +1,7 @@
 resource "aws_lambda_function" "check_expiry" {
     function_name = "checkExpiry"
 
-    s3_bucket = var.s3_bucket
+    s3_bucket = "${var.s3_bucket}-${var.target_env}"
     s3_key    = "${var.app_version}/checkExpiry.zip"
 
     handler = "index.handler"
