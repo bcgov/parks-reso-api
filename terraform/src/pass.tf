@@ -189,7 +189,8 @@ resource "aws_api_gateway_integration" "pass_options_integration" {
    http_method   = aws_api_gateway_method.pass_options_method.http_method
    type          = "MOCK"
    request_templates = {
-      "application/json": "{\"statusCode\": 200}"
+      "application/json": "{\"statusCode\": 200}",
+      "Access-Control-Allow-Origin": "*"
    }
    depends_on = [aws_api_gateway_method.pass_options_method]
 }
