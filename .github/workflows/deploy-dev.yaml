@@ -56,7 +56,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-duration-seconds: 900
-          role-session-name: parks-reso-admin-dev-gh-action
+          role-session-name: parks-reso-api-dev-gh-action
           role-skip-session-tagging: true
 
       - name: Upload zips to S3
