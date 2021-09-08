@@ -3,7 +3,7 @@ resource "aws_lambda_function" "readPassLambda" {
    function_name = "readPass"
 
    # This method is for deploying things outside of TF.
-   s3_bucket = "${var.s3_bucket}-${var.target_env}"
+   s3_bucket = var.s3_bucket
    s3_key    = "${var.app_version}/readPass.zip"
 
    handler = "index.handler"
@@ -29,7 +29,7 @@ resource "aws_lambda_function" "writePassLambda" {
    function_name = "writePass"
 
    # This method is for deploying things outside of TF.
-   s3_bucket = "${var.s3_bucket}-${var.target_env}"
+   s3_bucket = var.s3_bucket
    s3_key    = "${var.app_version}/writePass.zip"
 
    handler = "index.handler"
@@ -56,7 +56,7 @@ resource "aws_lambda_function" "deletePassLambda" {
    function_name = "deletePass"
 
    # This method is for deploying things outside of TF.
-   s3_bucket = "${var.s3_bucket}-${var.target_env}"
+   s3_bucket = var.s3_bucket
    s3_key    = "${var.app_version}/deletePass.zip"
 
    handler = "index.handler"
@@ -184,8 +184,8 @@ resource "aws_api_gateway_method_response" "pass_options_200" {
 }
 
 resource "aws_api_gateway_integration" "pass_options_integration" {
-   rest_api_id   = aws_api_gateway_rest_api.cors_api.id
-   resource_id   = aws_api_gateway_resource.cors_resource.id
+   rest_api_id   = aws_api_gateway_rest_api.apiLambda.id
+   resource_id   = aws_api_gateway_resource.passResource.id
    http_method   = aws_api_gateway_method.pass_options_method.http_method
    type          = "MOCK"
    request_templates = {
