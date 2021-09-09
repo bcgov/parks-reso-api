@@ -32,6 +32,7 @@ gc_notify_api_key = "${local.gc_notify_api_key}"
 gc_notify_parking_receipt_template_id = "${local.gc_notify_parking_receipt_template_id}"
 gc_notify_trail_receipt_template_id = "${local.gc_notify_trail_receipt_template_id}"
 gc_notify_cancel_template_id = "${local.gc_notify_cancel_template_id}"
+pass_cancellation_route = "${local.pass_cancellation_route}"
 public_url = "${local.public_url}"
 EOF
 }
