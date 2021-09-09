@@ -23,7 +23,7 @@ resource "aws_lambda_function" "readPassLambda" {
     variables = {
       TABLE_NAME = var.db_name,
       JWT_SECRET = local.jwtSecret.jwtSecret,
-      PUBLIC_FRONTEND = var.public_frontend,
+      PUBLIC_FRONTEND = var.public_url,
       GC_NOTIFY_API_PATH = var.gc_notify_api_path,
       GC_NOTIFY_API_KEY = var.gc_notify_api_key,
       GC_NOTIFY_CANCEL_TEMPLATE_ID = var.gc_notify_cancel_template_id,
@@ -49,7 +49,7 @@ resource "aws_lambda_function" "writePassLambda" {
     variables = {
       TABLE_NAME = var.db_name,
       JWT_SECRET = local.jwtSecret.jwtSecret,
-      PUBLIC_FRONTEND = var.public_frontend,
+      PUBLIC_FRONTEND = var.public_url,
       GC_NOTIFY_API_PATH = var.gc_notify_api_path,
       GC_NOTIFY_API_KEY = var.gc_notify_api_key,
       GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID = var.gc_notify_parking_receipt_template_id

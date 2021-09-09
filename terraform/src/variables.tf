@@ -1,4 +1,4 @@
-variable "public_frontend" {
+variable "public_url" {
   description = "full url to the base of the public front end"
 }
 
