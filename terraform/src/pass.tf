@@ -1,3 +1,13 @@
+data "aws_secretsmanager_secret_version" "jwt" {
+  secret_id = "${var.target_env}/ParksResoAPI/jwtSecret"
+}
+
+locals {
+  jwtSecret = jsondecode(
+    data.aws_secretsmanager_secret_version.jwt.secret_string
+  )
+}
+
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "readPassLambda" {
    function_name = "readPass"
@@ -12,7 +22,7 @@ resource "aws_lambda_function" "readPassLambda" {
    environment {
     variables = {
       TABLE_NAME = var.db_name,
-      JWT_SECRET = var.jwtSecret,
+      JWT_SECRET = local.jwtSecret.jwtSecret,
       PUBLIC_FRONTEND = var.public_frontend,
       GC_NOTIFY_API_PATH = var.gc_notify_api_path,
       GC_NOTIFY_API_KEY = var.gc_notify_api_key,
@@ -38,7 +48,7 @@ resource "aws_lambda_function" "writePassLambda" {
    environment {
     variables = {
       TABLE_NAME = var.db_name,
-      JWT_SECRET = var.jwtSecret,
+      JWT_SECRET = local.jwtSecret.jwtSecret,
       PUBLIC_FRONTEND = var.public_frontend,
       GC_NOTIFY_API_PATH = var.gc_notify_api_path,
       GC_NOTIFY_API_KEY = var.gc_notify_api_key,
@@ -65,7 +75,7 @@ resource "aws_lambda_function" "deletePassLambda" {
    environment {
     variables = {
       TABLE_NAME = var.db_name,
-      JWT_SECRET = var.jwtSecret
+      JWT_SECRET = local.jwtSecret.jwtSecret
     }
   }
 

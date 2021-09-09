@@ -9,7 +9,13 @@ include {
 locals {
   app_version = get_env("app_version", "")
   s3_bucket = get_env("s3_bucket", "")
-  target_env = get_env("target_env", "")
+  db_name = get_env("db_name", "")
+  gc_notify_api_path = get_env("gc_notify_api_path", "")
+  gc_notify_api_key = get_env("gc_notify_api_key", "")
+  gc_notify_parking_receipt_template_id = get_env("gc_notify_parking_receipt_template_id", "")
+  gc_notify_trail_receipt_template_id = get_env("gc_notify_trail_receipt_template_id", "")
+  gc_notify_cancel_template_id = get_env("gc_notify_cancel_template_id", "")
+  pass_cancellation_route = get_env("pass_cancellation_route", "")
 }
 
 generate "dev_tfvars" {
@@ -19,6 +25,12 @@ generate "dev_tfvars" {
   contents          = <<-EOF
 app_version = "${local.app_version}"
 s3_bucket = "${local.s3_bucket}"
-target_env = "${local.target_env}"
+db_name = "${local.db_name}"
+gc_notify_api_path = "${local.gc_notify_api_path}"
+gc_notify_api_key = "${local.gc_notify_api_key}"
+gc_notify_parking_receipt_template_id = "${local.gc_notify_parking_receipt_template_id}"
+gc_notify_trail_receipt_template_id = "${local.gc_notify_trail_receipt_template_id}"
+gc_notify_cancel_template_id = "${local.gc_notify_cancel_template_id}"
+pass_cancellation_route = "${local.pass_cancellation_route}"
 EOF
 }

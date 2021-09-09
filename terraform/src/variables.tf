@@ -16,10 +16,10 @@ variable "db_name" {
   # default     = "parkreso"
 }
 
-variable "jwtSecret" {
-  description = "JWT Secret"
-  # default     = "todo-changeme"
-}
+# variable "jwtSecret" {
+#   description = "JWT Secret"
+#   # default     = "todo-changeme"
+# }
 
 variable "gc_notify_api_path" {
   description = "Path to GC Notify email API endpoint"
@@ -53,10 +53,6 @@ variable "pass_cancellation_route" {
 
 variable "target_env" {
   description = "target environment"
-}
-
-variable "api_gateway_domain"{
-  description = "gateway domain"
 }
 
 variable "app_version"{
