@@ -1,8 +1,11 @@
-Jira Ticket:
-_FLCN-135_
+### Jira Ticket:
+FLCN-135
 
-Jira Ticket URL:
-_https://bcmines.atlassian.net/browse/FLCN-135_
+### Jira Ticket URL:
+https://bcmines.atlassian.net/browse/FLCN-135
 
-Version Type (major, minor, patch):
-_minor_
+### Version Type (major, minor, patch):
+minor
+
+### Description:
+This is a description.
