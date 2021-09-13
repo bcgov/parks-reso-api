@@ -2,7 +2,7 @@
 name: Deploy Prod
 on:
   release:
-    type: [released]
+    type: [published, edited, released]
 
 env:
   TF_VERSION: 0.14.7

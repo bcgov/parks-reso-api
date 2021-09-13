@@ -2,7 +2,7 @@
 name: Deploy Test
 on:
   release:
-    type: [prereleased]
+    type: [published, prereleased]
 
 env:
   TF_VERSION: 0.14.7
