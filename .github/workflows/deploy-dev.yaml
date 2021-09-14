@@ -1,8 +1,6 @@
 name: Deploy Dev
 
-on:
-  push:
-    branches: [main]
+on: pull_request
 
 env:
   TF_VERSION: 0.14.7
