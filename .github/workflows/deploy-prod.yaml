@@ -2,7 +2,7 @@
 name: Deploy Prod
 on:
   release:
-    type: [published, edited, released]
+    type: [published]
 
 env:
   TF_VERSION: 0.14.7
@@ -13,6 +13,7 @@ env:
 
 jobs:
   ci:
+    if: "!github.event.release.prerelease"
     name: Push to AWS Lambda
     runs-on: ubuntu-20.04
     environment: prod
