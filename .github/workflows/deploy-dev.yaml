@@ -103,11 +103,14 @@ jobs:
           for d in */ ; do
             cd $d && zip -r ../../artifacts/${d::-1}.zip ./ && cd ..
           done
+      
+      - name: Get PR Number
+        run: echo "PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')" >> $GITHUB_ENV
 
       - name: Upload zips to S3
         env:
           s3_bucket: "${{ env.S3_BUCKET }}-${{ env.TARGET_ENV }}"
-          dir_name: ${{ github.event.number }}
+          dir_name: ${{ env.PR_NUMBER }}
         run: |
           aws s3 sync ./artifacts s3://$s3_bucket/$dir_name/
 
@@ -127,7 +130,7 @@ jobs:
       - name: Terragrunt Apply
         working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
         env:
-          app_version: ${{ github.event.number }}
+          app_version: ${{ env.PR_NUMBER }}
           s3_bucket: ${{ env.S3_BUCKET }}
           db_name: ${{ env.DB_NAME }}
           gc_notify_api_path: ${{ env.GC_NOTIFY_API_PATH }}
