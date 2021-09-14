@@ -77,3 +77,15 @@ This creates several things in AWS:
 * DynamoDB
 * Cloudfront Distribution
 * Connections among S3, Cloudfront, DynamoDB and API Gateway.
+
+## Deploying to test and prod
+
+Test pipeline is triggered by publishing a release that is marked as a ```pre-release```.
+
+Prod pipeline is triggered by removing the ```pre-release``` tag from a release.
+
+# Config service
+
+Config service is used to alter frontend via DynamoDB. In Dynamo, an item with the PK and SK of config must exist. Within the attributes, you are able to set certain configurations such as ```KEYCLOAK_ENABLED```, ```API_LOCATION```, and ```debugMode```.
+
+This item is request by the front ends upon client connection.
