@@ -1,21 +1,23 @@
-name: Deploy Dev
-
+name: Deploy Prod
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      releaseTag:
+        description: 'Tag of version to be promoted to PROD'     
+        required: true
 
 env:
   TF_VERSION: 0.14.7
   TG_VERSION: 0.26.7
   TG_SRC_PATH: terraform
-  TFC_WORKSPACE: dev
-  TARGET_ENV: dev
+  TFC_WORKSPACE: prod
+  TARGET_ENV: prod
 
 jobs:
   ci:
     name: Push to AWS Lambda
     runs-on: ubuntu-20.04
-    environment: dev
+    environment: prod
 
     steps:
       ### Get environment variables from AWS Parameter Store ###
@@ -28,7 +30,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-duration-seconds: 900
-          role-session-name: parks-reso-api-dev-gh-action
+          role-session-name: parks-reso-api-prod-gh-action
           role-skip-session-tagging: true
 
       # API variables
@@ -76,6 +78,8 @@ jobs:
 
       - name: Check out the repo
         uses: actions/checkout@v2
+        with:
+            ref: ${{ github.event.inputs.releaseTag }}
 
       - name: Setup node
         uses: actions/setup-node@v2
@@ -104,10 +108,13 @@ jobs:
             cd $d && zip -r ../../artifacts/${d::-1}.zip ./ && cd ..
           done
 
+      - name: Get release version
+        run: echo "RELEASE_VERSION=${{ github.event.inputs.releaseTag }}" >> $GITHUB_ENV
+
       - name: Upload zips to S3
         env:
           s3_bucket: "${{ env.S3_BUCKET }}-${{ env.TARGET_ENV }}"
-          dir_name: ${{ github.run_number }}
+          dir_name: ${{ env.RELEASE_VERSION }}
         run: |
           aws s3 sync ./artifacts s3://$s3_bucket/$dir_name/
 
@@ -128,7 +135,7 @@ jobs:
         working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
         env:
           aws_region: ${{ secrets.AWS_REGION }}
-          app_version: ${{ github.run_number }}
+          app_version: ${{ env.RELEASE_VERSION }}
           s3_bucket: ${{ env.S3_BUCKET }}
           db_name: ${{ env.DB_NAME }}
           gc_notify_api_path: ${{ env.GC_NOTIFY_API_PATH }}
@@ -137,5 +144,5 @@ jobs:
           gc_notify_trail_receipt_template_id: ${{ env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID }}
           gc_notify_cancel_template_id: ${{ env.GC_NOTIFY_CANCEL_TEMPLATE_ID }}
           pass_cancellation_route: ${{ env.PASS_CANCELLATION_ROUTE }}
-          public_url: ${{ env.PUBLIC_URL }}
+          public_url: ${{ env.PUBLIC_URL }}          
         run: terragrunt apply-all --terragrunt-non-interactive

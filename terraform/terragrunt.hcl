@@ -3,6 +3,7 @@ locals {
   tfc_organization = "bcgov"
   project          = "pil3ef"
   environment      = reverse(split("/", get_terragrunt_dir()))[0]
+  aws_region       = get_env("AWS_REGION")
 }
 
 generate "remote_state" {
@@ -32,5 +33,14 @@ provider "aws" {
     role_arn = "arn:aws:iam::$${var.target_aws_account_id}:role/BCGOV_$${var.target_env}_Automation_Admin_Role"
   }
 }
+EOF
+}
+
+generate "common_vars" {
+  path              = "common.auto.tfvars"
+  if_exists         = "overwrite"
+  disable_signature = true
+  contents          = <<-EOF
+aws_region = "${local.aws_region}"
 EOF
 }
