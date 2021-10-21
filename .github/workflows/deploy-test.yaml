@@ -1,7 +1,10 @@
 name: Deploy Test
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+    inputs:
+      releaseTag:
+        description: 'Tag of version to be promoted to TEST'     
+        required: true
 
 env:
   TF_VERSION: 0.14.7
@@ -75,6 +78,8 @@ jobs:
 
       - name: Check out the repo
         uses: actions/checkout@v2
+        with:
+            ref: ${{ github.event.inputs.releaseTag }}
 
       - name: Setup node
         uses: actions/setup-node@v2
@@ -104,7 +109,7 @@ jobs:
           done
 
       - name: Get release version
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+        run: echo "RELEASE_VERSION=${{ github.event.inputs.releaseTag }}" >> $GITHUB_ENV
 
       - name: Upload zips to S3
         env:
@@ -129,6 +134,7 @@ jobs:
       - name: Terragrunt Apply
         working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
         env:
+          aws_region: ${{ secrets.AWS_REGION }}
           app_version: ${{ env.RELEASE_VERSION }}
           s3_bucket: ${{ env.S3_BUCKET }}
           db_name: ${{ env.DB_NAME }}
