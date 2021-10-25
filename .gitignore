@@ -1,3 +1,5 @@
 node_modules/
 *.lock.hcl
 *.DS_Store
+
+artifacts

@@ -1,5 +1,5 @@
 resource "aws_dynamodb_table" "park_dup_table" {
-  name           = var.db_name
+  name           = data.aws_ssm_parameter.db_name.value
   hash_key       = "pk"
   range_key      = "sk"
   read_capacity  = 1

@@ -1,37 +1,36 @@
 resource "aws_lambda_function" "check_expiry" {
-    function_name = "checkExpiry"
+  function_name = "checkExpiry"
 
-    s3_bucket = "${var.s3_bucket}-${var.target_env}"
-    s3_key    = "${var.app_version}/checkExpiry.zip"
+  filename         = "artifacts/checkExpiry.zip"
+  source_code_hash = filebase64sha256("artifacts/checkExpiry.zip")
 
-    handler = "index.handler"
-    runtime = "nodejs12.x"
+  handler = "index.handler"
+  runtime = "nodejs12.x"
 
-    environment {
-        variables = {
-            TABLE_NAME = var.db_name
-        }
+  environment {
+    variables = {
+      TABLE_NAME = data.aws_ssm_parameter.db_name.value
     }
-
-   role = aws_iam_role.readRole.arn
+  }
+  role = aws_iam_role.readRole.arn
 }
 
 resource "aws_cloudwatch_event_rule" "every_morning_at_12am" {
-    name = "every-morning-at-12am"
-    description = "Fires every morning at 2pm UTC (12am Pacific)"
-    schedule_expression = "cron(5 7 * * ? *)"
+  name                = "every-morning-at-12am"
+  description         = "Fires every morning at 2pm UTC (12am Pacific)"
+  schedule_expression = "cron(5 7 * * ? *)"
 }
 
 resource "aws_cloudwatch_event_target" "check_expiry_every_morning_at_12am" {
-    rule = aws_cloudwatch_event_rule.every_morning_at_12am.name
-    target_id = "check_expiry"
-    arn = aws_lambda_function.check_expiry.arn
+  rule      = aws_cloudwatch_event_rule.every_morning_at_12am.name
+  target_id = "check_expiry"
+  arn       = aws_lambda_function.check_expiry.arn
 }
 
 resource "aws_lambda_permission" "allow_cloudwatch_to_call_check_expiry" {
-    statement_id = "AllowExecutionFromCloudWatch"
-    action = "lambda:InvokeFunction"
-    function_name = aws_lambda_function.check_expiry.function_name
-    principal = "events.amazonaws.com"
-    source_arn = aws_cloudwatch_event_rule.every_morning_at_12am.arn
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.check_expiry.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.every_morning_at_12am.arn
 }

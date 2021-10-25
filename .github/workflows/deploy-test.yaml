@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       releaseTag:
-        description: 'Tag of version to be promoted to TEST'     
+        description: "Tag of version to be promoted to TEST"
         required: true
 
 env:
@@ -20,7 +20,19 @@ jobs:
     environment: test
 
     steps:
-      ### Get environment variables from AWS Parameter Store ###
+      - name: Attempt to checkout tag
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.releaseTag }}
+
+      - name: Tag not found
+        if: ${{ failure() }}
+        run: |
+          echo "::error::Git Tag not found, please double check input"
+          exit 1
+
+      - name: Save SHORT_HASH
+        run: echo "SHORT_HASH=`git rev-parse --short HEAD`" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -28,96 +40,13 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_SANDBOX }}
           role-duration-seconds: 900
-          role-session-name: parks-reso-api-test-gh-action
+          role-session-name: parks-reso-api-sandbox-gh-action
           role-skip-session-tagging: true
 
-      # API variables
-      - uses: "marvinpinto/action-inject-ssm-secrets@v1.2.1"
-        with:
-          ssm_parameter: "/parks-reso-api/s3-bucket"
-          env_variable_name: "S3_BUCKET"
-      - uses: "marvinpinto/action-inject-ssm-secrets@v1.2.1"
-        with:
-          ssm_parameter: "/parks-reso-api/db-name"
-          env_variable_name: "DB_NAME"
-      - uses: "marvinpinto/action-inject-ssm-secrets@v1.2.1"
-        with:
-          ssm_parameter: "/parks-reso-api/gc-notify-api-path"
-          env_variable_name: "GC_NOTIFY_API_PATH"
-      - uses: "marvinpinto/action-inject-ssm-secrets@v1.2.1"
-        with:
-          ssm_parameter: "/parks-reso-api/gc-notify-api-key"
-          env_variable_name: "GC_NOTIFY_API_KEY"
-      - uses: "marvinpinto/action-inject-ssm-secrets@v1.2.1"
-        with:
-          ssm_parameter: "/parks-reso-api/gc-notify-parking-receipt-template-id"
-          env_variable_name: "GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID"
-      - uses: "marvinpinto/action-inject-ssm-secrets@v1.2.1"
-        with:
-          ssm_parameter: "/parks-reso-api/gc-notify-trail-receipt-template-id"
-          env_variable_name: "GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID"
-      - uses: "marvinpinto/action-inject-ssm-secrets@v1.2.1"
-        with:
-          ssm_parameter: "/parks-reso-api/gc-notify-cancel-template-id"
-          env_variable_name: "GC_NOTIFY_CANCEL_TEMPLATE_ID"
-      - uses: "marvinpinto/action-inject-ssm-secrets@v1.2.1"
-        with:
-          ssm_parameter: "/parks-reso-api/pass-cancellation-route"
-          env_variable_name: "PASS_CANCELLATION_ROUTE"
-
-      # Public variables
-      - uses: "marvinpinto/action-inject-ssm-secrets@v1.2.1"
-        with:
-          ssm_parameter: "/parks-reso-public/url"
-          env_variable_name: "PUBLIC_URL"
-
-
-      ### Upload functions to S3 ###
-
-      - name: Check out the repo
-        uses: actions/checkout@v2
-        with:
-            ref: ${{ github.event.inputs.releaseTag }}
-
-      - name: Setup node
-        uses: actions/setup-node@v2
-        with:
-          node-version: 10
-
-      - name: Install packages
-        run: |
-          cd ./lambda && \
-          for d in */ ; do
-            cd $d && \
-            npm i && \
-            cd ..
-          done
-
-      - name: Install Zip
-        uses: montudor/action-zip@v1
-
-      - name: Make artifact directory
-        run: mkdir artifacts
-
-      - name: Zip function directories
-        run: |
-          cd ./lambda/ && \
-          for d in */ ; do
-            cd $d && zip -r ../../artifacts/${d::-1}.zip ./ && cd ..
-          done
-
-      - name: Get release version
-        run: echo "RELEASE_VERSION=${{ github.event.inputs.releaseTag }}" >> $GITHUB_ENV
-
-      - name: Upload zips to S3
-        env:
-          s3_bucket: "${{ env.S3_BUCKET }}-${{ env.TARGET_ENV }}"
-          dir_name: ${{ env.RELEASE_VERSION }}
-        run: |
-          aws s3 sync ./artifacts s3://$s3_bucket/$dir_name/
-
+      - name: Download previous build from S3
+        run: aws s3 cp s3://parks-reso-lambda-artifacts/${{ github.ref_name }}-${{ env.SHORT_HASH }}/ terraform/src/artifacts/ --recursive
 
       ### Run Terragrunt ###
 
@@ -135,14 +64,4 @@ jobs:
         working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
         env:
           aws_region: ${{ secrets.AWS_REGION }}
-          app_version: ${{ env.RELEASE_VERSION }}
-          s3_bucket: ${{ env.S3_BUCKET }}
-          db_name: ${{ env.DB_NAME }}
-          gc_notify_api_path: ${{ env.GC_NOTIFY_API_PATH }}
-          gc_notify_api_key: ${{ env.GC_NOTIFY_API_KEY }}
-          gc_notify_parking_receipt_template_id: ${{ env.GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID }}
-          gc_notify_trail_receipt_template_id: ${{ env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID }}
-          gc_notify_cancel_template_id: ${{ env.GC_NOTIFY_CANCEL_TEMPLATE_ID }}
-          pass_cancellation_route: ${{ env.PASS_CANCELLATION_ROUTE }}
-          public_url: ${{ env.PUBLIC_URL }}
         run: terragrunt apply-all --terragrunt-non-interactive

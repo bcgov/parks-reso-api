@@ -1,7 +1,7 @@
 resource "aws_iam_role" "readRole" {
-   name = "lambdaReadRole"
+  name = "lambdaReadRole"
 
-   assume_role_policy = <<EOF
+  assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -20,9 +20,9 @@ EOF
 }
 
 resource "aws_iam_role" "writeRole" {
-   name = "lambdaWriteRole"
+  name = "lambdaWriteRole"
 
-   assume_role_policy = <<EOF
+  assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -41,9 +41,9 @@ EOF
 }
 
 resource "aws_iam_role" "deleteRole" {
-   name = "lambdaDeleteRole"
+  name = "lambdaDeleteRole"
 
-   assume_role_policy = <<EOF
+  assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
