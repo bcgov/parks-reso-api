@@ -19,7 +19,7 @@ resource "aws_lambda_function" "readParkLambda" {
   filename         = "artifacts/readPark.zip"
   source_code_hash = filebase64sha256("artifacts/readPark.zip")
 
-  handler = "index.handler"
+  handler = "lambda/readPark/index.handler"
   runtime = "nodejs12.x"
 
   environment {
@@ -38,7 +38,7 @@ resource "aws_lambda_function" "writeParkLambda" {
   filename         = "artifacts/writePark.zip"
   source_code_hash = filebase64sha256("artifacts/writePark.zip")
 
-  handler = "index.handler"
+  handler = "lambda/writePark/index.handler"
   runtime = "nodejs12.x"
 
   environment {
