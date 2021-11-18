@@ -5,7 +5,7 @@ resource "aws_lambda_function" "readConfigLambda" {
   filename         = "artifacts/readConfig.zip"
   source_code_hash = filebase64sha256("artifacts/readConfig.zip")
 
-  handler = "index.handler"
+  handler = "lambda/readConfig/index.handler"
   runtime = "nodejs12.x"
 
   environment {
@@ -24,7 +24,7 @@ resource "aws_lambda_function" "writeConfigLambda" {
   filename         = "artifacts/writeConfig.zip"
   source_code_hash = filebase64sha256("artifacts/writeConfig.zip")
 
-  handler = "index.handler"
+  handler = "lambda/writeConfig/index.handler"
   runtime = "nodejs12.x"
 
   environment {

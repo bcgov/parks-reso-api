@@ -1,6 +1,5 @@
-
-const AWS = require('aws-sdk');
-const dynamodb = new AWS.DynamoDB();
+const { runQuery, setStatus } = require('../dynamoUtil');
+const { sendResponse } = require('../responseUtil');
 
 exports.handler = async (event, context) => {
     console.log('check expiry', event);
@@ -47,24 +46,7 @@ exports.handler = async (event, context) => {
     }
 }
 
-async function setStatus(passes, status) {
-  for(let i=0;i < passes.length;i++) {
-    let updateParams = {
-      Key: {
-        'pk': { S: passes[i].pk },
-        'sk': { S: passes[i].sk }
-      },
-      ExpressionAttributeValues: {
-        ':statusValue': { S: status }
-      },
-      UpdateExpression : "SET passStatus = :statusValue",
-      ReturnValues: "ALL_NEW",
-      TableName: process.env.TABLE_NAME
-    };
 
-    await dynamodb.updateItem(updateParams).promise();
-  }
-}
 
 function formatDate(d) {
   let month = '' + (d.getMonth() + 1),
@@ -77,29 +59,4 @@ function formatDate(d) {
       day = '0' + day;
 
   return [year, month, day].join('-');
-}
-
-const runQuery = async function (query) {
-  console.log("query:", query);
-  const data = await dynamodb.query(query).promise();
-  console.log("data:", data);
-  var unMarshalled = data.Items.map(item => {
-    return AWS.DynamoDB.Converter.unmarshall(item);
-  });
-  console.log(unMarshalled);
-  return unMarshalled;
-}
-
-const sendResponse = function (code, data, context) {
-  const response = {
-    statusCode: code,
-    headers: {
-      'Content-Type': 'application/json',
-      "Access-Control-Allow-Headers" : "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-      "Access-Control-Allow-Origin" : "*",
-      "Access-Control-Allow-Methods": "OPTIONS,GET"
-    },
-    body: JSON.stringify(data)
-  };
-  return response;
 }

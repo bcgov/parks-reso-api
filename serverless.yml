@@ -1,0 +1,142 @@
+service: parks-reso-api
+
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: api
+  region: ca-central-1
+  lambdaHashingVersion: 20201221
+
+package:
+  individually: true
+  patterns:
+    - '!./**' # This causes Serverless to only package referenced source files
+
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline
+  - serverless-plugin-include-dependencies
+
+functions:
+  ###########
+  # config
+  ###########
+  readConfig:
+    handler: lambda/readConfig/index.handler
+    events:
+      - http:
+          method: GET
+          path: /config
+          cors: true
+  writeConfig:
+    handler: lambda/writeConfig/index.handler
+    events:
+      - http:
+          method: POST
+          path: /config
+          cors: true
+
+  ###########
+  # park
+  ###########
+  readPark:
+    handler: lambda/readPark/index.handler
+    events:
+      - http:
+          method: GET
+          path: /park
+          cors: true
+  writePark:
+    handler: lambda/writePark/index.handler
+    events:
+      - http:
+          method: POST
+          path: /park
+          cors: true
+
+  ###########
+  # Facility
+  ###########
+  readFacility:
+    handler: lambda/readFacility/index.handler
+    events:
+      - http:
+          method: GET
+          path: /facility
+          cors: true
+  writeFacility:
+    handler: lambda/writeFacility/index.handler
+    events:
+      - http:
+          method: POST
+          path: /facility
+          cors: true
+
+  ###########
+  # Pass
+  ###########
+  readPass:
+    handler: lambda/readPass/index.handler
+    events:
+      - http:
+          method: GET
+          path: /pass
+          cors: true
+  writePass:
+    handler: lambda/writePass/index.handler
+    events:
+      - http:
+          method: POST
+          path: /pass
+          cors: true
+  deletePass:
+    handler: lambda/deletePass/index.handler
+    events:
+      - http:
+          method: DELETE
+          path: /pass
+          cors: true
+
+  ###########
+  # Jobs
+  ###########
+  # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-checkActivation
+  checkActivation:
+    handler: lambda/checkActivation/index.handler
+  # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-checkExpiry
+  checkExpiry:
+    handler: lambda/checkExpiry/index.handler
+
+custom:
+  dynamodb:
+    stages:
+      - api
+    start:
+      host: localhost
+      port: 8000
+      noStart: true
+      seed: true
+      migrate: true
+
+resources:
+  Resources:
+    bcprsCampingTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        TableName: parksreso
+        AttributeDefinitions:
+          - AttributeName: pk
+            AttributeType: S
+          - AttributeName: sk
+            AttributeType: S
+        KeySchema:
+          - AttributeName: pk
+            KeyType: HASH
+          - AttributeName: sk
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1

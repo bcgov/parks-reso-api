@@ -40,39 +40,22 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v2
         with:
-          node-version: 10
+          node-version: 12
+          cache: 'npm'
 
-      - name: Install packages
-        run: |
-          cd ./lambda && \
-          for d in */ ; do
-            cd $d && \
-            npm i && \
-            cd ..
-          done
+      - run: npm ci --ignore-scripts
 
-      - name: Install Zip
-        uses: montudor/action-zip@v1
-
-      - name: Make artifact directory
-        run: mkdir artifacts
-
-      - name: Zip function directories
-        run: |
-          cd ./lambda/ && \
-          for d in */ ; do
-            cd $d && zip -r ../../artifacts/${d::-1}.zip ./ && cd ..
-          done
+      - run: npm run build
 
       - name: Upload zips to S3
         run: |
           git_hash=$(git rev-parse --short HEAD)
-          aws s3 sync ./artifacts s3://parks-reso-lambda-artifacts/${{ env.GIT_BRANCH }}-$git_hash/ --delete
+          aws s3 sync ./artifacts s3://parks-reso-lambda-artifacts/${{ env.GIT_BRANCH }}-$git_hash/ --exclude "*" --include "*.zip" --delete
 
       - uses: actions/upload-artifact@v2
         with:
           name: lambda-builds
-          path: artifacts
+          path: artifacts/*.zip
 
   deploy:
     needs: build
