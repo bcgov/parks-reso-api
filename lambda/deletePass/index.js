@@ -32,7 +32,9 @@ exports.handler = async (event, context) => {
         ExpressionAttributeValues: {
           ':cancelled': { S: 'cancelled' }
         },
-        ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',
+        // If the pass is already cancelled, error so that we don't decrement the available
+        // count multiple times.
+        ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk) AND (NOT passStatus = :cancelled)',
         UpdateExpression: 'SET passStatus = :cancelled',
         ReturnValues: 'ALL_NEW',
         TableName: process.env.TABLE_NAME
