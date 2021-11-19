@@ -29,9 +29,9 @@ exports.handler = async (event, context) => {
         passQuery.ExpressionAttributeValues = {};
         passQuery.ExpressionAttributeValues[':pk'] = { S: 'pass::' + parkData[i].sk };
         passQuery.ExpressionAttributeValues[':yesterdaysDate'] = { S: yesterdaysDate };
-        passQuery.ExpressionAttributeValues[':reservedStatus'] = { S: 'reserved' };
+        passQuery.ExpressionAttributeValues[':activeStatus'] = { S: 'active' };
         passQuery.KeyConditionExpression = 'pk =:pk';
-        passQuery.FilterExpression = 'begins_with(#dateselector, :yesterdaysDate) AND passStatus =:reservedStatus';
+        passQuery.FilterExpression = 'begins_with(#dateselector, :yesterdaysDate) AND passStatus =:activeStatus';
 
         console.log("passQuery:", passQuery);
         const passData = await runQuery(passQuery);
