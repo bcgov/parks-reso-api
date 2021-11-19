@@ -9,7 +9,8 @@ exports.handler = async (event, context) => {
     };
 
     // Look for today's expiries
-    let yesterdaysDate = formatDate(new Date())
+    let yesterdaysDate = new Date();
+    yesterdaysDate.setDate(yesterdaysDate.getDate()-1);
 
     try {
       queryObj.ExpressionAttributeValues = {};
