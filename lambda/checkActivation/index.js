@@ -9,7 +9,7 @@ exports.handler = async (event, context) => {
   };
 
   // Look for today's activations
-  let todaysDate = formatDate(new Date());
+  let todaysDate = new Date().toISOString().split('T')[0];
 
   try {
     queryObj.ExpressionAttributeValues = {};
@@ -45,14 +45,3 @@ exports.handler = async (event, context) => {
     return sendResponse(200, { msg: 'Activation Check Complete' }, context);
   }
 };
-
-function formatDate(d) {
-  let month = '' + (d.getMonth() + 1),
-    day = '' + d.getDate(),
-    year = d.getFullYear();
-
-  if (month.length < 2) month = '0' + month;
-  if (day.length < 2) day = '0' + day;
-
-  return [year, month, day].join('-');
-}
