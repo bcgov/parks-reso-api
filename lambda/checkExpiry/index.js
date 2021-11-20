@@ -11,7 +11,7 @@ exports.handler = async (event, context) => {
   // Look for today's expiries
   let yd = new Date();
   yd.setDate(yd.getDate() - 1);
-  const yesterdaysDate = formatDate(yd);
+  const yesterdaysDate = yd.toISOString().split('T')[0];
 
   try {
     queryObj.ExpressionAttributeValues = {};
@@ -46,19 +46,4 @@ exports.handler = async (event, context) => {
     console.log(err);
     return sendResponse(200, { msg: 'Activation Check Complete' }, context);
   }
-}
-
-
-
-function formatDate(d) {
-  let month = '' + (d.getMonth() + 1),
-    day = '' + (d.getDate() - 1), // We need yesterday's date to check for moving active -> expired
-    year = d.getFullYear();
-
-  if (month.length < 2)
-    month = '0' + month;
-  if (day.length < 2)
-    day = '0' + day;
-
-  return [year, month, day].join('-');
 }
