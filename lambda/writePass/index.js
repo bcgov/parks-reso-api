@@ -104,6 +104,38 @@ exports.handler = async (event, context) => {
     const parkData = await runQuery(parkObj);
     console.log('ParkData:', parkData);
     if (parkData[0].visible === true) {
+      // Check existing pass for the same facility, email, type and date
+      try {
+        const existingPassCheckObject = {
+          TableName: process.env.TABLE_NAME,
+          KeyConditionExpression: 'pk = :pk',
+          FilterExpression:
+            'facilityName = :facilityName AND email = :email AND #type = :type AND #date = :date AND (passStatus = :reserved OR passStatus = :active)',
+          ExpressionAttributeNames: {
+            '#type': 'type',
+            '#date': 'date'
+          },
+          ExpressionAttributeValues: {
+            ':pk': { S: 'pass::' + parkName },
+            ':facilityName': { S: facilityName },
+            ':email': { S: email },
+            ':type': { S: type },
+            ':date': { S: date },
+            ':reserved': { S: 'reserved' },
+            ':active': { S: 'active' }
+          }
+        };
+
+        const existingItems = await dynamodb.query(existingPassCheckObject).promise();
+
+        if (existingItems.Count > 0) {
+          return sendResponse(400, { msg: 'Duplicate pass exists' });
+        }
+      } catch (err) {
+        console.log('err', err);
+        return sendResponse(400, { msg: 'Operation Failed' });
+      }
+
       try {
         // Make sure the key for the reservation exists
         let updateReservationObject = {
