@@ -41,10 +41,7 @@ exports.handler = async (event, context) => {
       // Filter Date
       if (event.queryStringParameters.date) {
         const theDate = new Date(event.queryStringParameters.date);
-        var month = ('0' + (theDate.getMonth() + 1)).slice(-2);
-        var day = ('0' + theDate.getUTCDate()).slice(-2);
-        var year = theDate.getUTCFullYear();
-        const dateselector = year + '-' + month + '-' + day;
+        const dateselector = theDate.toISOString().split('T')[0];
         queryObj = checkAddExpressionAttributeNames(queryObj);
         queryObj.ExpressionAttributeNames['#theDate'] = 'date';
         queryObj.ExpressionAttributeValues[':theDate'] = AWS.DynamoDB.Converter.input(dateselector);
@@ -109,10 +106,7 @@ exports.handler = async (event, context) => {
 
       if (passData && passData.data && passData.data.length !== 0) {
         const theDate = new Date(passData.data[0].date);
-        var month = ('0' + (theDate.getMonth() + 1)).slice(-2);
-        var day = ('0' + theDate.getUTCDate()).slice(-2);
-        var year = theDate.getUTCFullYear();
-        const dateselector = year + '' + month + '' + day;
+        const dateselector = theDate.toISOString().split('T')[0];
 
         // Build cancellation email payload
         const claims = {

@@ -96,10 +96,7 @@ exports.handler = async (event, context) => {
     parkObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
 
     const theDate = new Date(date);
-    var month = ('0' + (theDate.getMonth() + 1)).slice(-2);
-    var day = ('0' + theDate.getUTCDate()).slice(-2);
-    var year = theDate.getUTCFullYear();
-    const dateselector = year + '' + month + '' + day;
+    const dateselector = theDate.toISOString().split('T')[0];
 
     const parkData = await runQuery(parkObj);
     console.log('ParkData:', parkData);
