@@ -68,10 +68,13 @@ exports.handler = async (event, context) => {
 
     let gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
 
+    const dateOptions = {day: "numeric", month: "long", year: "numeric"};
+    const formattedDate = new Date(date).toLocaleDateString("en-US", dateOptions) + " (" + type + ")";
+
     let personalisation = {
       firstName: firstName,
       lastName: lastName,
-      date: date,
+      date: formattedDate,
       facilityName: facilityName,
       numberOfGuests: numberOfGuests.toString(),
       registrationNumber: registrationNumber.toString(),
