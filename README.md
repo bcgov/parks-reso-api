@@ -27,8 +27,8 @@ You can provide any value for them when using `dynamodb-local`. Real values are 
 ## Start Development Server
 
 ```
-npm install
-npm start
+yarn install
+yarn start
 ```
 
 Once server starts, the API will be available at http://localhost:3000/api. The local server is also configured to seed some basic data from the `data` directory.
@@ -38,7 +38,7 @@ Once server starts, the API will be available at http://localhost:3000/api. The 
 The Serverless Framework is setup to package Lambda functions into individual zip files which is then used by Terraform to deploy to AWS.
 
 ```
-npm run build
+yarn build
 ```
 
 # Deployment Pipeline
@@ -104,7 +104,7 @@ API requires a JWT secret for emails to work. This secret is stored in Secret Ma
 
 ## Install, zip and upload to S3
 
-For each of the functions we must run `npm i`. After that, each function directory is zipped up and uploaded to S3. These zips will then be pulled down by Terraform Cloud.
+For each of the functions we must run `yarn install`. After that, each function directory is zipped up and uploaded to S3. These zips will then be pulled down by Terraform Cloud.
 
 ## Terragrunt and Terraform Cloud
 

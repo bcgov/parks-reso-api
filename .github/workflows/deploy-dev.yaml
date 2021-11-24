@@ -34,18 +34,17 @@ jobs:
 
       ### Upload functions to S3 ###
 
-      - name: Check out the repo
-        uses: actions/checkout@v2
-
-      - name: Setup node
-        uses: actions/setup-node@v2
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
         with:
-          node-version: 12
-          cache: 'npm'
+          path: '**/node_modules'
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
 
-      - run: npm ci --ignore-scripts
+      - name: Install dependencies
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: yarn install --frozen-lockfile
 
-      - run: npm run build
+      - run: yarn build
 
       - name: Upload zips to S3
         run: |
