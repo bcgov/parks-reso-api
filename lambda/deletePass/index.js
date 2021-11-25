@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const jwt = require('jsonwebtoken');
 
-const { dynamodb } = require('../dynamoUtil');
+const { dynamodb, runQuery } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
 
@@ -24,7 +24,7 @@ exports.handler = async (event, context) => {
       }
 
       // Get the specific pass, this person is NOT authenticated
-      let updatePass = {
+      const updatePassQuery = {
         Key: {
           pk: { S: 'pass::' + decodedToken.parkName },
           sk: { S: decodedToken.passId }
@@ -36,15 +36,12 @@ exports.handler = async (event, context) => {
         // count multiple times.
         ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk) AND (NOT passStatus = :cancelled)',
         UpdateExpression: 'SET passStatus = :cancelled',
-        ReturnValues: 'ALL_NEW',
         TableName: process.env.TABLE_NAME
       };
-      console.log('updatePass:', updatePass);
-      const passRes = await dynamodb.updateItem(updatePass).promise();
-      console.log('passRes:', passRes);
+      console.log('updatePassQuery:', updatePassQuery);
 
       // Deduct the pass's numberOfGuests count from the trail period count.
-      let updateFacility = {
+      const updateFacilityQuery = {
         Key: {
           pk: { S: 'facility::' + decodedToken.parkName },
           sk: { S: decodedToken.facilityName }
@@ -58,34 +55,79 @@ exports.handler = async (event, context) => {
         },
         UpdateExpression: 'SET reservations.#dateselector.#type = reservations.#dateselector.#type - :passReducedBy',
         ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',
-        ReturnValues: 'ALL_NEW',
         TableName: process.env.TABLE_NAME
       };
-      console.log('updateFacility:', updateFacility);
-      const facilityRes = await dynamodb.updateItem(updateFacility).promise();
-      console.log('facilityRes:', facilityRes);
+      console.log('updateFacilityQuery:', updateFacilityQuery);
+
+      const res = await dynamodb
+        .transactWriteItems({
+          TransactItems: [
+            {
+              Update: updatePassQuery
+            },
+            {
+              Update: updateFacilityQuery
+            }
+          ]
+        })
+        .promise();
+      console.log('res:', res);
 
       return sendResponse(200, { msg: 'Cancelled' }, context);
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
       if ((await checkPermissions(event)) === false) {
         return sendResponse(403, { msg: 'Unauthorized!' });
       } else {
-        let updatePass = {
+        // We need to lookup the pass to get the date & facility
+        const passQuery = {
+          TableName: process.env.TABLE_NAME,
+          ExpressionAttributeValues: {
+            ':pk': { S: `pass::${event.queryStringParameters.park}` },
+            ':sk': { S: event.queryStringParameters.passId }
+          },
+          KeyConditionExpression: 'pk = :pk AND sk = :sk'
+        };
+        const [pass] = await runQuery(passQuery);
+
+        const updatePassQuery = {
           Key: {
-            pk: { S: 'pass::' + event.queryStringParameters.park },
+            pk: { S: `pass::${event.queryStringParameters.park}` },
             sk: { S: event.queryStringParameters.passId }
           },
           ExpressionAttributeValues: {
             ':cancelled': { S: 'cancelled' }
           },
-          ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',
+          // If the pass is already cancelled, error so that we don't decrement the available
+          // count multiple times.
+          ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk) AND (NOT passStatus = :cancelled)',
           UpdateExpression: 'SET passStatus = :cancelled',
-          ReturnValues: 'ALL_NEW',
           TableName: process.env.TABLE_NAME
         };
-        console.log('updatePass:', updatePass);
-        const facilityRes = await dynamodb.updateItem(updatePass).promise();
-        console.log('FacRes:', facilityRes);
+        console.log('updatePassQuery:', updatePassQuery);
+
+        const reservationCountCountQuery = {
+          Key: {
+            pk: { S: `facility::${event.queryStringParameters.park}` },
+            sk: { S: pass.facilityName }
+          },
+          ExpressionAttributeValues: {
+            ':passReducedBy': { N: pass.numberOfGuests.toString() }
+          },
+          ExpressionAttributeNames: {
+            '#type': pass.type,
+            '#dateselector': pass.date.split('T')[0]
+          },
+          UpdateExpression: 'SET reservations.#dateselector.#type = reservations.#dateselector.#type - :passReducedBy',
+          ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',
+          TableName: process.env.TABLE_NAME
+        };
+        const res = await dynamodb
+          .transactWriteItems({
+            TransactItems: [{ Update: updatePassQuery }, { Update: reservationCountCountQuery }]
+          })
+          .promise();
+        console.log('res:', res);
+
         return sendResponse(200, { msg: 'Cancelled' }, context);
       }
     } else {
