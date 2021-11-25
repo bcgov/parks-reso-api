@@ -16,7 +16,33 @@ exports.handler = async (event, context) => {
     console.log(event.body);
     let newObject = JSON.parse(event.body);
 
-    let { parkName, bookingTimes, name, status, type, visible, mode, stateReason, ...otherProps } = newObject;
+    let { 
+      parkName,
+      bookingTimes,
+      name,
+      status,
+      type,
+      visible,
+      mode,
+      stateReason,
+      bookingOpeningHour,
+      bookingDaysAhead,
+      ...otherProps
+    } = newObject;
+
+    const bookingOpeningHourAttrValue = {};
+    const bookingDaysAheadAttrValue = {};
+
+    if (bookingOpeningHour) {
+      bookingOpeningHourAttrValue.N = bookingOpeningHour.toString();
+    } else {
+      bookingOpeningHourAttrValue.NULL = true;
+    }
+    if (bookingDaysAhead) {
+      bookingDaysAheadAttrValue.N = bookingDaysAhead.toString();
+    } else {
+      bookingDaysAheadAttrValue.NULL = true;
+    }
 
     if (mode !== 'editFacililty') {
       // Add facility
@@ -30,6 +56,8 @@ exports.handler = async (event, context) => {
       facilityObject.Item['visible'] = { BOOL: visible };
       // Add reservations property to bookingtimes.
       facilityObject.Item['reservations'] = { M: {} };
+      facilityObject.Item['bookingOpeningHour'] = bookingOpeningHourAttrValue;
+      facilityObject.Item['bookingDaysAhead'] = bookingDaysAheadAttrValue;
 
       console.log('putting item:', facilityObject);
       const res = await dynamodb.putItem(facilityObject).promise();
@@ -45,13 +73,15 @@ exports.handler = async (event, context) => {
         ExpressionAttributeValues: {
           ':statusValue': { M: AWS.DynamoDB.Converter.marshall(status) },
           ':visibility': { BOOL: visible },
-          ':bookingTimes': { M: AWS.DynamoDB.Converter.marshall(bookingTimes) }
+          ':bookingTimes': { M: AWS.DynamoDB.Converter.marshall(bookingTimes) },
+          ':bookingOpeningHour': bookingOpeningHourAttrValue,
+          ':bookingDaysAhead': bookingDaysAheadAttrValue,
         },
         ExpressionAttributeNames: {
           '#facilityStatus': 'status',
           '#visibility': 'visible'
         },
-        UpdateExpression: 'SET #facilityStatus =:statusValue, bookingTimes =:bookingTimes, #visibility =:visibility',
+        UpdateExpression: 'SET #facilityStatus =:statusValue, bookingTimes =:bookingTimes, #visibility =:visibility, bookingOpeningHour = :bookingOpeningHour, bookingDaysAhead = :bookingDaysAhead',
         ReturnValues: 'ALL_NEW',
         TableName: process.env.TABLE_NAME
       };
