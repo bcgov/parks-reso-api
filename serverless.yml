@@ -18,7 +18,6 @@ plugins:
   - serverless-dynamodb-local
   - serverless-offline
   - serverless-plugin-include-dependencies
-
 functions:
   ###########
   # config
@@ -53,6 +52,10 @@ functions:
     events:
       - http:
           method: POST
+          path: /park
+          cors: true
+      - http:
+          method: PUT
           path: /park
           cors: true
 
