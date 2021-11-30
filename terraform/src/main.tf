@@ -77,6 +77,14 @@ resource "aws_api_gateway_method" "writeMethod" {
   authorization = "NONE"
 }
 
+// Defines the HTTP PUT /park API
+resource "aws_api_gateway_method" "writeMethod" {
+  rest_api_id   = aws_api_gateway_rest_api.apiLambda.id
+  resource_id   = aws_api_gateway_resource.readResource.id
+  http_method   = "PUT"
+  authorization = "NONE"
+}
+
 // Integrates the APIG to Lambda via POST method
 resource "aws_api_gateway_integration" "readIntegration" {
   rest_api_id = aws_api_gateway_rest_api.apiLambda.id
