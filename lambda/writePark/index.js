@@ -10,7 +10,7 @@ exports.handler = async (event, context) => {
   }
 
   if (!(new Set(["POST","PUT"]).has(event.httpMethod))) {
-    return sendResponse(404, { msg: 'Not Implemented' }, context);
+    return sendResponse(405, { msg: 'Not Implemented' }, context);
   }
 
   if ((await checkPermissions(event)) === false) {
