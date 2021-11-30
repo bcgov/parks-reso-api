@@ -29,3 +29,11 @@ data "aws_ssm_parameter" "pass_cancellation_route" {
 data "aws_ssm_parameter" "public_url" {
   name = "/parks-reso-public/url"
 }
+
+data "aws_ssm_parameter" "advance_booking_limit" {
+  name = "/parks-reso-api/advance-booking-limit"
+}
+
+data "aws_ssm_parameter" "advance_booking_hour" {
+  name = "/parks-reso-api/advance-booking-hour"
+}

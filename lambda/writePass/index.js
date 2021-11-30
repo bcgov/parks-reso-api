@@ -4,6 +4,10 @@ const axios = require('axios');
 const { dynamodb, runQuery } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 
+const ADVANCE_BOOKING_LIMIT = parseInt(process.env.ADVANCE_BOOKING_LIMIT, 10) || 3;
+const ADVANCE_BOOKING_HOUR = parseInt(process.env.ADVANCE_BOOKING_HOUR, 10) || 7;
+const BOOKING_TIMEZONE = 'America/Vancouver';
+
 exports.handler = async (event, context) => {
   let passObject = {
     TableName: process.env.TABLE_NAME
@@ -37,6 +41,43 @@ exports.handler = async (event, context) => {
 
     if (facilityType === 'Parking') {
       numberOfGuests = 1;
+    }
+
+    // Lookup the facility to confirm that booking is allowed
+    // (we are in the booking window and the facility is open and public)
+    const facilityQuery = {
+      TableName: process.env.TABLE_NAME,
+      ExpressionAttributeValues: {
+        ':pk': { S: `facility::${parkName}` },
+        ':sk': { S: facilityName },
+        ':visible': { BOOL: true }
+      },
+      KeyConditionExpression: 'pk = :pk AND sk = :sk',
+      FilterExpression: 'visible = :visible'
+    };
+    const facilityRes = await runQuery(facilityQuery);
+
+    if (facilityRes.length === 0) {
+      console.log('Facility not found.');
+      return sendResponse(404, { msg: 'Facility not found' });
+    }
+    const facility = facilityRes[0];
+
+    if (facility.status.state !== 'open') {
+      console.log('Facility is not open.');
+      return sendResponse(400, { msg: 'Facility is closed' });
+    }
+
+    const { minBookingDate, maxBookingDate } = getBookingDateRange(facility);
+    // the `date` param is a UTC full timestamp, e.g. '2021-11-25T16:18:46.758Z',
+    // but could be shortened to an ISO date in future
+    const bookingDate = new Date(date);
+    if (bookingDate < minBookingDate || bookingDate > maxBookingDate) {
+      console.log(
+        `Booking date ${bookingDate} outside of allowed booking range of
+        (${minBookingDate} to ${maxBookingDate})`
+      );
+      return sendResponse(400, { msg: 'Invalid booking date' });
     }
 
     passObject.Item = {};
@@ -248,6 +289,34 @@ exports.handler = async (event, context) => {
     return sendResponse(400, { msg: 'Operation Failed' });
   }
 };
+
+function getBookingDateRange(facility) {
+  const bookingOpeningHour = facility.bookingOpeningHour || ADVANCE_BOOKING_HOUR;
+  const bookingDaysAhead = facility.bookingDaysAhead || ADVANCE_BOOKING_LIMIT;
+  // Server time is UTC
+  const now = new Date();
+
+  // check the current date/time in the booking timezone
+  const currentYear = now.toLocaleString('en-US', { year: 'numeric', timeZone: BOOKING_TIMEZONE });
+  const currentMonth = now.toLocaleString('en-US', { month: '2-digit', timeZone: BOOKING_TIMEZONE });
+  const currentDay = now.toLocaleString('en-US', { day: '2-digit', timeZone: BOOKING_TIMEZONE });
+  const currentHour = now.toLocaleString('en-US', { hour: '2-digit', hour12: false, timeZone: BOOKING_TIMEZONE });
+
+  const minBookingDate = new Date(`${currentYear}-${currentMonth}-${currentDay}`);
+  const maxBookingDate = new Date(minBookingDate);
+  // if it is after the opening time locally, allow booking the full window.
+  // Otherwise, subtract 1 from the window.
+  if (parseInt(currentHour, 10) >= bookingOpeningHour) {
+    maxBookingDate.setDate(maxBookingDate.getDate() + bookingDaysAhead);
+  } else {
+    maxBookingDate.setDate(maxBookingDate.getDate() + bookingDaysAhead - 1);
+  }
+  maxBookingDate.setHours(23, 59, 59, 999);
+
+  return {
+    maxBookingDate, minBookingDate
+  }
+}
 
 function generate(count) {
   // TODO: Make this better

@@ -53,6 +53,8 @@ resource "aws_lambda_function" "writePassLambda" {
       GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID = data.aws_ssm_parameter.gc_notify_parking_receipt_template_id.value,
       GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID   = data.aws_ssm_parameter.gc_notify_trail_receipt_template_id.value,
       PASS_CANCELLATION_ROUTE               = data.aws_ssm_parameter.pass_cancellation_route.value,
+      ADVANCE_BOOKING_LIMIT                 = data.aws_ssm_parameter.advance_booking_limit.value,
+      ADVANCE_BOOKING_HOUR                  = data.aws_ssm_parameter.advance_booking_hour.value,
     }
   }
 
