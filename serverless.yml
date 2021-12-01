@@ -4,7 +4,7 @@ frameworkVersion: '2'
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs14.x
   stage: api
   region: ca-central-1
   lambdaHashingVersion: 20201221
@@ -19,6 +19,32 @@ plugins:
   - serverless-offline
   - serverless-plugin-include-dependencies
 functions:
+  ###########
+  # captcha
+  ###########
+  generateCaptcha:
+    handler: lambda/captcha/handler.generateCaptcha
+    events:
+      - http:
+          method: POST
+          path: /captcha
+          cors: true
+  verifyCaptcha:
+    handler: lambda/captcha/handler.verifyAnswer
+    events:
+      - http:
+          method: POST
+          path: /captcha/verify
+          cors: true
+
+  generateCaptchaAudio:
+    handler: lambda/captcha/handler.generateAudio
+    events:
+      - http:
+          method: POST
+          path: /captcha/audio
+          cors: true
+
   ###########
   # config
   ###########

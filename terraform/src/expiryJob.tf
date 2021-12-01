@@ -5,7 +5,7 @@ resource "aws_lambda_function" "check_expiry" {
   source_code_hash = filebase64sha256("artifacts/checkExpiry.zip")
 
   handler = "lambda/checkExpiry/index.handler"
-  runtime = "nodejs12.x"
+  runtime = "nodejs14.x"
 
   environment {
     variables = {

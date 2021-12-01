@@ -1,6 +1,7 @@
 const AWS = require('aws-sdk');
 const axios = require('axios');
 
+const { verifyJWT } = require('../captchaUtil');
 const { dynamodb, runQuery } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 
@@ -27,8 +28,18 @@ exports.handler = async (event, context) => {
       phoneNumber,
       facilityType,
       license,
+      captchaJwt,
       ...otherProps
     } = newObject;
+
+    if (!captchaJwt || !captchaJwt.length) {
+      return sendResponse(400, { msg: 'Missing CAPTCHA verification' });
+    }
+
+    const verifcation = verifyJWT(captchaJwt);
+    if (!verifcation.valid) {
+      return sendResponse(400, { msg: 'CAPTCHA verification failed' });
+    }
 
     // Enforce maximum limit per pass
     if (facilityType === 'Trail' && numberOfGuests > 4) {
@@ -68,8 +79,8 @@ exports.handler = async (event, context) => {
 
     let gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
 
-    const dateOptions = {day: "numeric", month: "long", year: "numeric"};
-    const formattedDate = new Date(date).toLocaleDateString("en-US", dateOptions) + " (" + type + ")";
+    const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+    const formattedDate = new Date(date).toLocaleDateString('en-US', dateOptions) + ' (' + type + ')';
 
     let personalisation = {
       firstName: firstName,

@@ -20,7 +20,7 @@ resource "aws_lambda_function" "readParkLambda" {
   source_code_hash = filebase64sha256("artifacts/readPark.zip")
 
   handler = "lambda/readPark/index.handler"
-  runtime = "nodejs12.x"
+  runtime = "nodejs14.x"
 
   environment {
     variables = {
@@ -39,7 +39,7 @@ resource "aws_lambda_function" "writeParkLambda" {
   source_code_hash = filebase64sha256("artifacts/writePark.zip")
 
   handler = "lambda/writePark/index.handler"
-  runtime = "nodejs12.x"
+  runtime = "nodejs14.x"
 
   environment {
     variables = {
@@ -78,7 +78,7 @@ resource "aws_api_gateway_method" "writeMethod" {
 }
 
 // Defines the HTTP PUT /park API
-resource "aws_api_gateway_method" "writeMethod" {
+resource "aws_api_gateway_method" "putMethod" {
   rest_api_id   = aws_api_gateway_rest_api.apiLambda.id
   resource_id   = aws_api_gateway_resource.readResource.id
   http_method   = "PUT"
@@ -107,16 +107,50 @@ resource "aws_api_gateway_integration" "writeIntegration" {
   uri                     = aws_lambda_function.writeParkLambda.invoke_arn
 }
 
+resource "aws_api_gateway_integration" "putIntegration" {
+  rest_api_id = aws_api_gateway_rest_api.apiLambda.id
+  resource_id = aws_api_gateway_resource.readResource.id
+  http_method = aws_api_gateway_method.putMethod.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.writeParkLambda.invoke_arn
+}
+
 resource "aws_api_gateway_deployment" "apideploy" {
-  depends_on = [aws_api_gateway_integration.readIntegration,
+  depends_on = [
+    aws_api_gateway_integration.readIntegration,
     aws_api_gateway_integration.writeIntegration,
+    aws_api_gateway_integration.putIntegration,
     aws_api_gateway_integration.readPassIntegration,
     aws_api_gateway_integration.writePassIntegration,
-  aws_api_gateway_integration.deletePassIntegration]
+    aws_api_gateway_integration.deletePassIntegration,
+    aws_api_gateway_integration.readFacilityIntegration,
+    aws_api_gateway_integration.writeFacilityIntegration,
+    aws_api_gateway_integration.generateCaptchaIntegration,
+    aws_api_gateway_integration.captchaVerifyIntegration,
+    aws_api_gateway_integration.captchaAudioIntegration
+  ]
 
   rest_api_id = aws_api_gateway_rest_api.apiLambda.id
 
-  // TODO: Change this from prod to version??
+  triggers = {
+    redeployment = sha1(jsonencode(aws_api_gateway_rest_api.apiLambda.body))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  variables = {
+    "timestamp" = timestamp()
+  }
+}
+
+resource "aws_api_gateway_stage" "api_stage" {
+  deployment_id = aws_api_gateway_deployment.apideploy.id
+  rest_api_id   = aws_api_gateway_rest_api.apiLambda.id
+
   stage_name = "api"
 }
 
@@ -134,6 +168,14 @@ resource "aws_lambda_permission" "writePermission" {
   function_name = aws_lambda_function.writeParkLambda.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/POST/park"
+}
+
+resource "aws_lambda_permission" "putPermission" {
+  statement_id  = "AllowParksDayUsePassAPIInvokePut"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.writeParkLambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/PUT/park"
 }
 
 //CORS

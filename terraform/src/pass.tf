@@ -16,7 +16,7 @@ resource "aws_lambda_function" "readPassLambda" {
   source_code_hash = filebase64sha256("artifacts/readPass.zip")
 
   handler = "lambda/readPass/index.handler"
-  runtime = "nodejs12.x"
+  runtime = "nodejs14.x"
 
   environment {
     variables = {
@@ -41,7 +41,7 @@ resource "aws_lambda_function" "writePassLambda" {
   source_code_hash = filebase64sha256("artifacts/writePass.zip")
 
   handler = "lambda/writePass/index.handler"
-  runtime = "nodejs12.x"
+  runtime = "nodejs14.x"
 
   environment {
     variables = {
@@ -67,7 +67,7 @@ resource "aws_lambda_function" "deletePassLambda" {
   source_code_hash = filebase64sha256("artifacts/deletePass.zip")
 
   handler = "lambda/deletePass/index.handler"
-  runtime = "nodejs12.x"
+  runtime = "nodejs14.x"
 
   environment {
     variables = {

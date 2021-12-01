@@ -38,7 +38,7 @@ test('Handler - 403 Unauthorized - invalid token', async () => {
   );
 });
 
-test('GET fails - 404 - Not Implemented', async () => {
+test('GET fails - 405 - Not Implemented', async () => {
   const event = {
     headers: {
       Authorization: "Bearer " + token
@@ -54,7 +54,7 @@ test('GET fails - 404 - Not Implemented', async () => {
         "Access-Control-Allow-Origin": "*",
         "Content-Type": "application/json"
       },
-      "statusCode": 404
+      "statusCode": 405
     }
   );
 });
