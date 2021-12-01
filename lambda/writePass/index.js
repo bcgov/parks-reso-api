@@ -36,8 +36,8 @@ exports.handler = async (event, context) => {
       return sendResponse(400, { msg: 'Missing CAPTCHA verification' });
     }
 
-    const verifcation = verifyJWT(captchaJwt);
-    if (!verifcation.valid) {
+    const verification = verifyJWT(captchaJwt);
+    if (!verification.valid) {
       return sendResponse(400, { msg: 'CAPTCHA verification failed' });
     }
 
