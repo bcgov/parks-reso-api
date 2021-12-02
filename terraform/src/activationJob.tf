@@ -5,7 +5,7 @@ resource "aws_lambda_function" "check_activation" {
   source_code_hash = filebase64sha256("artifacts/checkActivation.zip")
 
   handler = "lambda/checkActivation/index.handler"
-  runtime = "nodejs12.x"
+  runtime = "nodejs14.x"
 
   environment {
     variables = {

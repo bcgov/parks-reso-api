@@ -1,5 +1,14 @@
 node_modules/
 *.lock.hcl
 *.DS_Store
+.terragrunt-cache
+
+**/package-lock.json
 
 artifacts
+.serverless
+
+captcha/lib
+captcha/tests/test.html
+captcha/.env
+captcha/logs

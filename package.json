@@ -5,9 +5,12 @@
   "dependencies": {
     "axios": "^0.24.0",
     "jsonwebtoken": "^8.5.1",
-    "jwks-rsa": "^2.0.5"
+    "jwks-rsa": "^2.0.5",
+    "node-jose": "^2.0.0",
+    "svg-captcha": "^1.4.0"
   },
   "devDependencies": {
+    "aws-sdk-mock": "^5.4.0",
     "jest": "^27.4.0",
     "serverless": "^2.61.0",
     "serverless-dynamodb-local": "^0.2.40",
@@ -16,6 +19,7 @@
   },
   "scripts": {
     "start": "sls offline start",
-    "build": "sls package --package ./artifacts"
+    "build": "sls package --package ./artifacts",
+    "test": "jest"
   }
 }

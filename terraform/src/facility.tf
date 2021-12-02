@@ -6,7 +6,7 @@ resource "aws_lambda_function" "readFacilityLambda" {
   source_code_hash = filebase64sha256("artifacts/readFacility.zip")
 
   handler = "lambda/readFacility/index.handler"
-  runtime = "nodejs12.x"
+  runtime = "nodejs14.x"
 
   environment {
     variables = {
@@ -25,7 +25,7 @@ resource "aws_lambda_function" "writeFacilityLambda" {
   source_code_hash = filebase64sha256("artifacts/writeFacility.zip")
 
   handler = "lambda/writeFacility/index.handler"
-  runtime = "nodejs12.x"
+  runtime = "nodejs14.x"
 
   environment {
     variables = {

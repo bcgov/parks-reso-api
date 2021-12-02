@@ -10,3 +10,8 @@ variable "aws_region" {
 variable "target_env" {
   description = "target environment"
 }
+
+variable "captcha_sign_expiry" {
+  default = "5"
+  description = "CAPTCHA JWT signature expiry duration in minutes"
+}

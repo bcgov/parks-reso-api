@@ -22,7 +22,7 @@ docker run -d -p 8000:8000 --name dynamodb amazon/dynamodb-local -jar DynamoDBLo
 
 The AWS credentials `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` must exist in your environment as environment variables or in the `.aws` credential file. These values are used by the `aws-sdk` to instantiate sdk objects.
 
-You can provide any value for them when using `dynamodb-local`. Real values are needed when performing operations on remote AWS services.
+You can provide any value for them when using `dynamodb-local`. Real values are needed when performing operations on remote AWS services such as generating CAPTCHA audio using AWS Polly.
 
 ## Start Development Server
 

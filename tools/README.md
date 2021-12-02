@@ -10,4 +10,4 @@ this script populates a dynamo database called parksreso from a json file output
 3. login using the aws console credentials for the project you want to move the data into
 4. run the script:
 
-`python3 ./dynamoMigrator.py`
+`node dynamoRestore.js`
