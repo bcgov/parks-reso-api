@@ -33,12 +33,12 @@ exports.handler = async (event, context) => {
     const bookingOpeningHourAttrValue = {};
     const bookingDaysAheadAttrValue = {};
 
-    if (bookingOpeningHour) {
+    if (bookingOpeningHour || bookingOpeningHour === 0) {
       bookingOpeningHourAttrValue.N = bookingOpeningHour.toString();
     } else {
       bookingOpeningHourAttrValue.NULL = true;
     }
-    if (bookingDaysAhead) {
+    if (bookingDaysAhead || bookingDaysAhead === 0) {
       bookingDaysAheadAttrValue.N = bookingDaysAhead.toString();
     } else {
       bookingDaysAheadAttrValue.NULL = true;
