@@ -58,6 +58,14 @@ resource "aws_api_gateway_method" "writeFacilityMethod" {
   authorization = "NONE"
 }
 
+// Defines the HTTP PUT /facility API
+resource "aws_api_gateway_method" "putFacilityMethod" {
+  rest_api_id   = aws_api_gateway_rest_api.apiLambda.id
+  resource_id   = aws_api_gateway_resource.readResource.id
+  http_method   = "PUT"
+  authorization = "NONE"
+}
+
 // Integrates the APIG to Lambda via POST method
 resource "aws_api_gateway_integration" "readFacilityIntegration" {
   rest_api_id = aws_api_gateway_rest_api.apiLambda.id
@@ -80,6 +88,16 @@ resource "aws_api_gateway_integration" "writeFacilityIntegration" {
   uri                     = aws_lambda_function.writeFacilityLambda.invoke_arn
 }
 
+resource "aws_api_gateway_integration" "putIntegration" {
+  rest_api_id = aws_api_gateway_rest_api.apiLambda.id
+  resource_id = aws_api_gateway_resource.readResource.id
+  http_method = aws_api_gateway_method.putFacilityMethod.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.writeFacilityLambda.invoke_arn
+}
+
 resource "aws_lambda_permission" "readFacilityPermission" {
   statement_id  = "AllowParksDayUseFacilityAPIInvoke"
   action        = "lambda:InvokeFunction"
@@ -94,6 +112,14 @@ resource "aws_lambda_permission" "writeFacilityPermission" {
   function_name = aws_lambda_function.writeFacilityLambda.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/POST/facility"
+}
+
+resource "aws_lambda_permission" "putFacilityPermission" {
+  statement_id  = "AllowParksDayUseFacilityAPIInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.writeFacilityLambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/PUT/facility"
 }
 
 //CORS
