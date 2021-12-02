@@ -102,6 +102,10 @@ functions:
           method: POST
           path: /facility
           cors: true
+      - http:
+          method: PUT
+          path: /facility
+          cors: true
 
   ###########
   # Pass

@@ -127,6 +127,7 @@ resource "aws_api_gateway_deployment" "apideploy" {
     aws_api_gateway_integration.deletePassIntegration,
     aws_api_gateway_integration.readFacilityIntegration,
     aws_api_gateway_integration.writeFacilityIntegration,
+    aws_api_gateway_integration.putFacilityIntegration,
     aws_api_gateway_integration.generateCaptchaIntegration,
     aws_api_gateway_integration.captchaVerifyIntegration,
     aws_api_gateway_integration.captchaAudioIntegration
