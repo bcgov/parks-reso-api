@@ -61,7 +61,7 @@ resource "aws_api_gateway_method" "writeFacilityMethod" {
 // Defines the HTTP PUT /facility API
 resource "aws_api_gateway_method" "putFacilityMethod" {
   rest_api_id   = aws_api_gateway_rest_api.apiLambda.id
-  resource_id   = aws_api_gateway_resource.readResource.id
+  resource_id   = aws_api_gateway_resource.facilityResource.id
   http_method   = "PUT"
   authorization = "NONE"
 }
@@ -90,7 +90,7 @@ resource "aws_api_gateway_integration" "writeFacilityIntegration" {
 
 resource "aws_api_gateway_integration" "putFacilityIntegration" {
   rest_api_id = aws_api_gateway_rest_api.apiLambda.id
-  resource_id = aws_api_gateway_resource.readResource.id
+  resource_id = aws_api_gateway_resource.facilityResource.id
   http_method = aws_api_gateway_method.putFacilityMethod.http_method
 
   integration_http_method = "POST"
@@ -115,7 +115,7 @@ resource "aws_lambda_permission" "writeFacilityPermission" {
 }
 
 resource "aws_lambda_permission" "putFacilityPermission" {
-  statement_id  = "AllowParksDayUseFacilityAPIInvoke"
+  statement_id  = "AllowParksDayUseFacilityAPIInvokePut"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.writeFacilityLambda.function_name
   principal     = "apigateway.amazonaws.com"
