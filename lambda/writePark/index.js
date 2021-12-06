@@ -56,6 +56,8 @@ async function createItem(obj, context) {
   parkObject.Item['visible'] = { BOOL: visible };
   if (park.mapLink) {
     parkObject.Item['mapLink'] = AWS.DynamoDB.Converter.input(park.mapLink);
+  } else {
+    parkObject.Item['mapLink'] = { NULL: true };
   }
 
   console.log('putting item:', parkObject);
@@ -137,11 +139,16 @@ async function updateItem(obj, context) {
       '#up_status': 'status'
     };
   }
+  updateParams.UpdateExpression = updateParams.UpdateExpression + ' mapLink =:mapLink,';
   if (obj?.park?.mapLink) {
-    updateParams.UpdateExpression = updateParams.UpdateExpression + ' mapLink =:mapLink,';
     updateParams.ExpressionAttributeValues = {
       ...updateParams.ExpressionAttributeValues,
       ':mapLink': AWS.DynamoDB.Converter.input(obj.park.mapLink)
+    };
+  } else {
+    updateParams.ExpressionAttributeValues = {
+      ...updateParams.ExpressionAttributeValues,
+      ':mapLink': { NULL: true }
     };
   }
 
