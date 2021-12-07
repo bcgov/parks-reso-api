@@ -1,5 +1,5 @@
 data "aws_secretsmanager_secret_version" "private_key" {
-  secret_id = "${var.target_env}/parks-reso-admin/captcha-private-key"
+  secret_id = "${var.target_env}/parks-reso-api/captcha-private-key"
 }
 
 locals {
