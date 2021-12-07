@@ -82,15 +82,6 @@ async function updateItem(obj, context) {
   };
 
   updateParams.UpdateExpression =
-    'bcParksLink' in obj
-      ? updateParams.UpdateExpression + ' bcParksLink =:bcParksLink,'
-      : updateParams.UpdateExpression;
-  updateParams.ExpressionAttributeValues = {
-    ...updateParams.ExpressionAttributeValues,
-    ...('bcParksLink' in obj && { ':bcParksLink': AWS.DynamoDB.Converter.input(obj.bcParksLink) })
-  };
-
-  updateParams.UpdateExpression =
     'description' in obj
       ? updateParams.UpdateExpression + ' description =:description,'
       : updateParams.UpdateExpression;
@@ -117,28 +108,42 @@ async function updateItem(obj, context) {
       '#up_name': 'name'
     };
   }
-  if ('capacity' in obj) {
+  if (obj?.park?.capacity) {
     updateParams.UpdateExpression = updateParams.UpdateExpression + ' #up_capacity =:capacity,';
     updateParams.ExpressionAttributeValues = {
       ...updateParams.ExpressionAttributeValues,
-      ':capacity': AWS.DynamoDB.Converter.input(obj.capacity)
+      ':capacity': AWS.DynamoDB.Converter.input(obj.park.capacity)
     };
     updateParams.ExpressionAttributeNames = {
       ...updateParams.ExpressionAttributeNames,
       '#up_capacity': 'capacity'
     };
   }
-  if ('status' in obj) {
+  if (obj?.park?.status) {
     updateParams.UpdateExpression = updateParams.UpdateExpression + ' #up_status =:status,';
     updateParams.ExpressionAttributeValues = {
       ...updateParams.ExpressionAttributeValues,
-      ':status': AWS.DynamoDB.Converter.input(obj.status)
+      ':status': AWS.DynamoDB.Converter.input(obj.park.status)
     };
     updateParams.ExpressionAttributeNames = {
       ...updateParams.ExpressionAttributeNames,
       '#up_status': 'status'
     };
   }
+
+  updateParams.UpdateExpression = updateParams.UpdateExpression + ' bcParksLink =:bcParksLink,';
+  if (obj?.park?.bcParksLink) {
+    updateParams.ExpressionAttributeValues = {
+      ...updateParams.ExpressionAttributeValues,
+      ':bcParksLink': AWS.DynamoDB.Converter.input(obj.park.bcParksLink)
+    };
+  } else {
+    updateParams.ExpressionAttributeValues = {
+      ...updateParams.ExpressionAttributeValues,
+      ':bcParksLink': { NULL: true }
+    };
+  }
+
   updateParams.UpdateExpression = updateParams.UpdateExpression + ' mapLink =:mapLink,';
   if (obj?.park?.mapLink) {
     updateParams.ExpressionAttributeValues = {
