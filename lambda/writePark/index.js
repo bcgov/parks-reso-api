@@ -9,7 +9,7 @@ exports.handler = async (event, context) => {
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
-  if (!(new Set(["POST","PUT"]).has(event.httpMethod))) {
+  if (!new Set(['POST', 'PUT']).has(event.httpMethod)) {
     return sendResponse(405, { msg: 'Not Implemented' }, context);
   }
 
@@ -54,6 +54,11 @@ async function createItem(obj, context) {
   }
   parkObject.Item['status'] = { S: park.status };
   parkObject.Item['visible'] = { BOOL: visible };
+  if (park.mapLink) {
+    parkObject.Item['mapLink'] = AWS.DynamoDB.Converter.input(park.mapLink);
+  } else {
+    parkObject.Item['mapLink'] = { NULL: true };
+  }
 
   console.log('putting item:', parkObject);
   const res = await dynamodb.putItem(parkObject).promise();
@@ -67,55 +72,83 @@ async function updateItem(obj, context) {
   let updateParams = {
     Key: {
       pk: { S: 'park' },
-      sk: { S: sk },
+      sk: { S: sk }
     },
     ExpressionAttributeValues: {},
-    UpdateExpression: "set",
-    ReturnValues: "ALL_NEW",
+    UpdateExpression: 'set',
+    ReturnValues: 'ALL_NEW',
     TableName: process.env.TABLE_NAME,
     ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)'
   };
 
-  updateParams.UpdateExpression = ('bcParksLink' in obj) ? updateParams.UpdateExpression + ' bcParksLink =:bcParksLink,': updateParams.UpdateExpression
-  updateParams.ExpressionAttributeValues = { ...updateParams.ExpressionAttributeValues, ...('bcParksLink' in obj) && { ':bcParksLink': AWS.DynamoDB.Converter.input(obj.bcParksLink) }};
+  updateParams.UpdateExpression =
+    'bcParksLink' in obj
+      ? updateParams.UpdateExpression + ' bcParksLink =:bcParksLink,'
+      : updateParams.UpdateExpression;
+  updateParams.ExpressionAttributeValues = {
+    ...updateParams.ExpressionAttributeValues,
+    ...('bcParksLink' in obj && { ':bcParksLink': AWS.DynamoDB.Converter.input(obj.bcParksLink) })
+  };
 
-  updateParams.UpdateExpression = ('description' in obj) ? updateParams.UpdateExpression + ' description =:description,': updateParams.UpdateExpression
-  updateParams.ExpressionAttributeValues = { ...updateParams.ExpressionAttributeValues, ...('description' in obj) && { ':description': AWS.DynamoDB.Converter.input(obj.description) }};
+  updateParams.UpdateExpression =
+    'description' in obj
+      ? updateParams.UpdateExpression + ' description =:description,'
+      : updateParams.UpdateExpression;
+  updateParams.ExpressionAttributeValues = {
+    ...updateParams.ExpressionAttributeValues,
+    ...('description' in obj && { ':description': AWS.DynamoDB.Converter.input(obj.description) })
+  };
 
-  updateParams.UpdateExpression = ('visible' in obj) ? updateParams.UpdateExpression + ' visible =:visible,': updateParams.UpdateExpression
-  updateParams.ExpressionAttributeValues = { ...updateParams.ExpressionAttributeValues, ...('visible' in obj) && { ':visible': AWS.DynamoDB.Converter.input(obj.visible) }};
+  updateParams.UpdateExpression =
+    'visible' in obj ? updateParams.UpdateExpression + ' visible =:visible,' : updateParams.UpdateExpression;
+  updateParams.ExpressionAttributeValues = {
+    ...updateParams.ExpressionAttributeValues,
+    ...('visible' in obj && { ':visible': AWS.DynamoDB.Converter.input(obj.visible) })
+  };
 
   // Reserved Words
   if (obj?.park?.name) {
     updateParams.UpdateExpression = updateParams.UpdateExpression + ' #up_name =:name,';
     updateParams.ExpressionAttributeValues = {
       ...updateParams.ExpressionAttributeValues,
-     ':name': AWS.DynamoDB.Converter.input(obj.park.name)
+      ':name': AWS.DynamoDB.Converter.input(obj.park.name)
     };
     updateParams.ExpressionAttributeNames = {
-      '#up_name': "name"
-    }
+      '#up_name': 'name'
+    };
   }
   if ('capacity' in obj) {
     updateParams.UpdateExpression = updateParams.UpdateExpression + ' #up_capacity =:capacity,';
     updateParams.ExpressionAttributeValues = {
       ...updateParams.ExpressionAttributeValues,
-     ':capacity': AWS.DynamoDB.Converter.input(obj.capacity)
+      ':capacity': AWS.DynamoDB.Converter.input(obj.capacity)
     };
     updateParams.ExpressionAttributeNames = {
       ...updateParams.ExpressionAttributeNames,
-      '#up_capacity': "capacity"
-    }
+      '#up_capacity': 'capacity'
+    };
   }
   if ('status' in obj) {
     updateParams.UpdateExpression = updateParams.UpdateExpression + ' #up_status =:status,';
     updateParams.ExpressionAttributeValues = {
       ...updateParams.ExpressionAttributeValues,
-     ':status': AWS.DynamoDB.Converter.input(obj.status)
+      ':status': AWS.DynamoDB.Converter.input(obj.status)
     };
     updateParams.ExpressionAttributeNames = {
       ...updateParams.ExpressionAttributeNames,
-      '#up_status': "status"
+      '#up_status': 'status'
+    };
+  }
+  updateParams.UpdateExpression = updateParams.UpdateExpression + ' mapLink =:mapLink,';
+  if (obj?.park?.mapLink) {
+    updateParams.ExpressionAttributeValues = {
+      ...updateParams.ExpressionAttributeValues,
+      ':mapLink': AWS.DynamoDB.Converter.input(obj.park.mapLink)
+    };
+  } else {
+    updateParams.ExpressionAttributeValues = {
+      ...updateParams.ExpressionAttributeValues,
+      ':mapLink': { NULL: true }
     };
   }
 
