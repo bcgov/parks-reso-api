@@ -1,0 +1,33 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: yarn install
+    - name: Setup DynamoDB Local
+      uses: rrainn/dynamodb-action@v2.0.0
+      with:
+        sharedDb: true
+        port: 8000
+        cors: '*'
+    - run: yarn test
+      env:
+        IS_OFFLINE: true
+        AWS_REGION: local-env
+        AWS_ACCESS_KEY_ID: notused
+        AWS_SECRET_ACCESS_KEY: notused

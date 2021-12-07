@@ -10,6 +10,7 @@
     "svg-captcha": "^1.4.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.44.0",
     "aws-sdk-mock": "^5.4.0",
     "jest": "^27.4.0",
     "serverless": "^2.61.0",
@@ -20,6 +21,9 @@
   "scripts": {
     "start": "sls offline start",
     "build": "sls package --package ./artifacts",
-    "test": "jest"
+    "test": "jest --coverage"
+  },
+  "jest": {
+    "verbose": true
   }
 }
