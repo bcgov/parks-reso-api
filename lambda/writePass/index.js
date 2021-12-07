@@ -5,13 +5,21 @@ const { verifyJWT } = require('../captchaUtil');
 const { dynamodb, runQuery } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 
+const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
+
 exports.handler = async (event, context) => {
   let passObject = {
-    TableName: process.env.TABLE_NAME
+    TableName: TABLE_NAME
   };
 
+  if (!event) {
+    return sendResponse(400, {
+      msg: 'There was an error in your submission.',
+      title: 'Bad Request'
+    }, context);
+  }
+
   try {
-    console.log(event.body);
     let newObject = JSON.parse(event.body);
 
     const registrationNumber = generate(10);
@@ -33,17 +41,26 @@ exports.handler = async (event, context) => {
     } = newObject;
 
     if (!captchaJwt || !captchaJwt.length) {
-      return sendResponse(400, { msg: 'Missing CAPTCHA verification' });
+      return sendResponse(400, { 
+                                 msg: 'Missing CAPTCHA verification.', 
+                                 title: 'Missing CAPTCHA verification'
+                               });
     }
 
     const verification = verifyJWT(captchaJwt);
     if (!verification.valid) {
-      return sendResponse(400, { msg: 'CAPTCHA verification failed' });
+      return sendResponse(400, { 
+                                 msg: 'CAPTCHA verification failed.', 
+                                 title: 'CAPTCHA verification failed'
+                               });
     }
 
     // Enforce maximum limit per pass
     if (facilityType === 'Trail' && numberOfGuests > 4) {
-      return sendResponse(400, { msg: 'Operation Failed' });
+      return sendResponse(400, { 
+                                 msg: 'You cannot have more than 4 guests on a trail.', 
+                                 title: 'Too many guests'
+                               });
     }
 
     if (facilityType === 'Parking') {
@@ -101,7 +118,7 @@ exports.handler = async (event, context) => {
 
     // Only let pass come through if there's enough room
     let parkObj = {
-      TableName: process.env.TABLE_NAME
+      TableName: TABLE_NAME
     };
 
     parkObj.ExpressionAttributeValues = {};
@@ -118,7 +135,7 @@ exports.handler = async (event, context) => {
       // Check existing pass for the same facility, email, type and date
       try {
         const existingPassCheckObject = {
-          TableName: process.env.TABLE_NAME,
+          TableName: TABLE_NAME,
           KeyConditionExpression: 'pk = :pk',
           FilterExpression:
             'facilityName = :facilityName AND email = :email AND #type = :type AND #date = :date AND (passStatus = :reserved OR passStatus = :active)',
@@ -140,11 +157,14 @@ exports.handler = async (event, context) => {
         const existingItems = await dynamodb.query(existingPassCheckObject).promise();
 
         if (existingItems.Count > 0) {
-          return sendResponse(400, { msg: 'Duplicate pass exists' });
+          return sendResponse(400, {
+            title: 'This email account already has a reservation for this booking time.',
+            msg: 'A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>'
+          });
         }
       } catch (err) {
         console.log('err', err);
-        return sendResponse(400, { msg: 'Operation Failed' });
+        return sendResponse(400, { msg: 'Something went wrong.', title:'Operation Failed' });
       }
 
       try {
@@ -163,7 +183,7 @@ exports.handler = async (event, context) => {
           UpdateExpression: 'SET reservations.#dateselector = :dateSelectorInitialValue',
           ConditionExpression: 'attribute_not_exists(reservations.#dateselector)',
           ReturnValues: 'ALL_NEW',
-          TableName: process.env.TABLE_NAME
+          TableName: TABLE_NAME
         };
         console.log('updateReservationObject:', updateReservationObject);
         const updateReservationObjectRes = await dynamodb.updateItem(updateReservationObject).promise();
@@ -190,7 +210,7 @@ exports.handler = async (event, context) => {
           UpdateExpression: 'SET reservations.#dateselector.#type = :dateSelectorInitialValue',
           ConditionExpression: 'attribute_not_exists(reservations.#dateselector.#type)',
           ReturnValues: 'ALL_NEW',
-          TableName: process.env.TABLE_NAME
+          TableName: TABLE_NAME
         };
         console.log('addingProperty:', addingProperty);
         const addingPropertyRes = await dynamodb.updateItem(addingProperty).promise();
@@ -219,7 +239,7 @@ exports.handler = async (event, context) => {
           'SET reservations.#dateselector.#type = if_not_exists(reservations.#dateselector.#type, :start) + :inc',
         ConditionExpression: '#booking.#type.#maximum > reservations.#dateselector.#type',
         ReturnValues: 'ALL_NEW',
-        TableName: process.env.TABLE_NAME
+        TableName: TABLE_NAME
       };
       console.log('updateFacility:', updateFacility);
       const facilityRes = await dynamodb.updateItem(updateFacility).promise();
@@ -252,11 +272,11 @@ exports.handler = async (event, context) => {
       }
     } else {
       // Not allowed for whatever reason.
-      return sendResponse(400, { msg: 'Operation Failed' });
+      return sendResponse(400, { msg: 'Something went wrong.', title:'Operation Failed' });
     }
   } catch (err) {
     console.log('err', err);
-    return sendResponse(400, { msg: 'Operation Failed' });
+    return sendResponse(400, { msg: 'Something went wrong.', title:'Operation Failed' });
   }
 };
 
