@@ -292,7 +292,7 @@ function generate(count) {
 
 async function getParkInformation(parkName) {
   let queryObj = {
-    TableName: process.env.TABLE_NAME
+    TableName: TABLE_NAME
   };
   queryObj.ExpressionAttributeValues = {};
   queryObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
