@@ -268,9 +268,10 @@ exports.handler = async (event, context) => {
             personalisation: personalisation
           }
         });
-
+        console.log('GCNotify email sent.');
         return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
       } catch (err) {
+        console.log('GCNotify error:', err);
         let errRes = AWS.DynamoDB.Converter.unmarshall(passObject.Item);
         errRes['err'] = 'Email Failed to Send';
         return sendResponse(200, errRes);
