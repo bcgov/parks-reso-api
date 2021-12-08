@@ -1,5 +1,4 @@
 const writePassHandler = require('../lambda/writePass/index');
-
 const {DocumentClient} = require('aws-sdk/clients/dynamodb');
 
 const isTest = true;
@@ -261,7 +260,7 @@ describe('Pass Successes', () => {
     await databaseOperation(1, 'teardown');
   });
 
-  test('Handler - 200 Email Failed to Send, but pass has been created.', async () => {
+  test('Handler - 200 Email Failed to Send, but pass has been created for a Trail.', async () => {
     const event = {
       body: JSON.stringify({
         parkName: 'Test Park 1',
@@ -295,6 +294,44 @@ describe('Pass Successes', () => {
     expect(body.passStatus).toEqual('reserved');
     expect(body.phoneNumber).toEqual('2505555555');
     expect(body.facilityType).toEqual('Trail');
+    expect(typeof body.err).toBe('string');
+  });
+
+  test('Handler - 200 Email Failed to Send, but pass has been created for a Parking Pass.', async () => {
+    const event = {
+      body: JSON.stringify({
+        parkName: 'Test Park 1',
+        firstName: 'Jest',
+        lastName: 'User',
+        facilityName: 'Parking lot A',
+        email: 'noreply@gov.bc.ca',
+        date: new Date(),
+        type: 'AM',
+        numberOfGuests: 1,
+        phoneNumber: '2505555555',
+        facilityType: 'Parking',
+        mapLink: 'http://maps.google.com',
+        license: 'abc123',
+        captchaJwt: token
+      })
+    };
+
+    const response = await writePassHandler.handler(event, null);
+    expect(response.statusCode).toEqual(200);
+    const body = JSON.parse(response.body);
+    expect(body.pk).toEqual("pass::Test Park 1");
+    expect(typeof body.sk).toBe('string');
+    expect(body.firstName).toEqual('Jest');
+    expect(body.lastName).toEqual('User');
+    expect(body.facilityName).toEqual('Parking lot A');
+    expect(body.email).toEqual('noreply@gov.bc.ca');
+    expect(typeof body.date).toBe('string');
+    expect(body.type).toEqual('AM');
+    expect(typeof body.registrationNumber).toBe('string');
+    expect(body.numberOfGuests).toEqual(1);
+    expect(body.passStatus).toEqual('reserved');
+    expect(body.phoneNumber).toEqual('2505555555');
+    expect(body.facilityType).toEqual('Parking');
     expect(typeof body.err).toBe('string');
   });
 });
