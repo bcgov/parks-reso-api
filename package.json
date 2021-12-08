@@ -12,7 +12,10 @@
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.44.0",
     "aws-sdk-mock": "^5.4.0",
+    "date-fns": "^2.27.0",
+    "date-fns-tz": "^1.1.6",
     "jest": "^27.4.0",
+    "mockdate": "^3.0.5",
     "serverless": "^2.61.0",
     "serverless-dynamodb-local": "^0.2.40",
     "serverless-offline": "^8.2.0",
@@ -21,7 +24,7 @@
   "scripts": {
     "start": "sls offline start",
     "build": "sls package --package ./artifacts",
-    "test": "jest --coverage"
+    "test": "IS_OFFLINE=1 jest --coverage"
   },
   "jest": {
     "verbose": true
