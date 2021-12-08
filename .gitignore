@@ -3,6 +3,9 @@ node_modules/
 *.DS_Store
 .terragrunt-cache
 
+yarn-error.log
+coverage/
+
 **/package-lock.json
 
 artifacts

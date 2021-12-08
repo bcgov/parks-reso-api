@@ -99,6 +99,9 @@ exports.handler = async (event, context) => {
     const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
     const formattedDate = new Date(date).toLocaleDateString('en-US', dateOptions) + ' (' + type + ')';
 
+    // Get park's mapLink
+    const parkInformation = await getParkInformation(parkName);
+
     let personalisation = {
       firstName: firstName,
       lastName: lastName,
@@ -106,7 +109,9 @@ exports.handler = async (event, context) => {
       facilityName: facilityName,
       numberOfGuests: numberOfGuests.toString(),
       registrationNumber: registrationNumber.toString(),
-      cancellationLink: encodedCancellationLink
+      cancellationLink: encodedCancellationLink,
+      parkName: parkName,
+      mapLink: parkInformation.mapLink
     };
 
     // Mandatory if parking.
@@ -283,4 +288,17 @@ exports.handler = async (event, context) => {
 function generate(count) {
   // TODO: Make this better
   return Math.random().toString().substr(count);
+}
+
+async function getParkInformation(parkName) {
+  let queryObj = {
+    TableName: process.env.TABLE_NAME
+  };
+  queryObj.ExpressionAttributeValues = {};
+  queryObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
+  queryObj.ExpressionAttributeValues[':sk'] = { S: parkName };
+  queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
+  queryObj.ExpressionAttributeValues[':visible'] = { BOOL: true };
+  queryObj.FilterExpression = 'visible =:visible';
+  return await runQuery(queryObj);
 }
