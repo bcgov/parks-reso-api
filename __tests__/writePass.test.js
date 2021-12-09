@@ -1,6 +1,8 @@
 const writePassHandler = require('../lambda/writePass/index');
 const {DocumentClient} = require('aws-sdk/clients/dynamodb');
 
+const TABLE_NAME = process.env.TABLE_NAME || 'parksresotest';
+
 const isTest = true;
 const config = {
   convertEmptyValues: true,
@@ -28,7 +30,7 @@ async function initializeDatabase() {
     const AWS = require("aws-sdk");
     const dynamo = new AWS.DynamoDB(config);
     await dynamo.createTable({
-      TableName: 'parksreso',
+      TableName: TABLE_NAME,
       KeySchema: [
         {
           AttributeName: 'pk',
@@ -340,20 +342,21 @@ async function databaseOperation(version, mode) {
   if (version === 1) {
     if (mode === 'setup') {
       await ddb.put({
-                      TableName: 'parksreso',
+                      TableName: TABLE_NAME,
                       Item: {
                         "pk": "park",
                         "sk": "Test Park 1",
                         "name": "Test Park 1",
                         "description": "<p>My Description</p>",
                         "bcParksLink": "http://google.ca",
+                        "mapLink": "https://maps.google.com",
                         "status": "open",
                         "visible": true
                       }
                     }).promise();
 
       await ddb.put({
-          TableName: 'parksreso',
+          TableName: TABLE_NAME,
           Item: {
             "pk": "facility::Test Park 1",
             "sk": "Parking lot A",
@@ -377,14 +380,14 @@ async function databaseOperation(version, mode) {
       console.log("Teardown")
       // Teardown
       await ddb.delete({
-        TableName: 'parksreso',
+        TableName: TABLE_NAME,
         Key: {
           "pk": "park",
           "sk": "Test Park 1"
         }
       }).promise();
       await ddb.delete({
-        TableName: 'parksreso',
+        TableName: TABLE_NAME,
         Key: {
           "pk": "facility::Test Park 1",
           "sk": "Parking lot A"
