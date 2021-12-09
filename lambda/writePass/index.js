@@ -99,8 +99,17 @@ exports.handler = async (event, context) => {
     const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
     const formattedDate = new Date(date).toLocaleDateString('en-US', dateOptions) + ' (' + type + ')';
 
-    // Get park's mapLink
-    const parkInformation = await getParkInformation(parkName);
+    // Only let pass come through if there's enough room
+    let parkObj = {
+      TableName: TABLE_NAME
+    };
+
+    parkObj.ExpressionAttributeValues = {};
+    parkObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
+    parkObj.ExpressionAttributeValues[':sk'] = { S: parkName };
+    parkObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
+    const parkData = await runQuery(parkObj);
+    console.log('ParkData:', parkData);
 
     let personalisation = {
       firstName: firstName,
@@ -111,7 +120,7 @@ exports.handler = async (event, context) => {
       registrationNumber: registrationNumber.toString(),
       cancellationLink: encodedCancellationLink,
       parkName: parkName,
-      mapLink: parkInformation.mapLink
+      mapLink: parkData[0].mapLink
     };
 
     // Mandatory if parking.
@@ -121,21 +130,9 @@ exports.handler = async (event, context) => {
       personalisation['license'] = license;
     }
 
-    // Only let pass come through if there's enough room
-    let parkObj = {
-      TableName: TABLE_NAME
-    };
-
-    parkObj.ExpressionAttributeValues = {};
-    parkObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
-    parkObj.ExpressionAttributeValues[':sk'] = { S: parkName };
-    parkObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
-
     const theDate = new Date(date);
     const dateselector = theDate.toISOString().split('T')[0];
 
-    const parkData = await runQuery(parkObj);
-    console.log('ParkData:', parkData);
     if (parkData[0].visible === true) {
       // Check existing pass for the same facility, email, type and date
       try {
@@ -289,17 +286,4 @@ exports.handler = async (event, context) => {
 function generate(count) {
   // TODO: Make this better
   return Math.random().toString().substr(count);
-}
-
-async function getParkInformation(parkName) {
-  let queryObj = {
-    TableName: TABLE_NAME
-  };
-  queryObj.ExpressionAttributeValues = {};
-  queryObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
-  queryObj.ExpressionAttributeValues[':sk'] = { S: parkName };
-  queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
-  queryObj.ExpressionAttributeValues[':visible'] = { BOOL: true };
-  queryObj.FilterExpression = 'visible =:visible';
-  return await runQuery(queryObj);
 }
