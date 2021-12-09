@@ -15,14 +15,14 @@ resource "aws_lambda_function" "check_activation" {
   role = aws_iam_role.readRole.arn
 }
 
-resource "aws_cloudwatch_event_rule" "every_morning_at_7am" {
-  name                = "every-morning-at-7am"
-  description         = "Fires every morning at 2pm UTC (7am Pacific)"
-  schedule_expression = "cron(0 14 * * ? *)"
+resource "aws_cloudwatch_event_rule" "activation_every_hour" {
+  name                = "activation-every-hour"
+  description         = "Fires hourly"
+  schedule_expression = "cron(0 * * * ? *)"
 }
 
-resource "aws_cloudwatch_event_target" "check_activation_every_morning_at_7am" {
-  rule      = aws_cloudwatch_event_rule.every_morning_at_7am.name
+resource "aws_cloudwatch_event_target" "check_activation_every_hour" {
+  rule      = aws_cloudwatch_event_rule.activation_every_hour.name
   target_id = "check_activation"
   arn       = aws_lambda_function.check_activation.arn
 }
@@ -32,5 +32,5 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_check_activation" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.check_activation.function_name
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.every_morning_at_7am.arn
+  source_arn    = aws_cloudwatch_event_rule.activation_every_hour.arn
 }

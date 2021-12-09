@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
 
+const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 const options = {
   region: 'ca-central-1'
 };
@@ -24,10 +25,11 @@ async function setStatus(passes, status) {
       },
       UpdateExpression: 'SET passStatus = :statusValue',
       ReturnValues: 'ALL_NEW',
-      TableName: process.env.TABLE_NAME
+      TableName: TABLE_NAME
     };
 
-    await dynamodb.updateItem(updateParams).promise();
+    const res = await dynamodb.updateItem(updateParams).promise();
+    console.log(`Set status of ${res.Attributes?.type?.S} pass ${res.Attributes?.sk?.S} to ${status}`);
   }
 }
 
@@ -49,8 +51,45 @@ async function runQuery(query, paginated = false) {
   }
 }
 
+async function getConfig() {
+  const configQuery = {
+    TableName: TABLE_NAME,
+    KeyConditionExpression: 'pk = :pk AND sk = :sk',
+    ExpressionAttributeValues: {
+      ':pk': { S: 'config' },
+      ':sk': { S: 'config' }
+    }
+  };
+  return await runQuery(configQuery);
+}
+
+async function getParks() {
+  const parksQuery = {
+    TableName: TABLE_NAME,
+    KeyConditionExpression: 'pk = :pk',
+    ExpressionAttributeValues: {
+      ':pk': { S: 'park' }
+    }
+  };
+  return await runQuery(parksQuery);
+}
+
+async function getFacilities(parkName) {
+  const facilitiesQuery = {
+    TableName: TABLE_NAME,
+    KeyConditionExpression: 'pk = :pk',
+    ExpressionAttributeValues: {
+      ':pk': { S: `facility::${parkName}` }
+    }
+  };
+  return await runQuery(facilitiesQuery);
+}
+
 module.exports = {
   dynamodb,
   setStatus,
-  runQuery
+  runQuery,
+  getConfig,
+  getParks,
+  getFacilities
 };

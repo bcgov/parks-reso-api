@@ -1,47 +1,105 @@
-const { runQuery, setStatus } = require('../dynamoUtil');
+const { formatISO } = require('date-fns');
+const { utcToZonedTime } = require('date-fns-tz');
+
+const { runQuery, setStatus, getConfig, getParks, getFacilities } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 
+const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
+const ACTIVE_STATUS = 'active';
+const RESERVED_STATUS = 'reserved';
+const PASS_TYPE_AM = 'AM';
+const PASS_TYPE_PM = 'PM';
+const PASS_TYPE_DAY = 'DAY';
+const TIMEZONE = 'America/Vancouver';
+const PM_ACTIVATION_HOUR = 12;
+
 exports.handler = async (event, context) => {
-  console.log('check activation', event);
-
-  let queryObj = {
-    TableName: process.env.TABLE_NAME
-  };
-
-  // Look for today's activations
-  let todaysDate = new Date().toISOString().split('T')[0];
-
+  console.log('Event:', event, context);
   try {
-    queryObj.ExpressionAttributeValues = {};
-    queryObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
-    queryObj.KeyConditionExpression = 'pk =:pk';
-    console.log('queryObj:', queryObj);
+    const utcNow = Date.now();
+    const localNow = utcToZonedTime(utcNow, TIMEZONE);
+    console.log(`UTC: ${utcNow}; local (${TIMEZONE}): ${localNow}`);
 
-    const parkData = await runQuery(queryObj);
+    const [config] = await getConfig();
+    const parks = await getParks();
+    for (const park of parks) {
+      let activatedCount = 0;
 
-    for (let i = 0; i < parkData.length; i++) {
-      let passQuery = {
-        TableName: process.env.TABLE_NAME
-      };
-      passQuery.ExpressionAttributeNames = {
-        '#dateselector': 'date'
-      };
-      passQuery.ExpressionAttributeValues = {};
-      passQuery.ExpressionAttributeValues[':pk'] = { S: 'pass::' + parkData[i].sk };
-      passQuery.ExpressionAttributeValues[':todaysDate'] = { S: todaysDate };
-      passQuery.ExpressionAttributeValues[':reservedStatus'] = { S: 'reserved' };
-      passQuery.KeyConditionExpression = 'pk =:pk';
-      passQuery.FilterExpression = 'begins_with(#dateselector, :todaysDate) AND passStatus =:reservedStatus';
+      const facilities = await getFacilities(park.sk);
+      for (const facility of facilities) {
+        activatedCount += await activateFacilityPasses(config, park, facility, localNow);
+      }
 
-      console.log('passQuery:', passQuery);
-      const passData = await runQuery(passQuery);
-      console.log('passData:', passData);
-
-      await setStatus(passData, 'active');
+      console.log(`Activated ${activatedCount} passes for ${park.name}`);
     }
+
     return sendResponse(200, {}, context);
   } catch (err) {
-    console.log(err);
-    return sendResponse(200, { msg: 'Activation Check Complete' }, context);
+    console.error(err);
+
+    return sendResponse(500, {}, context);
   }
 };
+
+async function getCurrentPasses(passType, localNow, parkName, facilityName) {
+  const activeDateSelector = formatISO(localNow, { representation: 'date' });
+
+  console.log(`Loading ${passType} passes on ${activeDateSelector} for ${parkName} ${facilityName}`);
+
+  const passesQuery = {
+    TableName: TABLE_NAME,
+    KeyConditionExpression: 'pk = :pk',
+    ExpressionAttributeNames: {
+      '#dateselector': 'date',
+      '#passType': 'type'
+    },
+    ExpressionAttributeValues: {
+      ':pk': { S: `pass::${parkName}` },
+      ':facilityName': { S: facilityName },
+      ':activeDate': { S: activeDateSelector },
+      ':reservedStatus': { S: RESERVED_STATUS },
+      ':passType': { S: passType }
+    },
+    FilterExpression:
+      'begins_with(#dateselector, :activeDate) AND #passType = :passType AND passStatus = :reservedStatus AND facilityName = :facilityName'
+  };
+
+  return await runQuery(passesQuery);
+}
+
+async function activateFacilityPasses(config, park, facility, localNow) {
+  const localHour = localNow.getHours();
+  const defaultOpeningHour = config.BOOKING_OPENING_HOUR || 7;
+
+  let activatedCount = 0;
+  const facilityBookingOpeningHour = facility.bookingOpeningHour || defaultOpeningHour;
+  const isFacilityAmOpen = localHour >= facilityBookingOpeningHour;
+  const isFacilityPmOpen = localHour >= PM_ACTIVATION_HOUR;
+
+  for (const passType of [PASS_TYPE_AM, PASS_TYPE_PM, PASS_TYPE_DAY]) {
+    let isOpen = false;
+    switch (passType) {
+      case PASS_TYPE_AM:
+        isOpen = isFacilityAmOpen;
+        break;
+      case PASS_TYPE_PM:
+        isOpen = isFacilityPmOpen;
+        break;
+      case PASS_TYPE_DAY:
+        // DAY passes open at the same time as AM
+        isOpen = isFacilityAmOpen;
+        break;
+    }
+
+    if (isOpen) {
+      console.log(`Facility ${facility.name} is open for ${passType} passes`);
+      const passes = await getCurrentPasses(passType, localNow, park.name, facility.name);
+      await setStatus(passes, ACTIVE_STATUS);
+      activatedCount += passes.length;
+    } else {
+      console.log(`Facility ${facility.name} is not open for ${passType} passes`);
+    }
+  }
+
+  return activatedCount;
+}
