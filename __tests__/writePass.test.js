@@ -1,7 +1,7 @@
 const writePassHandler = require('../lambda/writePass/index');
 const {DocumentClient} = require('aws-sdk/clients/dynamodb');
 
-const TABLE_NAME = process.env.TABLE_NAME || 'parksresotest';
+const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 
 const isTest = true;
 const config = {
