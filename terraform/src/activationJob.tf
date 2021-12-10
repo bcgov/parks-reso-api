@@ -6,6 +6,7 @@ resource "aws_lambda_function" "check_activation" {
 
   handler = "lambda/checkActivation/index.handler"
   runtime = "nodejs14.x"
+  timeout = 300
 
   environment {
     variables = {
