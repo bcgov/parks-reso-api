@@ -34,7 +34,7 @@ exports.handler = async (event, context) => {
       const expiryDate = expiryHour === 0 ? yesterday : localNow;
       const parks = await getParks();
       for (const park of parks) {
-        const passes = await getExpiredPasses(passType, expiryDate, park.name);
+        const passes = await getExpiredPasses(passType, expiryDate, park.sk);
         await setStatus(passes, EXPIRED_STATUS);
       }
     }
@@ -47,10 +47,10 @@ exports.handler = async (event, context) => {
   }
 };
 
-async function getExpiredPasses(passType, passDate, parkName) {
+async function getExpiredPasses(passType, passDate, parkSk) {
   const dateSelector = formatISO(passDate, { representation: 'date' });
 
-  console.log(`Loading ${passType} passes on ${dateSelector} for ${parkName}`);
+  console.log(`Loading ${passType} passes on ${dateSelector} for ${parkSk}`);
 
   const passesQuery = {
     TableName: TABLE_NAME,
@@ -60,7 +60,7 @@ async function getExpiredPasses(passType, passDate, parkName) {
       '#passType': 'type'
     },
     ExpressionAttributeValues: {
-      ':pk': { S: `pass::${parkName}` },
+      ':pk': { S: `pass::${parkSk}` },
       ':activeDate': { S: dateSelector },
       ':activeStatus': { S: ACTIVE_STATUS },
       ':passType': { S: passType }

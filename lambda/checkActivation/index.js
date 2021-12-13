@@ -30,7 +30,7 @@ exports.handler = async (event, context) => {
         activatedCount += await activateFacilityPasses(config, park, facility, localNow);
       }
 
-      console.log(`Activated ${activatedCount} passes for ${park.name}`);
+      console.log(`Activated ${activatedCount} passes for ${park.sk}`);
     }
 
     return sendResponse(200, {}, context);
@@ -41,10 +41,10 @@ exports.handler = async (event, context) => {
   }
 };
 
-async function getCurrentPasses(passType, localNow, parkName, facilityName) {
+async function getCurrentPasses(passType, localNow, parkSk, facilityName) {
   const activeDateSelector = formatISO(localNow, { representation: 'date' });
 
-  console.log(`Loading ${passType} passes on ${activeDateSelector} for ${parkName} ${facilityName}`);
+  console.log(`Loading ${passType} passes on ${activeDateSelector} for ${parkSk} ${facilityName}`);
 
   const passesQuery = {
     TableName: TABLE_NAME,
@@ -54,7 +54,7 @@ async function getCurrentPasses(passType, localNow, parkName, facilityName) {
       '#passType': 'type'
     },
     ExpressionAttributeValues: {
-      ':pk': { S: `pass::${parkName}` },
+      ':pk': { S: `pass::${parkSk}` },
       ':facilityName': { S: facilityName },
       ':activeDate': { S: activeDateSelector },
       ':reservedStatus': { S: RESERVED_STATUS },
@@ -92,12 +92,12 @@ async function activateFacilityPasses(config, park, facility, localNow) {
     }
 
     if (isOpen) {
-      console.log(`Facility ${facility.name} is open for ${passType} passes`);
-      const passes = await getCurrentPasses(passType, localNow, park.name, facility.name);
+      console.log(`Facility ${facility.sk} is open for ${passType} passes`);
+      const passes = await getCurrentPasses(passType, localNow, park.sk, facility.name);
       await setStatus(passes, ACTIVE_STATUS);
       activatedCount += passes.length;
     } else {
-      console.log(`Facility ${facility.name} is not open for ${passType} passes`);
+      console.log(`Facility ${facility.sk} is not open for ${passType} passes`);
     }
   }
 
