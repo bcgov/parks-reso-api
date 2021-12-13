@@ -4,7 +4,10 @@ resource "aws_dynamodb_table" "park_dup_table" {
   range_key      = "sk"
   read_capacity  = 1
   write_capacity = 1
-  point_in_time_recovery = true
+
+  point_in_time_recovery {
+    enable = true
+  }
 
   attribute {
     name = "pk"
