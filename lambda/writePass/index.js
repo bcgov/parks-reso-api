@@ -9,7 +9,8 @@ const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 
 exports.handler = async (event, context) => {
   let passObject = {
-    TableName: TABLE_NAME
+    TableName: TABLE_NAME,
+    ConditionExpression: 'attribute_not_exists(sk)',
   };
 
   if (!event) {
