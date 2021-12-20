@@ -87,6 +87,7 @@ async function createFacility(obj) {
 
 async function updateFacility(obj) {
   let {
+    sk,
     parkName,
     bookingTimes,
     name,
@@ -117,7 +118,7 @@ async function updateFacility(obj) {
   let updateParams = {
     Key: {
       pk: { S: `facility::${parkName}` },
-      sk: { S: name }
+      sk: { S: sk }
     },
     ExpressionAttributeValues: {
       ':statusValue': { M: AWS.DynamoDB.Converter.marshall(status) },
