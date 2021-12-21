@@ -10,14 +10,18 @@ const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 exports.handler = async (event, context) => {
   let passObject = {
     TableName: TABLE_NAME,
-    ConditionExpression: 'attribute_not_exists(sk)',
+    ConditionExpression: 'attribute_not_exists(sk)'
   };
 
   if (!event) {
-    return sendResponse(400, {
-      msg: 'There was an error in your submission.',
-      title: 'Bad Request'
-    }, context);
+    return sendResponse(
+      400,
+      {
+        msg: 'There was an error in your submission.',
+        title: 'Bad Request'
+      },
+      context
+    );
   }
 
   try {
@@ -42,26 +46,26 @@ exports.handler = async (event, context) => {
     } = newObject;
 
     if (!captchaJwt || !captchaJwt.length) {
-      return sendResponse(400, { 
-                                 msg: 'Missing CAPTCHA verification.', 
-                                 title: 'Missing CAPTCHA verification'
-                               });
+      return sendResponse(400, {
+        msg: 'Missing CAPTCHA verification.',
+        title: 'Missing CAPTCHA verification'
+      });
     }
 
     const verification = verifyJWT(captchaJwt);
     if (!verification.valid) {
-      return sendResponse(400, { 
-                                 msg: 'CAPTCHA verification failed.', 
-                                 title: 'CAPTCHA verification failed'
-                               });
+      return sendResponse(400, {
+        msg: 'CAPTCHA verification failed.',
+        title: 'CAPTCHA verification failed'
+      });
     }
 
     // Enforce maximum limit per pass
     if (facilityType === 'Trail' && numberOfGuests > 4) {
-      return sendResponse(400, { 
-                                 msg: 'You cannot have more than 4 guests on a trail.', 
-                                 title: 'Too many guests'
-                               });
+      return sendResponse(400, {
+        msg: 'You cannot have more than 4 guests on a trail.',
+        title: 'Too many guests'
+      });
     }
 
     if (facilityType === 'Parking') {
@@ -167,7 +171,7 @@ exports.handler = async (event, context) => {
         }
       } catch (err) {
         console.log('err', err);
-        return sendResponse(400, { msg: 'Something went wrong.', title:'Operation Failed' });
+        return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
       }
 
       try {
@@ -223,30 +227,39 @@ exports.handler = async (event, context) => {
         console.log('Type Prop exists', e);
       }
 
-      let updateFacility = {
-        Key: {
-          pk: { S: 'facility::' + parkName },
-          sk: { S: facilityName }
-        },
-        ExpressionAttributeValues: {
-          ':inc': AWS.DynamoDB.Converter.input(numberOfGuests),
-          ':start': AWS.DynamoDB.Converter.input(0)
-        },
-        ExpressionAttributeNames: {
-          '#booking': 'bookingTimes',
-          '#type': type,
-          '#dateselector': dateselector,
-          '#maximum': 'max'
-        },
-        UpdateExpression:
-          'SET reservations.#dateselector.#type = if_not_exists(reservations.#dateselector.#type, :start) + :inc',
-        ConditionExpression: '#booking.#type.#maximum > reservations.#dateselector.#type',
-        ReturnValues: 'ALL_NEW',
-        TableName: TABLE_NAME
-      };
-      console.log('updateFacility:', updateFacility);
-      const facilityRes = await dynamodb.updateItem(updateFacility).promise();
-      console.log('FacRes:', facilityRes);
+      try {
+        let updateFacility = {
+          Key: {
+            pk: { S: 'facility::' + parkName },
+            sk: { S: facilityName }
+          },
+          ExpressionAttributeValues: {
+            ':inc': AWS.DynamoDB.Converter.input(numberOfGuests),
+            ':start': AWS.DynamoDB.Converter.input(0)
+          },
+          ExpressionAttributeNames: {
+            '#booking': 'bookingTimes',
+            '#type': type,
+            '#dateselector': dateselector,
+            '#maximum': 'max'
+          },
+          UpdateExpression:
+            'SET reservations.#dateselector.#type = if_not_exists(reservations.#dateselector.#type, :start) + :inc',
+          ConditionExpression: '#booking.#type.#maximum > reservations.#dateselector.#type',
+          ReturnValues: 'ALL_NEW',
+          TableName: TABLE_NAME
+        };
+        console.log('updateFacility:', updateFacility);
+        const facilityRes = await dynamodb.updateItem(updateFacility).promise();
+        console.log('FacRes:', facilityRes);
+      } catch (err) {
+        // There are no more passes available.
+        console.log('err', err);
+        return sendResponse(400, {
+          msg: 'We have sold out of allotted passes for this time, please check back on the site from time to time as new passes may come available.',
+          title: 'Sorry, we are unable to fill your specific request.'
+        });
+      }
 
       console.log('putting item:', passObject);
       const res = await dynamodb.putItem(passObject).promise();
@@ -276,11 +289,11 @@ exports.handler = async (event, context) => {
       }
     } else {
       // Not allowed for whatever reason.
-      return sendResponse(400, { msg: 'Something went wrong.', title:'Operation Failed' });
+      return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
     }
   } catch (err) {
     console.log('err', err);
-    return sendResponse(400, { msg: 'Something went wrong.', title:'Operation Failed' });
+    return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
   }
 };
 
