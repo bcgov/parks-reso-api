@@ -17,6 +17,7 @@ resource "aws_lambda_function" "readPassLambda" {
 
   handler = "lambda/readPass/index.handler"
   runtime = "nodejs14.x"
+  timeout = 6
 
   environment {
     variables = {
