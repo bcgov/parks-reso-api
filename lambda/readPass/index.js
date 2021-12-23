@@ -10,6 +10,8 @@ exports.handler = async (event, context) => {
   console.log('Read Pass', event);
   console.log('event.queryStringParameters', event.queryStringParameters);
 
+  let summaryObj = undefined;
+
   let queryObj = {
     TableName: process.env.TABLE_NAME
   };
@@ -46,6 +48,39 @@ exports.handler = async (event, context) => {
         queryObj.ExpressionAttributeNames['#theDate'] = 'date';
         queryObj.ExpressionAttributeValues[':theDate'] = AWS.DynamoDB.Converter.input(dateselector);
         queryObj.FilterExpression += ' AND contains(#theDate, :theDate)';
+
+        // Get calculate numbers for pie chart summary for this date.
+
+        // 1. get total capacity count for this facility on this day
+        let facilityData = undefined;
+        try {
+          facilityData = await getFacilityBookingTimes(
+            event.queryStringParameters.park,
+            event.queryStringParameters.facilityName
+          );
+        } catch (error) {
+          return sendResponse(200, {
+            title: 'Error',
+            msg: 'Unable to get booking times'
+          });
+        }
+
+        // Get facility max data. eg: 256 passes per period (am/pm/day)
+
+        // 2. get total reserved for am and pm for this day
+        // Get query for today's results count (not the records in question).
+        // If contains LastEvaluatedKey, you must iterate here until LastEvaluatedKey is no longer present
+        // on the request.
+        // Find all the passes, grouped by period am/pm/day
+        const reservationDataOnDate = facilityData.reservations[dateselector];
+        summaryObj = {
+          amReserved: reservationDataOnDate?.AM, // If suitable for this facility
+          amCapacity: facilityData.bookingTimes?.AM?.max,
+          pmReserved: reservationDataOnDate?.PM, // If suitable for this facility
+          pmCapacity: facilityData.bookingTimes?.PM?.max,
+          dayReserved: reservationDataOnDate?.DAY, // If suitable for this facility
+          dayCapacity: facilityData.bookingTimes?.DAY?.max
+        };
       }
       // Filter reservation number
       if (event.queryStringParameters.reservationNumber) {
@@ -72,7 +107,8 @@ exports.handler = async (event, context) => {
       queryObj = paginationHandler(queryObj, event);
 
       console.log('queryObj:', queryObj);
-      const passData = await runQuery(queryObj, true);
+      let passData = await runQuery(queryObj, true);
+      passData.summary = summaryObj;
       return sendResponse(200, passData, context);
     } else if (event.queryStringParameters.passes && event.queryStringParameters.park) {
       console.log('Grab passes for this park');
@@ -202,4 +238,16 @@ const paginationHandler = function (queryObj, event) {
     };
   }
   return queryObj;
+};
+
+const getFacilityBookingTimes = async function (parkName, facilityName) {
+  let summaryQueryObj = {
+    TableName: process.env.TABLE_NAME,
+    KeyConditionExpression: 'pk =:pk AND sk =:sk',
+    ExpressionAttributeValues: {}
+  };
+  summaryQueryObj.ExpressionAttributeValues[':pk'] = AWS.DynamoDB.Converter.input('facility::' + parkName);
+  summaryQueryObj.ExpressionAttributeValues[':sk'] = AWS.DynamoDB.Converter.input(facilityName);
+  const facilityData = await runQuery(summaryQueryObj, false);
+  return facilityData[0];
 };
