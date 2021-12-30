@@ -47,6 +47,19 @@ exports.handler = async (event, context) => {
         queryObj.ExpressionAttributeValues[':theDate'] = AWS.DynamoDB.Converter.input(dateselector);
         queryObj.FilterExpression += ' AND contains(#theDate, :theDate)';
       }
+      // Filter Multiple Statuses
+      if (event.queryStringParameters.passStatus) {
+        const statusList = event.queryStringParameters.passStatus.split(',');
+        const statusObj = {};
+        statusList.forEach((status, index) => {
+          const statusName = ":passStatus" + index;
+          statusObj[statusName.toString()] = AWS.DynamoDB.Converter.input(status);
+        });
+        queryObj = checkAddExpressionAttributeNames(queryObj);
+        queryObj.ExpressionAttributeNames['#theStatus'] = 'passStatus';
+        Object.assign(queryObj.ExpressionAttributeValues, statusObj);
+        queryObj.FilterExpression += ' AND #theStatus IN (' + Object.keys(statusObj).toString() + ')';
+      }
       // Filter reservation number
       if (event.queryStringParameters.reservationNumber) {
         queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.reservationNumber };
