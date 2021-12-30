@@ -51,10 +51,10 @@ exports.handler = async (event, context) => {
       if (event.queryStringParameters.passStatus) {
         const statusList = event.queryStringParameters.passStatus.split(',');
         const statusObj = {};
-        statusList.forEach((status, index) => {
+        for (let [index, status] of statusList.entries()) {
           const statusName = ":passStatus" + index;
           statusObj[statusName.toString()] = AWS.DynamoDB.Converter.input(status);
-        });
+        }
         queryObj = checkAddExpressionAttributeNames(queryObj);
         queryObj.ExpressionAttributeNames['#theStatus'] = 'passStatus';
         Object.assign(queryObj.ExpressionAttributeValues, statusObj);
