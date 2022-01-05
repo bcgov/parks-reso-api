@@ -4,6 +4,7 @@ const axios = require('axios');
 const { verifyJWT } = require('../captchaUtil');
 const { dynamodb, runQuery } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
+const { utcToZonedTime } = require('date-fns-tz');
 
 const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 
@@ -77,19 +78,17 @@ exports.handler = async (event, context) => {
     }
 
     // Get current time vs booking time information
-    const today = new Date();
-    const currentDay = parseInt(today.toLocaleString('en-US', { day: '2-digit', timeZone: 'America/Vancouver' }));
-    const currentHour = parseInt(
-      today.toLocaleString('en-US', { hour: '2-digit', hour12: false, timeZone: 'America/Vancouver' })
-    );
-    const bookingDay = new Date(date).getDate();
+    const localDate = utcToZonedTime(Date.now(), 'America/Vancouver');
+    const currentHour = localDate.getHours();  
+    const bookingDate = new Date(date);
+    console.log('localDate', localDate, 'bookingDate', bookingDate);
 
     let facilityObj = {
       TableName: TABLE_NAME
     };
 
     // check if booking date in the past
-    if (currentDay > bookingDay) {
+    if (localDate > bookingDate && localDate.getDate() > bookingDate.getDate()) {
       return sendResponse(400, {
         msg: 'You cannot book for a date in the past.',
         title: 'Booking date in the past'
@@ -101,7 +100,6 @@ exports.handler = async (event, context) => {
     facilityObj.ExpressionAttributeValues[':sk'] = { S: facilityName };
     facilityObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
     const facilityData = await runQuery(facilityObj);
-    console.log('FacilityData:', facilityData);
 
     // There should only be 1 facility.
     let openingHour = facilityData[0].bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
@@ -111,7 +109,7 @@ exports.handler = async (event, context) => {
     let status = 'reserved';
 
     // check if booking same-day
-    if (currentDay === bookingDay) {
+    if (localDate.getDate() === bookingDate.getDate()) {
       // check if AM/PM/DAY is currently open
       if (type === 'AM' && currentHour >= DEFAULT_PM_OPENING_HOUR) {
         // it is beyond AM closing time
