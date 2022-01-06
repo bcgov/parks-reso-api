@@ -82,6 +82,15 @@ exports.handler = async (event, context) => {
         );
         queryObj.FilterExpression += ' AND #lastName =:lastName';
       }
+      // Filter email
+      if (event.queryStringParameters.email) {
+        queryObj = checkAddExpressionAttributeNames(queryObj);
+        queryObj.ExpressionAttributeNames['#email'] = 'email';
+        queryObj.ExpressionAttributeValues[':email'] = AWS.DynamoDB.Converter.input(
+          event.queryStringParameters.email
+        );
+        queryObj.FilterExpression += ' AND #email =:email';
+      }
       queryObj = paginationHandler(queryObj, event);
 
       console.log('queryObj:', queryObj);
