@@ -217,17 +217,14 @@ describe('Pass Fails', () => {
   });
   
   test('Handler - 400 Bad Request - Booking date in the past', async () => {
-    let yesterday = new Date();
-    yesterday = yesterday.setDate(yesterday.getDate()-1);
-
-    const event = {
+   const event = {
       body: JSON.stringify({
         parkName: '',
         firstName: '',
         lastName: '',
         facilityName: '',
         email: '',
-        date: new Date(yesterday),
+        date: "1970-01-01T00:00:00.758Z",
         type: '',
         numberOfGuests: 1,
         phoneNumber: '',

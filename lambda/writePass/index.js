@@ -79,22 +79,22 @@ exports.handler = async (event, context) => {
 
     // Get current time vs booking time information
     const localDate = utcToZonedTime(Date.now(), 'America/Vancouver');
-    const currentHour = localDate.getHours();  
+    const currentHour = localDate.getHours();
     const bookingDate = new Date(date);
-    console.log('localDate', localDate, 'bookingDate', bookingDate);
 
     let facilityObj = {
       TableName: TABLE_NAME
     };
 
     // check if booking date in the past
-    if (localDate > bookingDate && localDate.getDate() > bookingDate.getDate()) {
+    localDate.setHours(0,0,0,0);
+    if (localDate > bookingDate) {
       return sendResponse(400, {
         msg: 'You cannot book for a date in the past.',
         title: 'Booking date in the past'
       });
     }
-    
+
     facilityObj.ExpressionAttributeValues = {};
     facilityObj.ExpressionAttributeValues[':pk'] = { S: 'facility::' + parkName };
     facilityObj.ExpressionAttributeValues[':sk'] = { S: facilityName };
@@ -104,7 +104,6 @@ exports.handler = async (event, context) => {
     // There should only be 1 facility.
     let openingHour = facilityData[0].bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
     let closingHour = DEFAULT_PM_OPENING_HOUR;
-
 
     let status = 'reserved';
 
