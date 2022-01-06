@@ -24,9 +24,14 @@
   "scripts": {
     "start": "sls offline start",
     "build": "sls package --package ./artifacts",
-    "test": "IS_OFFLINE=1 jest --coverage"
+    "test": "IS_OFFLINE=1 TABLE_NAME=parksreso-tests jest --coverage"
   },
   "jest": {
-    "verbose": true
+    "verbose": true,
+    "globalSetup": "./__tests__/global/setup.js",
+    "globalTeardown": "./__tests__/global/teardown.js",
+    "modulePathIgnorePatterns": [
+      "./__tests__/global/"
+    ]
   }
 }

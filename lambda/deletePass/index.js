@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const jwt = require('jsonwebtoken');
 
-const { dynamodb, runQuery } = require('../dynamoUtil');
+const { dynamodb, runQuery, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
 
@@ -36,7 +36,7 @@ exports.handler = async (event, context) => {
         // count multiple times.
         ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk) AND (NOT passStatus = :cancelled)',
         UpdateExpression: 'SET passStatus = :cancelled',
-        TableName: process.env.TABLE_NAME
+        TableName: TABLE_NAME
       };
       console.log('updatePassQuery:', updatePassQuery);
 
@@ -55,7 +55,7 @@ exports.handler = async (event, context) => {
         },
         UpdateExpression: 'SET reservations.#dateselector.#type = reservations.#dateselector.#type - :passReducedBy',
         ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',
-        TableName: process.env.TABLE_NAME
+        TableName: TABLE_NAME
       };
       console.log('updateFacilityQuery:', updateFacilityQuery);
 
@@ -80,7 +80,7 @@ exports.handler = async (event, context) => {
       } else {
         // We need to lookup the pass to get the date & facility
         const passQuery = {
-          TableName: process.env.TABLE_NAME,
+          TableName: TABLE_NAME,
           ExpressionAttributeValues: {
             ':pk': { S: `pass::${event.queryStringParameters.park}` },
             ':sk': { S: event.queryStringParameters.passId }
@@ -101,7 +101,7 @@ exports.handler = async (event, context) => {
           // count multiple times.
           ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk) AND (NOT passStatus = :cancelled)',
           UpdateExpression: 'SET passStatus = :cancelled',
-          TableName: process.env.TABLE_NAME
+          TableName: TABLE_NAME
         };
         console.log('updatePassQuery:', updatePassQuery);
 
@@ -119,7 +119,7 @@ exports.handler = async (event, context) => {
           },
           UpdateExpression: 'SET reservations.#dateselector.#type = reservations.#dateselector.#type - :passReducedBy',
           ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',
-          TableName: process.env.TABLE_NAME
+          TableName: TABLE_NAME
         };
         const res = await dynamodb
           .transactWriteItems({

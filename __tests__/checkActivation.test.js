@@ -4,10 +4,7 @@ const AWS = require('aws-sdk');
 const { DocumentClient } = require('aws-sdk/clients/dynamodb');
 
 const checkActivation = require('../lambda/checkActivation/index');
-
-const REGION = process.env.AWS_REGION || 'local-env';
-const ENDPOINT = 'http://localhost:8000';
-const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
+const { REGION, ENDPOINT, TABLE_NAME } = require('./global/settings');
 
 let dynamoDb;
 let docClient;
@@ -22,39 +19,7 @@ async function setupDb() {
     endpoint: ENDPOINT,
     convertEmptyValues: true
   });
-  try {
-    await dynamoDb
-      .createTable({
-        TableName: TABLE_NAME,
-        KeySchema: [
-          {
-            AttributeName: 'pk',
-            KeyType: 'HASH'
-          },
-          {
-            AttributeName: 'sk',
-            KeyType: 'RANGE'
-          }
-        ],
-        AttributeDefinitions: [
-          {
-            AttributeName: 'pk',
-            AttributeType: 'S'
-          },
-          {
-            AttributeName: 'sk',
-            AttributeType: 'S'
-          }
-        ],
-        ProvisionedThroughput: {
-          ReadCapacityUnits: 1,
-          WriteCapacityUnits: 1
-        }
-      })
-      .promise();
-  } catch (err) {
-    console.log(err);
-  }
+  
   await docClient
     .put({
       TableName: TABLE_NAME,

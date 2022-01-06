@@ -86,6 +86,7 @@ async function getFacilities(parkName) {
 }
 
 module.exports = {
+  TABLE_NAME,
   dynamodb,
   setStatus,
   runQuery,

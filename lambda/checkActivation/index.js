@@ -1,10 +1,9 @@
 const { formatISO } = require('date-fns');
 const { utcToZonedTime } = require('date-fns-tz');
 
-const { runQuery, setStatus, getConfig, getParks, getFacilities } = require('../dynamoUtil');
+const { runQuery, setStatus, getConfig, getParks, getFacilities, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 
-const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 const ACTIVE_STATUS = 'active';
 const RESERVED_STATUS = 'reserved';
 const PASS_TYPE_AM = 'AM';

@@ -1,4 +1,4 @@
-const { runQuery } = require('../dynamoUtil');
+const { runQuery, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
 
@@ -6,7 +6,7 @@ exports.handler = async (event, context) => {
   console.log('Read Facility', event);
 
   let queryObj = {
-    TableName: process.env.TABLE_NAME
+    TableName: TABLE_NAME
   };
 
   const isAdmin = await checkPermissions(event);
@@ -59,7 +59,7 @@ const parkVisible = async function (park, isAdmin) {
     return true;
   } else {
     let queryObj = {
-      TableName: process.env.TABLE_NAME,
+      TableName: TABLE_NAME,
       ExpressionAttributeValues: {}
     };
     queryObj.ExpressionAttributeValues[':pk'] = { S: 'park' };

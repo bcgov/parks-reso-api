@@ -2,11 +2,9 @@ const AWS = require('aws-sdk');
 const axios = require('axios');
 
 const { verifyJWT } = require('../captchaUtil');
-const { dynamodb, runQuery } = require('../dynamoUtil');
+const { dynamodb, runQuery, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { utcToZonedTime } = require('date-fns-tz');
-
-const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
