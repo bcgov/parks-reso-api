@@ -50,7 +50,7 @@ async function addValue(entry, type, from, to) {
     } else {
       let resp = await secretsManager.createSecret({
         Name: entry.Name,
-        SecretString: JSON.stringify(entry.Value)
+        SecretString: entry.Value
       }).promise();
     }
   } catch (e) {
