@@ -4,8 +4,13 @@ const axios = require('axios');
 const { verifyJWT } = require('../captchaUtil');
 const { dynamodb, runQuery } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
+const { utcToZonedTime } = require('date-fns-tz');
 
 const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
+
+// default opening/closing hours in 24h time
+const DEFAULT_AM_OPENING_HOUR = 7;
+const DEFAULT_PM_OPENING_HOUR = 12;
 
 exports.handler = async (event, context) => {
   let passObject = {
@@ -72,6 +77,59 @@ exports.handler = async (event, context) => {
       numberOfGuests = 1;
     }
 
+    // Get current time vs booking time information
+    const localDate = utcToZonedTime(Date.now(), 'America/Vancouver');
+    const currentHour = localDate.getHours();
+    const bookingDate = new Date(date);
+
+    let facilityObj = {
+      TableName: TABLE_NAME
+    };
+
+    // check if booking date in the past
+    localDate.setHours(0,0,0,0);
+    if (localDate > bookingDate) {
+      return sendResponse(400, {
+        msg: 'You cannot book for a date in the past.',
+        title: 'Booking date in the past'
+      });
+    }
+
+    facilityObj.ExpressionAttributeValues = {};
+    facilityObj.ExpressionAttributeValues[':pk'] = { S: 'facility::' + parkName };
+    facilityObj.ExpressionAttributeValues[':sk'] = { S: facilityName };
+    facilityObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
+    const facilityData = await runQuery(facilityObj);
+
+    // There should only be 1 facility.
+    let openingHour = facilityData[0].bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
+    let closingHour = DEFAULT_PM_OPENING_HOUR;
+
+    let status = 'reserved';
+
+    // check if booking same-day
+    if (localDate.getDate() === bookingDate.getDate()) {
+      // check if AM/PM/DAY is currently open
+      if (type === 'AM' && currentHour >= DEFAULT_PM_OPENING_HOUR) {
+        // it is beyond AM closing time
+        return sendResponse(400, {
+          msg:
+            'It is too late to book an AM pass on this day (AM time slot is from ' +
+            to12hTimeString(openingHour) +
+            ' to ' +
+            to12hTimeString(closingHour) +
+            ').',
+          title: 'AM time slot has expired'
+        });
+      }
+      if (type === 'PM') {
+        openingHour = DEFAULT_PM_OPENING_HOUR;
+      }
+      if (currentHour >= openingHour) {
+        status = 'active';
+      }
+    }
+
     passObject.Item = {};
     passObject.Item['pk'] = { S: 'pass::' + parkName };
     passObject.Item['sk'] = { S: registrationNumber };
@@ -83,7 +141,7 @@ exports.handler = async (event, context) => {
     passObject.Item['type'] = { S: type };
     passObject.Item['registrationNumber'] = { S: registrationNumber };
     passObject.Item['numberOfGuests'] = AWS.DynamoDB.Converter.input(numberOfGuests);
-    passObject.Item['passStatus'] = { S: 'reserved' };
+    passObject.Item['passStatus'] = { S: status };
     passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
     passObject.Item['facilityType'] = { S: facilityType };
 
@@ -296,6 +354,18 @@ exports.handler = async (event, context) => {
     return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
   }
 };
+
+function to12hTimeString(hour) {
+  let period = 'am';
+  if (hour > 11) {
+    period = 'pm';
+    if (hour > 12) {
+      hour -= 12;
+    }
+  }
+  let hourStr = hour === 0 ? '12' : hour.toString();
+  return hourStr + period;
+}
 
 function generate(count) {
   // TODO: Make this better

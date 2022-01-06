@@ -215,6 +215,40 @@ describe('Pass Fails', () => {
       }
     );
   });
+  
+  test('Handler - 400 Bad Request - Booking date in the past', async () => {
+   const event = {
+      body: JSON.stringify({
+        parkName: '',
+        firstName: '',
+        lastName: '',
+        facilityName: '',
+        email: '',
+        date: "1970-01-01T00:00:00.758Z",
+        type: '',
+        numberOfGuests: 1,
+        phoneNumber: '',
+        facilityType: '',
+        license: '',
+        captchaJwt: token
+      })
+    };
+    expect(await writePassHandler.handler(event, null)).toMatchObject(
+      {
+        "body": JSON.stringify({
+          msg: "You cannot book for a date in the past.",
+          title: "Booking date in the past"
+        }),
+        "headers": {
+          "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+          "Access-Control-Allow-Methods": "OPTIONS,GET",
+          "Access-Control-Allow-Origin": "*",
+          "Content-Type": "application/json"
+        },
+        "statusCode": 400
+      }
+    );
+  });
 
   test('Handler - 400 Bad Request - One or more params are invalid.', async () => {
     const event = {
@@ -271,7 +305,7 @@ describe('Pass Successes', () => {
         facilityName: 'Parking lot A',
         email: 'noreply@gov.bc.ca',
         date: new Date(),
-        type: 'AM',
+        type: 'DAY',
         numberOfGuests: 1,
         phoneNumber: '2505555555',
         facilityType: 'Trail',
@@ -290,10 +324,10 @@ describe('Pass Successes', () => {
     expect(body.facilityName).toEqual('Parking lot A');
     expect(body.email).toEqual('noreply@gov.bc.ca');
     expect(typeof body.date).toBe('string');
-    expect(body.type).toEqual('AM');
+    expect(body.type).toEqual('DAY');
     expect(typeof body.registrationNumber).toBe('string');
     expect(body.numberOfGuests).toEqual(1);
-    expect(body.passStatus).toEqual('reserved');
+    expect(['reserved','active']).toContain(body.passStatus);
     expect(body.phoneNumber).toEqual('2505555555');
     expect(body.facilityType).toEqual('Trail');
     expect(typeof body.err).toBe('string');
@@ -308,7 +342,7 @@ describe('Pass Successes', () => {
         facilityName: 'Parking lot A',
         email: 'noreply@gov.bc.ca',
         date: new Date(),
-        type: 'AM',
+        type: 'DAY',
         numberOfGuests: 1,
         phoneNumber: '2505555555',
         facilityType: 'Parking',
@@ -328,10 +362,10 @@ describe('Pass Successes', () => {
     expect(body.facilityName).toEqual('Parking lot A');
     expect(body.email).toEqual('noreply@gov.bc.ca');
     expect(typeof body.date).toBe('string');
-    expect(body.type).toEqual('AM');
+    expect(body.type).toEqual('DAY');
     expect(typeof body.registrationNumber).toBe('string');
     expect(body.numberOfGuests).toEqual(1);
-    expect(body.passStatus).toEqual('reserved');
+    expect(['reserved','active']).toContain(body.passStatus);
     expect(body.phoneNumber).toEqual('2505555555');
     expect(body.facilityType).toEqual('Parking');
     expect(typeof body.err).toBe('string');
@@ -366,10 +400,14 @@ async function databaseOperation(version, mode) {
               "AM": {
                 "max": 25
               },
+              "DAY": {
+                "max": 25
+              },
             },
             "reservations": {
               "20211207": {
-                "AM": 1
+                "AM": 1,
+                "DAY": 1
               }
             },
             "status": "open",
