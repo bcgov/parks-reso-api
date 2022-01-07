@@ -1,6 +1,6 @@
 const AWS = require('aws-sdk');
 
-const { dynamodb } = require('../dynamoUtil');
+const { dynamodb, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
 
@@ -9,7 +9,7 @@ exports.handler = async (event, context) => {
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
   let configObject = {
-    TableName: process.env.TABLE_NAME
+    TableName: TABLE_NAME
   };
 
   try {

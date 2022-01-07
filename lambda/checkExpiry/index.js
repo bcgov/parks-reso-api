@@ -1,10 +1,9 @@
 const { formatISO, subDays, getHours } = require('date-fns');
 const { utcToZonedTime } = require('date-fns-tz');
 
-const { runQuery, setStatus, getParks } = require('../dynamoUtil');
+const { runQuery, setStatus, getParks, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 
-const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 const TIMEZONE = 'America/Vancouver';
 const ACTIVE_STATUS = 'active';
 const EXPIRED_STATUS = 'expired';

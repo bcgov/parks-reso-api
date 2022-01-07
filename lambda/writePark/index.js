@@ -1,6 +1,6 @@
 const AWS = require('aws-sdk');
 
-const { dynamodb } = require('../dynamoUtil');
+const { dynamodb, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
 
@@ -37,7 +37,7 @@ async function createItem(obj, context) {
   const { park, facilities, visible, description, ...otherProps } = obj;
 
   let parkObject = {
-    TableName: process.env.TABLE_NAME,
+    TableName: TABLE_NAME,
     ConditionExpression: 'attribute_not_exists(pk) AND attribute_not_exists(sk)'
   };
 
@@ -77,7 +77,7 @@ async function updateItem(obj, context) {
     ExpressionAttributeValues: {},
     UpdateExpression: 'set',
     ReturnValues: 'ALL_NEW',
-    TableName: process.env.TABLE_NAME,
+    TableName: TABLE_NAME,
     ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)'
   };
 

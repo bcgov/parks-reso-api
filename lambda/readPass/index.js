@@ -2,7 +2,7 @@ const AWS = require('aws-sdk');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 
-const { runQuery } = require('../dynamoUtil');
+const { runQuery, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
 
@@ -11,7 +11,7 @@ exports.handler = async (event, context) => {
   console.log('event.queryStringParameters', event.queryStringParameters);
 
   let queryObj = {
-    TableName: process.env.TABLE_NAME
+    TableName: TABLE_NAME
   };
 
   try {

@@ -1,11 +1,11 @@
-const { runQuery } = require('../dynamoUtil');
+const { runQuery, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 
 exports.handler = async (event, context) => {
   console.log('Read Config', event);
 
   let queryObj = {
-    TableName: process.env.TABLE_NAME
+    TableName: TABLE_NAME
   };
 
   try {
