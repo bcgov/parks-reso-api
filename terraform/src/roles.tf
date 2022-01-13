@@ -40,6 +40,30 @@ EOF
 
 }
 
+resource "aws_iam_role" "exportRole" {
+  name = "lambdaExportRole"
+
+  assume_role_policy = jsonencode({
+    Version: "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "sts:AssumeRole"
+        ]
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Sid = ""
+      }
+    ]
+  })
+
+  managed_policy_arns = [
+     "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  ]
+}
+
 resource "aws_iam_role" "readRole" {
   name = "lambdaReadRole"
 
@@ -125,6 +149,31 @@ resource "aws_iam_role_policy" "park_reso_dynamodb" {
               "dynamodb:Delete*",
               "dynamodb:Update*",
               "dynamodb:PutItem"
+          ],
+          "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
+        }
+    ]
+  }
+  EOF
+}
+
+resource "aws_iam_role_policy" "park_reso_dynamodb_export" {
+  name = "park_reso_dynamodb_export"
+  role = aws_iam_role.exportRole.id
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+          "Effect": "Allow",
+          "Action": [
+              "dynamodb:BatchGet*",
+              "dynamodb:DescribeStream",
+              "dynamodb:DescribeTable",
+              "dynamodb:Get*",
+              "dynamodb:Query",
+              "dynamodb:Scan"
           ],
           "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
         }

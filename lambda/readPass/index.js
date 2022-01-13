@@ -19,7 +19,7 @@ exports.handler = async (event, context) => {
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
     if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
-      if ((await checkPermissions(event)) === false) {
+      if ((await checkPermissions(event)).decoded === false) {
         return sendResponse(403, { msg: 'Unauthorized' });
       }
       // Get all the passes for a specific facility
@@ -98,7 +98,7 @@ exports.handler = async (event, context) => {
       return sendResponse(200, passData, context);
     } else if (event.queryStringParameters.passes && event.queryStringParameters.park) {
       console.log('Grab passes for this park');
-      if ((await checkPermissions(event)) === false) {
+      if ((await checkPermissions(event)).decoded === false) {
         return sendResponse(403, { msg: 'Unauthorized' });
       }
       // Grab passes for this park.
@@ -187,7 +187,7 @@ exports.handler = async (event, context) => {
         return sendResponse(400, { msg: 'Invalid Request, pass does not exist' }, context);
       }
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
-      if ((await checkPermissions(event)) === false) {
+      if ((await checkPermissions(event)).decoded === false) {
         return sendResponse(403, { msg: 'Unauthorized!' });
       } else {
         // Get the specific pass

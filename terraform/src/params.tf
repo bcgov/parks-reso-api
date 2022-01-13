@@ -26,6 +26,10 @@ data "aws_ssm_parameter" "pass_cancellation_route" {
   name = "/parks-reso-api/pass-cancellation-route"
 }
 
+data "aws_ssm_parameter" "s3_bucket_data" {
+  name = "/parks-reso-api/s3_bucket_data"
+}
+
 data "aws_ssm_parameter" "public_url" {
   name = "/parks-reso-public/url"
 }

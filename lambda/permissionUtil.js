@@ -2,6 +2,10 @@ const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
 const SSO_ISSUER = process.env.SSO_ISSUER || 'https://oidc.gov.bc.ca/auth/realms/g7v0xlf4';
 const SSO_JWKSURI = process.env.SSO_JWKSURI || 'https://oidc.gov.bc.ca/auth/realms/g7v0xlf4/protocol/openid-connect/certs';
+const INVALID_TOKEN = {
+        decoded: false,
+        data: null
+      };
 
 exports.checkPermissions = async function (event) {
   // TODO: Add keycloak decoding based on NRPTI prod
@@ -23,19 +27,22 @@ exports.checkPermissions = async function (event) {
       );
     }).catch(e => {
       console.log('e verify:', e);
-      return false;
+      return INVALID_TOKEN;
     });
     console.log('token:', decoded);
     if (decoded === false) {
       console.log('403');
-      return false;
+      return INVALID_TOKEN;
     } else {
       // They are good.
-      return true;
+      return {
+        decoded: true,
+        data: decoded
+      };
     }
   } catch (e) {
     console.log('err p:', e);
-    return false;
+    return INVALID_TOKEN;
   }
 };
 

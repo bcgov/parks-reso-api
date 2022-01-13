@@ -4,6 +4,7 @@
   "description": "parks-reso-api",
   "dependencies": {
     "axios": "^0.24.0",
+    "csvjson": "^5.1.0",
     "date-fns": "^2.27.0",
     "date-fns-tz": "^1.1.6",
     "jsonwebtoken": "^8.5.1",

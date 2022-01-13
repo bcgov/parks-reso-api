@@ -133,6 +133,17 @@ functions:
           cors: true
 
   ###########
+  # Export
+  ###########
+  exportPass:
+    handler: lambda/exportPass/index.handler
+    events:
+      - http:
+          method: GET
+          path: /export-pass
+          cors: true
+
+  ###########
   # Jobs
   ###########
   # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-checkActivation
