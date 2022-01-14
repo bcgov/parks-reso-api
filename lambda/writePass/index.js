@@ -132,7 +132,9 @@ exports.handler = async (event, context) => {
     passObject.Item['pk'] = { S: 'pass::' + parkName };
     passObject.Item['sk'] = { S: registrationNumber };
     passObject.Item['firstName'] = { S: firstName };
+    passObject.Item['searchFirstName'] = { S: firstName.toLowerCase() };
     passObject.Item['lastName'] = { S: lastName };
+    passObject.Item['searchLastName'] = { S: lastName.toLowerCase() };
     passObject.Item['facilityName'] = { S: facilityName };
     passObject.Item['email'] = { S: email };
     passObject.Item['date'] = { S: date };
