@@ -85,7 +85,7 @@ exports.handler = async (event, context) => {
     };
 
     // check if booking date in the past
-    localDate.setHours(0,0,0,0);
+    localDate.setHours(0, 0, 0, 0);
     if (localDate > bookingDate) {
       return sendResponse(400, {
         msg: 'You cannot book for a date in the past.',
@@ -128,6 +128,10 @@ exports.handler = async (event, context) => {
       }
     }
 
+    const theDate = new Date(date);
+    // We can reuse the date selector as the short date required for indexing
+    const dateselector = theDate.toISOString().split('T')[0];
+
     passObject.Item = {};
     passObject.Item['pk'] = { S: 'pass::' + parkName };
     passObject.Item['sk'] = { S: registrationNumber };
@@ -136,6 +140,7 @@ exports.handler = async (event, context) => {
     passObject.Item['facilityName'] = { S: facilityName };
     passObject.Item['email'] = { S: email };
     passObject.Item['date'] = { S: date };
+    passObject.Item['shortPassDate'] = { S: dateselector };
     passObject.Item['type'] = { S: type };
     passObject.Item['registrationNumber'] = { S: registrationNumber };
     passObject.Item['numberOfGuests'] = AWS.DynamoDB.Converter.input(numberOfGuests);
@@ -190,9 +195,6 @@ exports.handler = async (event, context) => {
       gcNotifyTemplate = process.env.GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID;
       personalisation['license'] = license;
     }
-
-    const theDate = new Date(date);
-    const dateselector = theDate.toISOString().split('T')[0];
 
     if (parkData[0].visible === true) {
       // Check existing pass for the same facility, email, type and date
