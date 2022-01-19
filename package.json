@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.44.0",
+    "@digitalspace/dynamodb-migrate": "^1.0.2",
     "aws-sdk-mock": "^5.4.0",
     "jest": "^27.4.0",
     "mockdate": "^3.0.5",
@@ -24,7 +25,8 @@
   "scripts": {
     "start": "sls offline start",
     "build": "sls package --package ./artifacts",
-    "test": "IS_OFFLINE=1 TABLE_NAME=parksreso-tests jest --coverage"
+    "test": "IS_OFFLINE=1 TABLE_NAME=parksreso-tests jest --coverage",
+    "migrate": "node ./node_modules/@digitalspace/dynamodb-migrate/migrate.js"
   },
   "jest": {
     "verbose": true,
