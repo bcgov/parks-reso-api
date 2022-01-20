@@ -31,20 +31,17 @@ To list passes that failed to update or revert, add show-failures argument :
   let revert = false;
   let showFailures = false;
 
+  // TODO: Set this as a config in dbOptions
   if (args.includes('show-failures')) {
     showFailures = true;
   }
 
+  // TODO: Set this as a config in dbOptions
   if (args.includes('revert')) {
     revert = true;
   }
 
-  const options = {
-    region: process.env.MIGRATIONS_DB_REGION || 'ca-central-1',
-    endpoint: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000'
-  };
-
-  const dynamodb = new AWS.DynamoDB(options);
+  const dynamodb = new AWS.DynamoDB(dbOptions);
 
   exports.dynamodb = new AWS.DynamoDB();
 
