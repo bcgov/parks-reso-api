@@ -916,6 +916,15 @@
   "resolved" "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   "version" "0.2.3"
 
+"@digitalspace/dynamodb-migrate@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@digitalspace/dynamodb-migrate/-/dynamodb-migrate-1.0.2.tgz#afc45bd2ed81f088d4373fce06226dc4dec03ff6"
+  integrity sha512-ZlhY9vy9fq23pJpCDoStmrzNs28U53man4Zi6jaCX4uKjBQMdUbVf7TpGMQsZ2VH/aNp1eTdOJD9ueYn+0Qs6A==
+  dependencies:
+    aws-sdk "^2.1059.0"
+    commander "^8.3.0"
+    luxon "^2.3.0"
+
 "@hapi/accept@^5.0.1":
   "integrity" "sha512-CmzBx/bXUR8451fnZRuZAJRlzgm0Jgu5dltTX/bszmR2lheb9BpyN47Q1RbaGTsvFzn0PXAEs+lXDKfshccYZw=="
   "resolved" "https://registry.npmjs.org/@hapi/accept/-/accept-5.0.2.tgz"

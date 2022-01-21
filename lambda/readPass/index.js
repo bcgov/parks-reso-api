@@ -68,19 +68,19 @@ exports.handler = async (event, context) => {
       // Filter first/last
       if (event.queryStringParameters.firstName) {
         queryObj = checkAddExpressionAttributeNames(queryObj);
-        queryObj.ExpressionAttributeNames['#firstName'] = 'firstName';
-        queryObj.ExpressionAttributeValues[':firstName'] = AWS.DynamoDB.Converter.input(
-          event.queryStringParameters.firstName
+        queryObj.ExpressionAttributeNames['#searchFirstName'] = 'searchFirstName';
+        queryObj.ExpressionAttributeValues[':searchFirstName'] = AWS.DynamoDB.Converter.input(
+          event.queryStringParameters.firstName.toLowerCase()
         );
-        queryObj.FilterExpression += ' AND #firstName =:firstName';
+        queryObj.FilterExpression += ' AND #searchFirstName =:searchFirstName';
       }
       if (event.queryStringParameters.lastName) {
         queryObj = checkAddExpressionAttributeNames(queryObj);
-        queryObj.ExpressionAttributeNames['#lastName'] = 'lastName';
-        queryObj.ExpressionAttributeValues[':lastName'] = AWS.DynamoDB.Converter.input(
-          event.queryStringParameters.lastName
+        queryObj.ExpressionAttributeNames['#searchLastName'] = 'searchLastName';
+        queryObj.ExpressionAttributeValues[':searchLastName'] = AWS.DynamoDB.Converter.input(
+          event.queryStringParameters.lastName.toLowerCase()
         );
-        queryObj.FilterExpression += ' AND #lastName =:lastName';
+        queryObj.FilterExpression += ' AND #searchLastName =:searchLastName';
       }
       // Filter email
       if (event.queryStringParameters.email) {
