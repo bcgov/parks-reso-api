@@ -4,6 +4,7 @@ const csvjson = require('csvjson');
 const { runQuery } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
+const { formatISO } = require('date-fns');
 
 exports.handler = async (event, context) => {
   console.log('Export Pass', event);
@@ -20,7 +21,7 @@ exports.handler = async (event, context) => {
     if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
 
       const tokenObj = await checkPermissions(event);
-      if (tokenObj.decoded === false) {
+      if (tokenObj.decoded !== true) {
         return sendResponse(403, { msg: 'Unauthorized' });
       }
       // Get all the passes for a specific facility
@@ -33,7 +34,7 @@ exports.handler = async (event, context) => {
       // Filter Date
       if (event.queryStringParameters.date) {
         const theDate = new Date(event.queryStringParameters.date);
-        const dateselector = theDate.toISOString().split('T')[0];
+        const dateselector = formatISO(theDate, { representation: 'date' });
         queryObj = checkAddExpressionAttributeNames(queryObj);
         queryObj.ExpressionAttributeNames['#theDate'] = 'date';
         queryObj.ExpressionAttributeValues[':theDate'] = AWS.DynamoDB.Converter.input(dateselector);
