@@ -5,7 +5,7 @@ const { sendResponse } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
 
 exports.handler = async (event, context) => {
-  if ((await checkPermissions(event)) === false) {
+  if ((await checkPermissions(event)).decoded !== true) {
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
   let configObject = {

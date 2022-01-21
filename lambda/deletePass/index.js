@@ -75,7 +75,7 @@ exports.handler = async (event, context) => {
 
       return sendResponse(200, { msg: 'Cancelled' }, context);
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
-      if ((await checkPermissions(event)) === false) {
+      if ((await checkPermissions(event)).decoded !== true) {
         return sendResponse(403, { msg: 'Unauthorized!' });
       } else {
         // We need to lookup the pass to get the date & facility

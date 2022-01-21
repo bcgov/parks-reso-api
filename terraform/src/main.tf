@@ -261,6 +261,11 @@ resource "aws_iam_role_policy_attachment" "lambda_read_logs" {
   policy_arn = aws_iam_policy.lambda_logging.arn
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_exportPass_cloudwatch_logs" {
+  role       = aws_iam_role.exportRole.name
+  policy_arn = aws_iam_policy.lambda_logging.arn
+}
+
 resource "aws_iam_role_policy_attachment" "lambda_write_logs" {
   role       = aws_iam_role.writeRole.name
   policy_arn = aws_iam_policy.lambda_logging.arn

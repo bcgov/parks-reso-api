@@ -9,6 +9,10 @@ resource "aws_dynamodb_table" "park_dup_table" {
     enabled = true
   }
 
+  tags = {
+    Name = "Database"
+  }
+
   attribute {
     name = "pk"
     type = "S"

@@ -13,7 +13,7 @@ exports.handler = async (event, context) => {
     return sendResponse(405, { msg: 'Not Implemented' }, context);
   }
 
-  if ((await checkPermissions(event)) === false) {
+  if ((await checkPermissions(event)).decoded !== true) {
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
