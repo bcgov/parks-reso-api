@@ -165,6 +165,10 @@ resources:
             AttributeType: S
           - AttributeName: sk
             AttributeType: S
+          - AttributeName: shortPassDate
+            AttributeType: S
+          - AttributeName: facilityName
+            AttributeType: S
         KeySchema:
           - AttributeName: pk
             KeyType: HASH
@@ -173,3 +177,31 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+        GlobalSecondaryIndexes:
+          - IndexName: shortPassDate-index
+            KeySchema:
+              - AttributeName: shortPassDate
+                KeyType: HASH
+              - AttributeName: facilityName
+                KeyType: RANGE
+            Projection:
+              ProjectionType: INCLUDE
+              NonKeyAttributes:
+                - firstName
+                - searchFirstName
+                - lastName
+                - searchLastName
+                - facilityName
+                - email
+                - date
+                - shortPassDate
+                - type
+                - registrationNumber
+                - numberOfGuests
+                - passStatus
+                - phoneNumber
+                - facilityType
+                - license
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
