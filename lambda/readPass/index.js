@@ -2,9 +2,10 @@ const AWS = require('aws-sdk');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 
-const { runQuery, TABLE_NAME } = require('../dynamoUtil');
+const { runQuery, TABLE_NAME, expressionBuilder } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
+const { formatISO } = require('date-fns');
 
 exports.handler = async (event, context) => {
   console.log('Read Pass', event);
@@ -13,7 +14,6 @@ exports.handler = async (event, context) => {
   let queryObj = {
     TableName: TABLE_NAME
   };
-
   try {
     if (!event.queryStringParameters) {
       return sendResponse(400, { msg: 'Invalid Request' }, context);
@@ -22,12 +22,25 @@ exports.handler = async (event, context) => {
       if ((await checkPermissions(event)) === false) {
         return sendResponse(403, { msg: 'Unauthorized' });
       }
+
       // Get all the passes for a specific facility
-      queryObj.ExpressionAttributeValues = {};
-      queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
-      queryObj.ExpressionAttributeValues[':facilityName'] = { S: event.queryStringParameters.facilityName };
-      queryObj.KeyConditionExpression = 'pk =:pk';
-      queryObj.FilterExpression = 'facilityName =:facilityName';
+      if (event.queryStringParameters.date) {
+        // Use GSI on shortPassDate if date is provided
+        const shortDate = formatISO(new Date(event.queryStringParameters.date), { representation: 'date' });
+
+        queryObj.ExpressionAttributeValues = {};
+        queryObj.IndexName = 'shortPassDate-index';
+        queryObj.ExpressionAttributeValues[':shortPassDate'] = { S: shortDate };
+        queryObj.ExpressionAttributeValues[':facilityName'] = { S: event.queryStringParameters.facilityName };
+        queryObj.KeyConditionExpression = 'shortPassDate =:shortPassDate AND facilityName =:facilityName';
+        queryObj.FilterExpression = '';
+      } else {
+        queryObj.ExpressionAttributeValues = {};
+        queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
+        queryObj.ExpressionAttributeValues[':facilityName'] = { S: event.queryStringParameters.facilityName };
+        queryObj.KeyConditionExpression = 'pk =:pk';
+        queryObj.FilterExpression = 'facilityName =:facilityName';
+      }
 
       if (event.queryStringParameters.passType) {
         queryObj.ExpressionAttributeValues[':passType'] = AWS.DynamoDB.Converter.input(
@@ -35,35 +48,30 @@ exports.handler = async (event, context) => {
         );
         queryObj = checkAddExpressionAttributeNames(queryObj);
         queryObj.ExpressionAttributeNames['#theType'] = 'type';
-        queryObj.FilterExpression += ' AND #theType =:passType';
+        queryObj.FilterExpression += expressionBuilder('AND', queryObj.FilterExpression, '#theType =:passType');
       }
 
-      // Filter Date
-      if (event.queryStringParameters.date) {
-        const theDate = new Date(event.queryStringParameters.date);
-        const dateselector = theDate.toISOString().split('T')[0];
-        queryObj = checkAddExpressionAttributeNames(queryObj);
-        queryObj.ExpressionAttributeNames['#theDate'] = 'date';
-        queryObj.ExpressionAttributeValues[':theDate'] = AWS.DynamoDB.Converter.input(dateselector);
-        queryObj.FilterExpression += ' AND contains(#theDate, :theDate)';
-      }
       // Filter Multiple Statuses
       if (event.queryStringParameters.passStatus) {
         const statusList = event.queryStringParameters.passStatus.split(',');
         const statusObj = {};
         for (let [index, status] of statusList.entries()) {
-          const statusName = ":passStatus" + index;
+          const statusName = ':passStatus' + index;
           statusObj[statusName.toString()] = AWS.DynamoDB.Converter.input(status);
         }
         queryObj = checkAddExpressionAttributeNames(queryObj);
         queryObj.ExpressionAttributeNames['#theStatus'] = 'passStatus';
         Object.assign(queryObj.ExpressionAttributeValues, statusObj);
-        queryObj.FilterExpression += ' AND #theStatus IN (' + Object.keys(statusObj).toString() + ')';
+        queryObj.FilterExpression += expressionBuilder(
+          'AND',
+          queryObj.FilterExpression,
+          '#theStatus IN (' + Object.keys(statusObj).toString() + ')'
+        );
       }
       // Filter reservation number
       if (event.queryStringParameters.reservationNumber) {
         queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.reservationNumber };
-        queryObj.KeyConditionExpression += ' AND sk =:sk';
+        queryObj.KeyConditionExpression += expressionBuilder('AND', queryObj.KeyConditionExpression, 'sk =:sk');
       }
       // Filter first/last
       if (event.queryStringParameters.firstName) {
@@ -72,7 +80,11 @@ exports.handler = async (event, context) => {
         queryObj.ExpressionAttributeValues[':searchFirstName'] = AWS.DynamoDB.Converter.input(
           event.queryStringParameters.firstName.toLowerCase()
         );
-        queryObj.FilterExpression += ' AND #searchFirstName =:searchFirstName';
+        queryObj.FilterExpression += expressionBuilder(
+          'AND',
+          queryObj.FilterExpression,
+          '#searchFirstName =:searchFirstName'
+        );
       }
       if (event.queryStringParameters.lastName) {
         queryObj = checkAddExpressionAttributeNames(queryObj);
@@ -80,16 +92,18 @@ exports.handler = async (event, context) => {
         queryObj.ExpressionAttributeValues[':searchLastName'] = AWS.DynamoDB.Converter.input(
           event.queryStringParameters.lastName.toLowerCase()
         );
-        queryObj.FilterExpression += ' AND #searchLastName =:searchLastName';
+        queryObj.FilterExpression += expressionBuilder(
+          'AND',
+          queryObj.FilterExpression,
+          '#searchLastName =:searchLastName'
+        );
       }
       // Filter email
       if (event.queryStringParameters.email) {
         queryObj = checkAddExpressionAttributeNames(queryObj);
         queryObj.ExpressionAttributeNames['#email'] = 'email';
-        queryObj.ExpressionAttributeValues[':email'] = AWS.DynamoDB.Converter.input(
-          event.queryStringParameters.email
-        );
-        queryObj.FilterExpression += ' AND #email =:email';
+        queryObj.ExpressionAttributeValues[':email'] = AWS.DynamoDB.Converter.input(event.queryStringParameters.email);
+        queryObj.FilterExpression += expressionBuilder('AND', queryObj.FilterExpression, '#email =:email');
       }
       queryObj = paginationHandler(queryObj, event);
 
@@ -127,8 +141,7 @@ exports.handler = async (event, context) => {
       console.log('passData', passData);
 
       if (passData && passData.data && passData.data.length !== 0) {
-        const theDate = new Date(passData.data[0].date);
-        const dateselector = theDate.toISOString().split('T')[0];
+        const dateselector = formatISO(new Date(passData.data[0].date), { representation: 'date' });
 
         // Build cancellation email payload
         const claims = {
