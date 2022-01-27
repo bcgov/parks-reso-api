@@ -157,22 +157,30 @@ resource "aws_iam_role_policy" "park_reso_dynamodb" {
     "Version": "2012-10-17",
     "Statement": [
       {
-          "Effect": "Allow",
-          "Action": [
-              "dynamodb:BatchGet*",
-              "dynamodb:DescribeStream",
-              "dynamodb:DescribeTable",
-              "dynamodb:Get*",
-              "dynamodb:Query",
-              "dynamodb:Scan",
-              "dynamodb:BatchWrite*",
-              "dynamodb:CreateTable",
-              "dynamodb:Delete*",
-              "dynamodb:Update*",
-              "dynamodb:PutItem"
-          ],
-          "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
-        }
+        "Effect": "Allow",
+        "Action": [
+            "dynamodb:BatchGet*",
+            "dynamodb:DescribeStream",
+            "dynamodb:DescribeTable",
+            "dynamodb:Get*",
+            "dynamodb:Query",
+            "dynamodb:Scan",
+            "dynamodb:BatchWrite*",
+            "dynamodb:CreateTable",
+            "dynamodb:Delete*",
+            "dynamodb:Update*",
+            "dynamodb:PutItem"
+        ],
+        "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+            "dynamodb:Query",
+            "dynamodb:Scan"
+        ],
+        "Resource": "${aws_dynamodb_table.park_dup_table.arn}/index/*"
+      }
     ]
   }
   EOF
