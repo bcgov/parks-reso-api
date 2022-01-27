@@ -31,21 +31,21 @@ resource "aws_dynamodb_table" "park_dup_table" {
     read_capacity      = 10
     projection_type    = "INCLUDE"
     non_key_attributes = [
-      firstName,
-      searchFirstName,
-      lastName,
-      searchLastName,
-      facilityName,
-      email,
-      date,
-      shortPassDate,
-      type,
-      registrationNumber,
-      numberOfGuests,
-      passStatus,
-      phoneNumber,
-      facilityType,
-      license
+      "firstName",
+      "searchFirstName",
+      "lastName",
+      "searchLastName",
+      "facilityName",
+      "email",
+      "date",
+      "shortPassDate",
+      "type",
+      "registrationNumber",
+      "numberOfGuests",
+      "passStatus",
+      "phoneNumber",
+      "facilityType",
+      "license"
     ]
   }
 }
