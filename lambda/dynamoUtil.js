@@ -51,6 +51,24 @@ async function runQuery(query, paginated = false) {
   }
 }
 
+async function runScan(query, paginated = false) {
+  console.log('query:', query);
+  const data = await dynamodb.scan(query).promise();
+  console.log('data:', data);
+  var unMarshalled = data.Items.map(item => {
+    return AWS.DynamoDB.Converter.unmarshall(item);
+  });
+  console.log(unMarshalled);
+  if (paginated) {
+    return {
+      LastEvaluatedKey: data.LastEvaluatedKey,
+      data: unMarshalled
+    };
+  } else {
+    return unMarshalled;
+  }
+}
+
 async function getConfig() {
   const configQuery = {
     TableName: TABLE_NAME,
@@ -90,6 +108,7 @@ module.exports = {
   dynamodb,
   setStatus,
   runQuery,
+  runScan,
   getConfig,
   getParks,
   getFacilities

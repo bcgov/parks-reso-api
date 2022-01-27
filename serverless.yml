@@ -144,6 +144,17 @@ functions:
           cors: true
 
   ###########
+  # Metric
+  ###########
+  metric:
+    handler: lambda/metric/index.handler
+    events:
+      - http:
+          method: GET
+          path: /metric
+          cors: true
+
+  ###########
   # Jobs
   ###########
   # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-checkActivation

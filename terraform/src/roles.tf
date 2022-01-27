@@ -64,6 +64,27 @@ resource "aws_iam_role" "exportRole" {
   ]
 }
 
+resource "aws_iam_role" "metricRole" {
+  name = "lambdaMetricRole"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+
+}
+
 resource "aws_iam_role" "readRole" {
   name = "lambdaReadRole"
 
@@ -160,6 +181,31 @@ resource "aws_iam_role_policy" "park_reso_dynamodb" {
 resource "aws_iam_role_policy" "park_reso_dynamodb_export" {
   name = "park_reso_dynamodb_export"
   role = aws_iam_role.exportRole.id
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+          "Effect": "Allow",
+          "Action": [
+              "dynamodb:BatchGet*",
+              "dynamodb:DescribeStream",
+              "dynamodb:DescribeTable",
+              "dynamodb:Get*",
+              "dynamodb:Query",
+              "dynamodb:Scan"
+          ],
+          "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
+        }
+    ]
+  }
+  EOF
+}
+
+resource "aws_iam_role_policy" "park_reso_dynamodb_metric" {
+  name = "park_reso_dynamodb_metric"
+  role = aws_iam_role.metricRole.id
 
   policy = <<-EOF
   {
