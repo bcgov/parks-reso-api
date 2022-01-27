@@ -1,5 +1,6 @@
 'use strict';
 const AWS = require('aws-sdk');
+const { formatISO } = require('date-fns');
 
 exports.up = async function (dbOptions) {
   const TABLE_NAME = process.env.MIGRATIONS_TABLE_NAME || 'parksreso';
@@ -73,7 +74,7 @@ exports.up = async function (dbOptions) {
             '#shortPassDate': 'shortPassDate'
           },
           ExpressionAttributeValues: {
-            ':shortPassDate': { S: new Date(item.date).toISOString().split('T')[0] }
+            ':shortPassDate': { S: formatISO(new Date(item.date), { representation: 'date' }) }
           },
           ReturnValues: 'ALL_NEW'
         };

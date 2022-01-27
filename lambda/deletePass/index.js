@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { dynamodb, runQuery, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
+const { formatISO } = require('date-fns');
 
 exports.handler = async (event, context) => {
   console.log('Delete Pass', event);
@@ -115,7 +116,7 @@ exports.handler = async (event, context) => {
           },
           ExpressionAttributeNames: {
             '#type': pass.type,
-            '#dateselector': pass.date.split('T')[0]
+            '#dateselector': formatISO(new Date(pass.date), { representation: 'date' })
           },
           UpdateExpression: 'SET reservations.#dateselector.#type = reservations.#dateselector.#type - :passReducedBy',
           ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',

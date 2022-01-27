@@ -5,6 +5,7 @@ const { verifyJWT } = require('../captchaUtil');
 const { dynamodb, runQuery, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { utcToZonedTime } = require('date-fns-tz');
+const { formatISO } = require('date-fns');
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
@@ -128,9 +129,7 @@ exports.handler = async (event, context) => {
       }
     }
 
-    const theDate = new Date(date);
-    // We can reuse the date selector as the short date required for indexing
-    const dateselector = theDate.toISOString().split('T')[0];
+    const dateselector = formatISO(new Date(date), { representation: 'date' });
 
     passObject.Item = {};
     passObject.Item['pk'] = { S: 'pass::' + parkName };

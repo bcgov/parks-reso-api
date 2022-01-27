@@ -103,6 +103,14 @@ async function getFacilities(parkName) {
   return await runQuery(facilitiesQuery);
 }
 
+const expressionBuilder = function (operator, existingExpression, newFilterExpression) {
+  if (existingExpression) {
+    return ` ${operator} ${newFilterExpression}`;
+  } else {
+    return newFilterExpression;
+  }
+};
+
 module.exports = {
   TABLE_NAME,
   dynamodb,
@@ -111,5 +119,6 @@ module.exports = {
   runScan,
   getConfig,
   getParks,
-  getFacilities
+  getFacilities,
+  expressionBuilder
 };

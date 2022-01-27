@@ -22,6 +22,32 @@ resource "aws_dynamodb_table" "park_dup_table" {
     name = "sk"
     type = "S"
   }
+
+  global_secondary_index {
+    name               = "shortPassDate-index"
+    hash_key           = "shortPassDate"
+    range_key          = "facilityName"
+    write_capacity     = 10
+    read_capacity      = 10
+    projection_type    = "INCLUDE"
+    non_key_attributes = [
+      firstName,
+      searchFirstName,
+      lastName,
+      searchLastName,
+      facilityName,
+      email,
+      date,
+      shortPassDate,
+      type,
+      registrationNumber,
+      numberOfGuests,
+      passStatus,
+      phoneNumber,
+      facilityType,
+      license
+    ]
+  }
 }
 
 resource "aws_backup_vault" "parksreso_backup_vault" {
