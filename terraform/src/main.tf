@@ -125,6 +125,8 @@ resource "aws_api_gateway_deployment" "apideploy" {
     aws_api_gateway_integration.readPassIntegration,
     aws_api_gateway_integration.writePassIntegration,
     aws_api_gateway_integration.deletePassIntegration,
+    aws_api_gateway_integration.metricIntegration,
+    aws_api_gateway_integration.exportPassIntegration,
     aws_api_gateway_integration.readFacilityIntegration,
     aws_api_gateway_integration.writeFacilityIntegration,
     aws_api_gateway_integration.putFacilityIntegration,
@@ -263,6 +265,11 @@ resource "aws_iam_role_policy_attachment" "lambda_read_logs" {
 
 resource "aws_iam_role_policy_attachment" "lambda_exportPass_cloudwatch_logs" {
   role       = aws_iam_role.exportRole.name
+  policy_arn = aws_iam_policy.lambda_logging.arn
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_metric_cloudwatch_logs" {
+  role       = aws_iam_role.metricRole.name
   policy_arn = aws_iam_policy.lambda_logging.arn
 }
 
