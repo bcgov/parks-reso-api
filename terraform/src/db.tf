@@ -23,6 +23,16 @@ resource "aws_dynamodb_table" "park_dup_table" {
     type = "S"
   }
 
+   attribute {
+    name = "shortPassDate"
+    type = "S"
+  }
+
+   attribute {
+    name = "facilityName"
+    type = "S"
+  }
+
   global_secondary_index {
     name               = "shortPassDate-index"
     hash_key           = "shortPassDate"
