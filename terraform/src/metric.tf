@@ -11,13 +11,7 @@ resource "aws_lambda_function" "metricLambda" {
   environment {
     variables = {
       TABLE_NAME                   = data.aws_ssm_parameter.db_name.value,
-      JWT_SECRET                   = local.jwtSecret.jwtSecret,
-      PUBLIC_FRONTEND              = data.aws_ssm_parameter.public_url.value,
-      GC_NOTIFY_API_PATH           = data.aws_ssm_parameter.gc_notify_api_path.value,
-      GC_NOTIFY_API_KEY            = data.aws_ssm_parameter.gc_notify_api_key.value,
-      GC_NOTIFY_CANCEL_TEMPLATE_ID = data.aws_ssm_parameter.gc_notify_cancel_template_id.value,
-      PASS_CANCELLATION_ROUTE      = data.aws_ssm_parameter.pass_cancellation_route.value,
-      S3_BUCKET_DATA               = data.aws_ssm_parameter.s3_bucket_data.value,
+      JWT_SECRET                   = local.jwtSecret.jwtSecret
     }
   }
 

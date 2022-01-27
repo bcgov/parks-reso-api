@@ -1,5 +1,5 @@
 const AWS = require('aws-sdk');
-const { runScan } = require('../dynamoUtil');
+const { runScan, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
 
@@ -8,7 +8,7 @@ exports.handler = async (event, context) => {
   console.log('event.queryStringParameters', event.queryStringParameters);
 
   let queryObj = {
-    TableName: process.env.TABLE_NAME
+    TableName: TABLE_NAME
   };
 
   try {
