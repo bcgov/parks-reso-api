@@ -9,7 +9,7 @@ exports.handler = async (event, context) => {
     TableName: TABLE_NAME
   };
 
-  const isAdmin = await checkPermissions(event);
+  const isAdmin = (await checkPermissions(event)).decoded;
   console.log('isAdmin:', isAdmin);
 
   try {
