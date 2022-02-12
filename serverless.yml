@@ -196,9 +196,7 @@ resources:
             KeyType: HASH
           - AttributeName: sk
             KeyType: RANGE
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+        BillingMode: PAY_PER_REQUEST
         GlobalSecondaryIndexes:
           - IndexName: shortPassDate-index
             KeySchema:
@@ -224,6 +222,4 @@ resources:
                 - phoneNumber
                 - facilityType
                 - license
-            ProvisionedThroughput:
-              ReadCapacityUnits: 1
-              WriteCapacityUnits: 1
+            BillingMode: PAY_PER_REQUEST
