@@ -198,6 +198,18 @@ resources:
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         GlobalSecondaryIndexes:
+          - IndexName: passStatus-index
+            KeySchema:
+              - AttributeName: passStatus
+                KeyType: HASH
+            Projection:
+              ProjectionType: INCLUDE
+              NonKeyAttributes:
+                - type
+                - date
+                - pk
+                - sk
+            BillingMode: PAY_PER_REQUEST
           - IndexName: shortPassDate-index
             KeySchema:
               - AttributeName: shortPassDate
