@@ -917,13 +917,13 @@
   "version" "0.2.3"
 
 "@digitalspace/dynamodb-migrate@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@digitalspace/dynamodb-migrate/-/dynamodb-migrate-1.0.2.tgz#afc45bd2ed81f088d4373fce06226dc4dec03ff6"
-  integrity sha512-ZlhY9vy9fq23pJpCDoStmrzNs28U53man4Zi6jaCX4uKjBQMdUbVf7TpGMQsZ2VH/aNp1eTdOJD9ueYn+0Qs6A==
+  "integrity" "sha512-ZlhY9vy9fq23pJpCDoStmrzNs28U53man4Zi6jaCX4uKjBQMdUbVf7TpGMQsZ2VH/aNp1eTdOJD9ueYn+0Qs6A=="
+  "resolved" "https://registry.npmjs.org/@digitalspace/dynamodb-migrate/-/dynamodb-migrate-1.0.2.tgz"
+  "version" "1.0.2"
   dependencies:
-    aws-sdk "^2.1059.0"
-    commander "^8.3.0"
-    luxon "^2.3.0"
+    "aws-sdk" "^2.1059.0"
+    "commander" "^8.3.0"
+    "luxon" "^2.3.0"
 
 "@hapi/accept@^5.0.1":
   "integrity" "sha512-CmzBx/bXUR8451fnZRuZAJRlzgm0Jgu5dltTX/bszmR2lheb9BpyN47Q1RbaGTsvFzn0PXAEs+lXDKfshccYZw=="
@@ -2343,15 +2343,15 @@
     "sinon" "^11.1.1"
     "traverse" "^0.6.6"
 
-"aws-sdk@^2.1030.0", "aws-sdk@^2.1032.0", "aws-sdk@^2.7.0", "aws-sdk@^2.928.0":
-  "integrity" "sha512-BjSGGZIQE/SCLDgj2T4AhtBG4A4NgXhV/Z/I/E7Mst/RpOepTqZGznUbgXTvO+Z3gKqx33jJa6mS7ZxStCb/Wg=="
-  "resolved" "https://registry.npmjs.org/aws-sdk/-/aws-sdk-2.1035.0.tgz"
-  "version" "2.1035.0"
+"aws-sdk@^2.1030.0", "aws-sdk@^2.1032.0", "aws-sdk@^2.1059.0", "aws-sdk@^2.7.0", "aws-sdk@^2.928.0":
+  "integrity" "sha512-Fjp5GOzctLHly5ySBGzASZVWEQi3zHc2TlYkiT5VNwvDiV9Uwv2frm2zgQf0wL6BOkPRS2b1TfOJT7x6Q5aOIw=="
+  "resolved" "https://registry.npmjs.org/aws-sdk/-/aws-sdk-2.1071.0.tgz"
+  "version" "2.1071.0"
   dependencies:
     "buffer" "4.9.2"
     "events" "1.1.1"
     "ieee754" "1.1.13"
-    "jmespath" "0.15.0"
+    "jmespath" "0.16.0"
     "querystring" "0.2.0"
     "sax" "1.2.1"
     "url" "0.10.3"
@@ -3072,6 +3072,11 @@
   "resolved" "https://registry.npmjs.org/commander/-/commander-2.20.3.tgz"
   "version" "2.20.3"
 
+"commander@^8.3.0":
+  "integrity" "sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww=="
+  "resolved" "https://registry.npmjs.org/commander/-/commander-8.3.0.tgz"
+  "version" "8.3.0"
+
 "commander@~4.1.1":
   "integrity" "sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA=="
   "resolved" "https://registry.npmjs.org/commander/-/commander-4.1.1.tgz"
@@ -3258,7 +3263,7 @@
   "resolved" "https://registry.npmjs.org/date-fns-tz/-/date-fns-tz-1.2.2.tgz"
   "version" "1.2.2"
 
-"date-fns@^2.27.0", "date-fns@>=2.0.0":
+"date-fns@^2.28.0", "date-fns@>=2.0.0":
   "integrity" "sha512-8d35hViGYx/QH0icHYCeLmsLmMUheMmTyV9Fcm6gvNwdw31yXXH+O85sOBJ+OLnLQMKZowvpKb6FgMIQjcpvQw=="
   "resolved" "https://registry.npmjs.org/date-fns/-/date-fns-2.28.0.tgz"
   "version" "2.28.0"
@@ -5555,10 +5560,10 @@
     "import-local" "^3.0.2"
     "jest-cli" "^27.4.0"
 
-"jmespath@0.15.0":
-  "integrity" "sha1-o/Iiqarp+Wb10nx5ZRDigJF2Qhc="
-  "resolved" "https://registry.npmjs.org/jmespath/-/jmespath-0.15.0.tgz"
-  "version" "0.15.0"
+"jmespath@0.16.0":
+  "integrity" "sha512-9FzQjJ7MATs1tSpnco1K6ayiYE3figslrXA72G2HQ/n76RzvYlofyi5QM+iX4YRs/pu3yzxlVQSST23+dMDknw=="
+  "resolved" "https://registry.npmjs.org/jmespath/-/jmespath-0.16.0.tgz"
+  "version" "0.16.0"
 
 "jose@^2.0.5":
   "integrity" "sha512-BAiDNeDKTMgk4tvD0BbxJ8xHEHBZgpeRZ1zGPPsitSyMgjoMWiLGYAE7H7NpP5h0lPppQajQs871E8NHUrzVPA=="
@@ -6113,6 +6118,11 @@
   "integrity" "sha512-TfTiyvZhwBYM/7QdAVDh+7dBTBA29v4ik0Ce9zda3Mnf8on1S5KJI8P2jKFZ8+5C0jhmr0KwJEO/Wdpm0VeWJQ=="
   "resolved" "https://registry.npmjs.org/luxon/-/luxon-1.28.0.tgz"
   "version" "1.28.0"
+
+"luxon@^2.3.0":
+  "integrity" "sha512-gv6jZCV+gGIrVKhO90yrsn8qXPKD8HYZJtrUDSfEbow8Tkw84T9OnCyJhWvnJIaIF/tBuiAjZuQHUt1LddX2mg=="
+  "resolved" "https://registry.npmjs.org/luxon/-/luxon-2.3.0.tgz"
+  "version" "2.3.0"
 
 "make-dir@^1.0.0":
   "integrity" "sha512-2w31R7SJtieJJnQtGc7RVL2StM2vGYVfqUOvUDxH6bC6aJTxPxTF0GnIgCyu7tjockiUWAYQRbxa7vKn34s5sQ=="
