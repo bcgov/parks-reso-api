@@ -23,8 +23,13 @@ resource "aws_dynamodb_table" "park_dup_table" {
     type = "S"
   }
 
-   attribute {
+  attribute {
     name = "shortPassDate"
+    type = "S"
+  }
+
+  attribute {
+    name = "passStatus"
     type = "S"
   }
 
@@ -54,6 +59,20 @@ resource "aws_dynamodb_table" "park_dup_table" {
       "phoneNumber",
       "facilityType",
       "license"
+    ]
+  }
+
+  global_secondary_index {
+    name               = "passStatus-index"
+    hash_key           = "passStatus"
+    write_capacity     = 1
+    read_capacity      = 1
+    projection_type    = "INCLUDE"
+    non_key_attributes = [
+      "type",
+      "date",
+      "pk",
+      "sk"
     ]
   }
 }
