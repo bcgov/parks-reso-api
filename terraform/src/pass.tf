@@ -43,6 +43,7 @@ resource "aws_lambda_function" "writePassLambda" {
 
   handler = "lambda/writePass/index.handler"
   runtime = "nodejs14.x"
+  timeout = 10
 
   environment {
     variables = {
