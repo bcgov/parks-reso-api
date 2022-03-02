@@ -7,6 +7,7 @@ resource "aws_lambda_function" "exportPassLambda" {
   handler = "lambda/exportPass/index.handler"
   runtime = "nodejs14.x"
   timeout = 30
+  publish = "true"
 
   environment {
     variables = {
@@ -22,6 +23,12 @@ resource "aws_lambda_function" "exportPassLambda" {
   }
 
   role = aws_iam_role.exportRole.arn
+}
+
+resource "aws_lambda_alias" "exportPassLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.exportPassLambda.function_name
+  function_version = aws_lambda_function.exportPassLambda.version
 }
 
 resource "aws_api_gateway_resource" "exportPassResource" {

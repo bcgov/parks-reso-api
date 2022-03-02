@@ -7,6 +7,7 @@ resource "aws_lambda_function" "metricLambda" {
   handler = "lambda/metric/index.handler"
   runtime = "nodejs14.x"
   timeout = 30
+  publish = "true"
 
   environment {
     variables = {
@@ -16,6 +17,12 @@ resource "aws_lambda_function" "metricLambda" {
   }
 
   role = aws_iam_role.metricRole.arn
+}
+
+resource "aws_lambda_alias" "metricLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.metricLambda.function_name
+  function_version = aws_lambda_function.metricLambda.version
 }
 
 resource "aws_api_gateway_resource" "metricResource" {

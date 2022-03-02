@@ -7,6 +7,7 @@ resource "aws_lambda_function" "check_activation" {
   handler = "lambda/checkActivation/index.handler"
   runtime = "nodejs14.x"
   timeout = 300
+  publish = "true"
 
   environment {
     variables = {
@@ -14,6 +15,12 @@ resource "aws_lambda_function" "check_activation" {
     }
   }
   role = aws_iam_role.readRole.arn
+}
+
+resource "aws_lambda_alias" "check_activation_latest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.check_activation.function_name
+  function_version = aws_lambda_function.check_activation.version
 }
 
 resource "aws_cloudwatch_event_rule" "activation_every_hour" {
