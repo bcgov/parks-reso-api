@@ -7,6 +7,7 @@ resource "aws_lambda_function" "readConfigLambda" {
 
   handler = "lambda/readConfig/index.handler"
   runtime = "nodejs14.x"
+  publish = "true"
 
   environment {
     variables = {
@@ -15,6 +16,18 @@ resource "aws_lambda_function" "readConfigLambda" {
   }
 
   role = aws_iam_role.readRole.arn
+}
+
+resource "aws_lambda_alias" "readConfigLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.readConfigLambda.function_name
+  function_version = aws_lambda_function.readConfigLambda.version
+}
+
+resource "aws_lambda_provisioned_concurrency_config" "readConfigLambda" {
+  function_name                     = aws_lambda_alias.readConfigLambdaLatest.function_name
+  provisioned_concurrent_executions = 3
+  qualifier                         = aws_lambda_alias.readConfigLambdaLatest.name
 }
 
 // Deploys the lambda via the zip above
@@ -26,6 +39,7 @@ resource "aws_lambda_function" "writeConfigLambda" {
 
   handler = "lambda/writeConfig/index.handler"
   runtime = "nodejs14.x"
+  publish = "true"
 
   environment {
     variables = {
@@ -34,6 +48,12 @@ resource "aws_lambda_function" "writeConfigLambda" {
   }
 
   role = aws_iam_role.writeRole.arn
+}
+
+resource "aws_lambda_alias" "writeConfigLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.writeConfigLambda.function_name
+  function_version = aws_lambda_function.writeConfigLambda.version
 }
 
 resource "aws_api_gateway_resource" "configResource" {

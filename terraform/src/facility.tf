@@ -7,6 +7,7 @@ resource "aws_lambda_function" "readFacilityLambda" {
 
   handler = "lambda/readFacility/index.handler"
   runtime = "nodejs14.x"
+  publish = "true"
 
   environment {
     variables = {
@@ -15,6 +16,18 @@ resource "aws_lambda_function" "readFacilityLambda" {
   }
 
   role = aws_iam_role.readRole.arn
+}
+
+resource "aws_lambda_alias" "readFacilityLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.readFacilityLambda.function_name
+  function_version = aws_lambda_function.readFacilityLambda.version
+}
+
+resource "aws_lambda_provisioned_concurrency_config" "readFacilityLambda" {
+  function_name                     = aws_lambda_alias.readFacilityLambdaLatest.function_name
+  provisioned_concurrent_executions = 2
+  qualifier                         = aws_lambda_alias.readFacilityLambdaLatest.name
 }
 
 // Deploys the lambda via the zip above
@@ -26,6 +39,7 @@ resource "aws_lambda_function" "writeFacilityLambda" {
 
   handler = "lambda/writeFacility/index.handler"
   runtime = "nodejs14.x"
+  publish = "true"
 
   environment {
     variables = {
@@ -34,6 +48,12 @@ resource "aws_lambda_function" "writeFacilityLambda" {
   }
 
   role = aws_iam_role.writeRole.arn
+}
+
+resource "aws_lambda_alias" "writeFacilityLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.writeFacilityLambda.function_name
+  function_version = aws_lambda_function.writeFacilityLambda.version
 }
 
 resource "aws_api_gateway_resource" "facilityResource" {

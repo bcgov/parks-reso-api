@@ -2,8 +2,7 @@ resource "aws_dynamodb_table" "park_dup_table" {
   name           = data.aws_ssm_parameter.db_name.value
   hash_key       = "pk"
   range_key      = "sk"
-  read_capacity  = 1
-  write_capacity = 1
+  billing_mode   = "PAY_PER_REQUEST"
 
   point_in_time_recovery {
     enabled = true
