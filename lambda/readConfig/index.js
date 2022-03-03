@@ -8,6 +8,11 @@ exports.handler = async (event, context) => {
     TableName: TABLE_NAME
   };
 
+  if (event.queryStringParameters.warmup) {
+    // Used for warming up the lambda
+    return sendResponse(200);
+  }
+
   try {
     queryObj.ExpressionAttributeValues = {};
     queryObj.ExpressionAttributeValues[':pk'] = { S: 'config' };

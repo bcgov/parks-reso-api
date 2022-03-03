@@ -2,6 +2,11 @@ const { getCaptcha, verifyCaptcha, getCaptchaAudio } = require('../captchaUtil')
 const { sendResponse } = require('../responseUtil');
 
 async function generateCaptcha(event, context) {
+  if (event.queryStringParameters.warmup) {
+    // Used for warming up the lambda
+    return sendResponse(200);
+  }
+
   const captcha = await getCaptcha({ fontSize: 76, width: 190, height: 70 });
 
   if (captcha?.valid === false) {
@@ -12,6 +17,11 @@ async function generateCaptcha(event, context) {
 }
 
 async function verifyAnswer(event, context) {
+  if (event.queryStringParameters.warmup) {
+    // Used for warming up the lambda
+    return sendResponse(200);
+  }
+
   const postBody = JSON.parse(event.body);
   const result = await verifyCaptcha(postBody);
 

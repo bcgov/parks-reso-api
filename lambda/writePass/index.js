@@ -28,6 +28,11 @@ exports.handler = async (event, context) => {
     );
   }
 
+  if (event.queryStringParameters.warmup) {
+    // Used for warming up the lambda
+    return sendResponse(200);
+  }
+
   try {
     let newObject = JSON.parse(event.body);
 

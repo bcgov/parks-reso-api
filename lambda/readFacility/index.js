@@ -16,6 +16,12 @@ exports.handler = async (event, context) => {
     if (!event.queryStringParameters) {
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
+
+    if (event.queryStringParameters.warmup) {
+      // Used for warming up the lambda
+      return sendResponse(200);
+    }
+
     if (event.queryStringParameters.facilities && event.queryStringParameters.park) {
       console.log('Grab facilities for this park');
       // Grab facilities for this park.

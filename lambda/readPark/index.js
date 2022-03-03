@@ -27,6 +27,9 @@ exports.handler = async (event, context) => {
         });
         return sendResponse(200, list, context);
       }
+    } else if (event.queryStringParameters.warmup) {
+      // Used for warming up the lambda
+      return sendResponse(200);
     } else if (event.queryStringParameters.park) {
       // Get specific park.
       queryObj.ExpressionAttributeValues = {};
