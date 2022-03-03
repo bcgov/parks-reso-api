@@ -21,6 +21,7 @@ resource "aws_lambda_function" "readParkLambda" {
 
   handler = "lambda/readPark/index.handler"
   runtime = "nodejs14.x"
+  publish = "true"
 
   environment {
     variables = {
@@ -29,6 +30,18 @@ resource "aws_lambda_function" "readParkLambda" {
   }
 
   role = aws_iam_role.readRole.arn
+}
+
+resource "aws_lambda_alias" "readParkLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.readParkLambda.function_name
+  function_version = aws_lambda_function.readParkLambda.version
+}
+
+resource "aws_lambda_provisioned_concurrency_config" "readParkLambda" {
+  function_name                     = aws_lambda_alias.readParkLambdaLatest.function_name
+  provisioned_concurrent_executions = 2
+  qualifier                         = aws_lambda_alias.readParkLambdaLatest.name
 }
 
 // Deploys the lambda via the zip above
@@ -40,6 +53,7 @@ resource "aws_lambda_function" "writeParkLambda" {
 
   handler = "lambda/writePark/index.handler"
   runtime = "nodejs14.x"
+  publish = "true"
 
   environment {
     variables = {
@@ -48,6 +62,12 @@ resource "aws_lambda_function" "writeParkLambda" {
   }
 
   role = aws_iam_role.writeRole.arn
+}
+
+resource "aws_lambda_alias" "writeParkLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.writeParkLambda.function_name
+  function_version = aws_lambda_function.writeParkLambda.version
 }
 
 resource "aws_api_gateway_rest_api" "apiLambda" {

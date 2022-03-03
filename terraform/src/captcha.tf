@@ -15,6 +15,7 @@ resource "aws_lambda_function" "generateCaptchaLambda" {
 
   handler = "lambda/captcha/handler.generateCaptcha"
   runtime = "nodejs14.x"
+  publish = "true"
 
   environment {
     variables = {
@@ -23,6 +24,18 @@ resource "aws_lambda_function" "generateCaptchaLambda" {
   }
 
   role = aws_iam_role.basicExecutionRole.arn
+}
+
+resource "aws_lambda_alias" "generateCaptchaLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.generateCaptchaLambda.function_name
+  function_version = aws_lambda_function.generateCaptchaLambda.version
+}
+
+resource "aws_lambda_provisioned_concurrency_config" "generateCaptchaLambda" {
+  function_name                     = aws_lambda_alias.generateCaptchaLambdaLatest.function_name
+  provisioned_concurrent_executions = 2
+  qualifier                         = aws_lambda_alias.generateCaptchaLambdaLatest.name
 }
 
 resource "aws_lambda_permission" "generateCaptchaPermission" {
@@ -42,6 +55,7 @@ resource "aws_lambda_function" "verifyCaptchaLambda" {
 
   handler = "lambda/captcha/handler.verifyAnswer"
   runtime = "nodejs14.x"
+  publish = "true"
 
   environment {
     variables = {
@@ -52,6 +66,18 @@ resource "aws_lambda_function" "verifyCaptchaLambda" {
   }
 
   role = aws_iam_role.basicExecutionRole.arn
+}
+
+resource "aws_lambda_alias" "verifyCaptchaLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.verifyCaptchaLambda.function_name
+  function_version = aws_lambda_function.verifyCaptchaLambda.version
+}
+
+resource "aws_lambda_provisioned_concurrency_config" "verifyCaptchaLambda" {
+  function_name                     = aws_lambda_alias.verifyCaptchaLambdaLatest.function_name
+  provisioned_concurrent_executions = 2
+  qualifier                         = aws_lambda_alias.verifyCaptchaLambdaLatest.name
 }
 
 resource "aws_lambda_permission" "verifyCaptchaPermission" {
@@ -71,6 +97,7 @@ resource "aws_lambda_function" "generateCaptchaAudioLambda" {
 
   handler = "lambda/captcha/handler.generateAudio"
   runtime = "nodejs14.x"
+  publish = "true"
 
   environment {
     variables = {
@@ -79,6 +106,12 @@ resource "aws_lambda_function" "generateCaptchaAudioLambda" {
   }
 
   role = aws_iam_role.pollySynthesizeSpeechRole.arn
+}
+
+resource "aws_lambda_alias" "generateCaptchaAudioLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.generateCaptchaAudioLambda.function_name
+  function_version = aws_lambda_function.generateCaptchaAudioLambda.version
 }
 
 resource "aws_lambda_permission" "generateCaptchaAudioPermission" {

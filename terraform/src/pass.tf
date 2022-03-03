@@ -18,6 +18,7 @@ resource "aws_lambda_function" "readPassLambda" {
   handler = "lambda/readPass/index.handler"
   runtime = "nodejs14.x"
   timeout = 6
+  publish = "true"
 
   environment {
     variables = {
@@ -34,6 +35,12 @@ resource "aws_lambda_function" "readPassLambda" {
   role = aws_iam_role.readRole.arn
 }
 
+resource "aws_lambda_alias" "readPassLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.readPassLambda.function_name
+  function_version = aws_lambda_function.readPassLambda.version
+}
+
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "writePassLambda" {
   function_name = "writePass"
@@ -44,6 +51,7 @@ resource "aws_lambda_function" "writePassLambda" {
   handler = "lambda/writePass/index.handler"
   runtime = "nodejs14.x"
   timeout = 10
+  publish = "true"
 
   environment {
     variables = {
@@ -61,6 +69,18 @@ resource "aws_lambda_function" "writePassLambda" {
   role = aws_iam_role.writeRole.arn
 }
 
+resource "aws_lambda_alias" "writePassLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.writePassLambda.function_name
+  function_version = aws_lambda_function.writePassLambda.version
+}
+
+resource "aws_lambda_provisioned_concurrency_config" "writePassLambda" {
+  function_name                     = aws_lambda_alias.writePassLambdaLatest.function_name
+  provisioned_concurrent_executions = 2
+  qualifier                         = aws_lambda_alias.writePassLambdaLatest.name
+}
+
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "deletePassLambda" {
   function_name = "deletePass"
@@ -70,6 +90,7 @@ resource "aws_lambda_function" "deletePassLambda" {
 
   handler = "lambda/deletePass/index.handler"
   runtime = "nodejs14.x"
+  publish = "true"
 
   environment {
     variables = {
@@ -79,6 +100,12 @@ resource "aws_lambda_function" "deletePassLambda" {
   }
 
   role = aws_iam_role.deleteRole.arn
+}
+
+resource "aws_lambda_alias" "deletePassLambdaLatest" {
+  name             = "latest"
+  function_name    = aws_lambda_function.deletePassLambda.function_name
+  function_version = aws_lambda_function.deletePassLambda.version
 }
 
 resource "aws_api_gateway_resource" "passResource" {
