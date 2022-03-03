@@ -1,17 +1,15 @@
 const { runQuery, TABLE_NAME } = require('../dynamoUtil');
-const { sendResponse } = require('../responseUtil');
+const { sendResponse, checkWarmup } = require('../responseUtil');
 
 exports.handler = async (event, context) => {
   console.log('Read Config', event);
+  if (checkWarmup(event)) {
+    return sendResponse(200, {});
+  }
 
   let queryObj = {
     TableName: TABLE_NAME
   };
-
-  if (event.queryStringParameters.warmup) {
-    // Used for warming up the lambda
-    return sendResponse(200);
-  }
 
   try {
     queryObj.ExpressionAttributeValues = {};

@@ -3,7 +3,7 @@ const axios = require('axios');
 
 const { verifyJWT } = require('../captchaUtil');
 const { dynamodb, runQuery, TABLE_NAME } = require('../dynamoUtil');
-const { sendResponse } = require('../responseUtil');
+const { sendResponse, checkWarmup } = require('../responseUtil');
 const { utcToZonedTime } = require('date-fns-tz');
 const { formatISO } = require('date-fns');
 
@@ -28,9 +28,8 @@ exports.handler = async (event, context) => {
     );
   }
 
-  if (event.queryStringParameters.warmup) {
-    // Used for warming up the lambda
-    return sendResponse(200);
+  if (checkWarmup(event)) {
+    return sendResponse(200, {});
   }
 
   try {
