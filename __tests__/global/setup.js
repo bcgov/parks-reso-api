@@ -8,6 +8,8 @@ module.exports = async () => {
     endpoint: ENDPOINT
   });
 
+  // TODO: This should pull in the JSON version of our serverless.yml!
+
   try {
     let res = await dynamoDb
       .createTable({
@@ -62,6 +64,7 @@ module.exports = async () => {
               NonKeyAttributes: [
                 'type',
                 'date',
+                'facilityName',
                 'pk',
                 'sk'
               ]

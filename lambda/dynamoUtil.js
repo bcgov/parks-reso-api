@@ -8,6 +8,20 @@ const options = {
 if (process.env.IS_OFFLINE) {
   options.endpoint = 'http://localhost:8000';
 }
+const ACTIVE_STATUS = 'active';
+const RESERVED_STATUS = 'reserved';
+const EXPIRED_STATUS = 'expired';
+const timeZone = 'America/Vancouver';
+const PASS_TYPE_AM = 'AM';
+const PASS_TYPE_PM = 'PM';
+const PASS_TYPE_DAY = 'DAY';
+const TIMEZONE = 'America/Vancouver';
+const PM_ACTIVATION_HOUR = 12;
+const PASS_TYPE_EXPIRY_HOURS = {
+  AM: 12,
+  PM: 0,
+  DAY: 0
+};
 
 const dynamodb = new AWS.DynamoDB(options);
 
@@ -36,11 +50,11 @@ async function setStatus(passes, status) {
 async function runQuery(query, paginated = false) {
   console.log('query:', query);
   const data = await dynamodb.query(query).promise();
-  console.log('data:', data);
+  // console.log('data:', data);
   var unMarshalled = data.Items.map(item => {
     return AWS.DynamoDB.Converter.unmarshall(item);
   });
-  console.log(unMarshalled);
+  // console.log(unMarshalled);
   if (paginated) {
     return {
       LastEvaluatedKey: data.LastEvaluatedKey,
@@ -54,11 +68,11 @@ async function runQuery(query, paginated = false) {
 async function runScan(query, paginated = false) {
   console.log('query:', query);
   const data = await dynamodb.scan(query).promise();
-  console.log('data:', data);
+  // console.log('data:', data);
   var unMarshalled = data.Items.map(item => {
     return AWS.DynamoDB.Converter.unmarshall(item);
   });
-  console.log(unMarshalled);
+  // console.log(unMarshalled);
   if (paginated) {
     return {
       LastEvaluatedKey: data.LastEvaluatedKey,
@@ -111,7 +125,55 @@ const expressionBuilder = function (operator, existingExpression, newFilterExpre
   }
 };
 
+const getPassesByStatus = async function(status, filterExpression = undefined) {
+  console.log(`Loading passes`, filterExpression);
+
+  const passesQuery = {
+    TableName: TABLE_NAME,
+    KeyConditionExpression: 'passStatus = :activeStatus',
+    IndexName: 'passStatus-index'
+  };
+
+  if (filterExpression && filterExpression.FilterExpression) {
+    passesQuery.FilterExpression = filterExpression.FilterExpression;
+  }
+  if (filterExpression && filterExpression.ExpressionAttributeValues) {
+    passesQuery.ExpressionAttributeValues = filterExpression.ExpressionAttributeValues;
+  }
+  if (filterExpression && filterExpression.ExpressionAttributeNames) {
+    passesQuery.ExpressionAttributeNames = filterExpression.ExpressionAttributeNames;
+  }
+
+  if (!passesQuery.ExpressionAttributeValues) {
+    passesQuery.ExpressionAttributeValues = {};
+  }
+  passesQuery.ExpressionAttributeValues[':activeStatus'] = { S: status };
+
+  console.log("Query:", passesQuery);
+
+  // Grab all the results, don't skip any.
+  let results = [];
+  let passData;
+  do {
+    passData = await runQuery(passesQuery, true);
+    passData.data.forEach((item) => results.push(item));
+    passesQuery.ExclusiveStartKey  = passData.LastEvaluatedKey;
+  } while(typeof passData.LastEvaluatedKey !== "undefined");
+
+  return results;
+}
+
 module.exports = {
+  ACTIVE_STATUS,
+  RESERVED_STATUS,
+  EXPIRED_STATUS,
+  PASS_TYPE_AM,
+  PASS_TYPE_PM,
+  PASS_TYPE_DAY,
+  TIMEZONE,
+  PM_ACTIVATION_HOUR,
+  PASS_TYPE_EXPIRY_HOURS,
+  timeZone,
   TABLE_NAME,
   dynamodb,
   setStatus,
@@ -120,5 +182,6 @@ module.exports = {
   getConfig,
   getParks,
   getFacilities,
+  getPassesByStatus,
   expressionBuilder
 };
