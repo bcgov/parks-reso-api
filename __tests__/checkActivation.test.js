@@ -87,41 +87,6 @@ describe('checkActivationHandler', () => {
     return setupDb();
   });
 
-  test('should not update old passes', async () => {
-    const oldDate = new Date();
-    oldDate.setDate(oldDate.getDate() - 5);
-
-    await docClient
-      .put({
-        TableName: TABLE_NAME,
-        Item: {
-          pk: 'pass::Test Park',
-          sk: '123456700',
-          facilityName: 'Parking Lot A',
-          type: 'DAY',
-          registrationNumber: '123456700',
-          passStatus: 'reserved',
-          date: formatISO(oldDate, { representation: 'date' })
-        }
-      })
-      .promise();
-
-    MockDate.set(new Date('2021-12-08T11:01:58.135Z'));
-    await checkActivation.handler(null, {});
-    MockDate.reset();
-
-    const result = await docClient
-      .get({
-        TableName: TABLE_NAME,
-        Key: {
-          pk: 'pass::Test Park',
-          sk: '123456700'
-        }
-      })
-      .promise();
-    expect(result.Item.passStatus).toBe('reserved');
-  });
-
   test.each([['AM', '123456702'], ['DAY', '123456703']])('should set %s passes with default opening hour to active', async (passType, sk) => {
     const passDate = new Date('2021-12-08T19:01:58.135Z');
     await docClient
@@ -134,7 +99,7 @@ describe('checkActivationHandler', () => {
           type: passType,
           registrationNumber: sk,
           passStatus: 'reserved',
-          date: formatISO(passDate, { representation: 'date' })
+          date: formatISO(passDate)
         }
       })
       .promise();
@@ -167,7 +132,7 @@ describe('checkActivationHandler', () => {
           type: passType,
           registrationNumber: sk,
           passStatus: 'reserved',
-          date: formatISO(passDate, { representation: 'date' })
+          date: formatISO(passDate)
         }
       })
       .promise();
@@ -200,7 +165,7 @@ describe('checkActivationHandler', () => {
           type: passType,
           registrationNumber: sk,
           passStatus: 'reserved',
-          date: formatISO(passDate, { representation: 'date' })
+          date: formatISO(passDate)
         }
       })
       .promise();
@@ -233,7 +198,7 @@ describe('checkActivationHandler', () => {
           type: 'PM',
           registrationNumber: '123456708',
           passStatus: 'reserved',
-          date: formatISO(passDate, { representation: 'date' })
+          date: formatISO(passDate)
         }
       })
       .promise();
@@ -266,7 +231,7 @@ describe('checkActivationHandler', () => {
           type: 'PM',
           registrationNumber: '123456709',
           passStatus: 'reserved',
-          date: formatISO(passDate, { representation: 'date' })
+          date: formatISO(passDate)
         }
       })
       .promise();

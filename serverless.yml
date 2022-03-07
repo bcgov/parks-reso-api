@@ -191,6 +191,8 @@ resources:
             AttributeType: S
           - AttributeName: facilityName
             AttributeType: S
+          - AttributeName: passStatus
+            AttributeType: S
         KeySchema:
           - AttributeName: pk
             KeyType: HASH
@@ -206,6 +208,7 @@ resources:
               ProjectionType: INCLUDE
               NonKeyAttributes:
                 - type
+                - facilityName
                 - date
                 - pk
                 - sk

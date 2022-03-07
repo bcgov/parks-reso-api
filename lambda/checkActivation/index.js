@@ -1,36 +1,100 @@
-const { formatISO } = require('date-fns');
-const { utcToZonedTime } = require('date-fns-tz');
+const { endOfToday, compareAsc, addHours, startOfDay } = require('date-fns');
+const { utcToZonedTime, zonedTimeToUtc } = require('date-fns-tz');
 
-const { runQuery, setStatus, getConfig, getParks, getFacilities, TABLE_NAME } = require('../dynamoUtil');
+const { setStatus,
+        getPassesByStatus,
+        getParks,
+        getFacilities,
+        RESERVED_STATUS,
+        ACTIVE_STATUS,
+        EXPIRED_STATUS,
+        PASS_TYPE_PM,
+        timeZone } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
-
-const ACTIVE_STATUS = 'active';
-const RESERVED_STATUS = 'reserved';
-const PASS_TYPE_AM = 'AM';
-const PASS_TYPE_PM = 'PM';
-const PASS_TYPE_DAY = 'DAY';
-const TIMEZONE = 'America/Vancouver';
-const PM_ACTIVATION_HOUR = 12;
 
 exports.handler = async (event, context) => {
   console.log('Event:', event, context);
   try {
-    const utcNow = Date.now();
-    const localNow = utcToZonedTime(utcNow, TIMEZONE);
-    console.log(`UTC: ${utcNow}; local (${TIMEZONE}): ${localNow}`);
+    const theDate = zonedTimeToUtc(endOfToday(), timeZone);
 
-    const [config] = await getConfig();
+    console.log("Checking against date:", theDate);
+
+    const filter = {
+      FilterExpression: '#theDate <=:theDate',
+      ExpressionAttributeValues: {
+        ':theDate': { S: theDate.toISOString() }
+      },
+      ExpressionAttributeNames: {
+        '#theDate': 'date'
+      }
+    };
+
+    console.log("Getting passes by status:", RESERVED_STATUS, filter);
+
+    const passes = await getPassesByStatus(RESERVED_STATUS, filter);
+    console.log("Reserved Passes:", passes.length);
+
+    // Query the passStatus-index for passStatus = 'reserved'
+    // NB: Filter on date <= endOfToday for fixing previous bad data.
+    // What period are we in? AM/PM?
+    const currentTime = utcToZonedTime(new Date(), timeZone);
+    const noonTime = addHours(startOfDay(currentTime), 12);
+    const startOfDayLocalTime = startOfDay(currentTime);
+
+    // 1. If currentTimeLocal < noon => AM
+    // 2. If currentTimeLocal >= noon => PM
+    const isAM = compareAsc(currentTime, noonTime) <= 0 ? true : false;
+
+    let passesToActiveStatus = [];
+    let passesToExpiredStatus = [];
+
+    // Get all facilities for opening hour lookups.
+    let facilities = [];
     const parks = await getParks();
-    for (const park of parks) {
-      let activatedCount = 0;
+    for(let i=0;i<parks.length;i++) {
+      const results = await getFacilities(parks[i].sk);
+      facilities = facilities.concat(results);
+    }
+    // console.log("Facilities:", facilities);
 
-      const facilities = await getFacilities(park.sk);
-      for (const facility of facilities) {
-        activatedCount += await activateFacilityPasses(config, park, facility, localNow);
+    // For each pass determine if we're in the AM/DAY for that pass or the PM.  Push into active
+    // accordingly, or set it to expired if it's anything < today
+    for (let i=0;i < passes.length;i++) {
+      let pass = passes[i];
+
+      const passParkName = pass.pk.split('::')[1];
+      const passFacilityName = pass.facilityName;
+
+      // TODO: Fixme into a MAP for better lookups.
+      let openingHourTimeForFacility = 7;
+      const theFacility = facilities.filter(fac => fac.pk === 'facility::' + passParkName && fac.sk === passFacilityName);
+
+      if (theFacility && theFacility.length > 0 && theFacility[0].bookingOpeningHour !== undefined && theFacility[0].bookingOpeningHour !== null) {
+        openingHourTimeForFacility = theFacility[0].bookingOpeningHour;
       }
 
-      console.log(`Activated ${activatedCount} passes for ${park.sk}`);
+      const isWithinOpeningHour = compareAsc(currentTime, addHours(startOfDayLocalTime, openingHourTimeForFacility)) >= 0 ? true : false;
+
+      if (isAM === true && pass.type !== PASS_TYPE_PM && isWithinOpeningHour) {
+        passesToActiveStatus.push(pass);
+      } else if (isAM === false && pass.type === PASS_TYPE_PM) {
+        passesToActiveStatus.push(pass);
+      }
+
+      // If we added an item to passesToActiveStatus that was date < begginingOfToday, set to expired, woops!
+      if (compareAsc(new Date(pass.date), startOfDayLocalTime) <= 0) {
+        // Prune from the active list
+        passesToActiveStatus = passesToActiveStatus.filter(item => item.sk !== pass.sk && item.date !== pass.date);
+
+        // Push this one instead to an expired list.
+        passesToExpiredStatus.push(pass);
+      }
     }
+    console.log("Passes => active:", passesToActiveStatus.length);
+    console.log("Passes => expired:", passesToExpiredStatus.length);
+
+    await setStatus(passesToActiveStatus, ACTIVE_STATUS);
+    await setStatus(passesToExpiredStatus, EXPIRED_STATUS);
 
     return sendResponse(200, {}, context);
   } catch (err) {
@@ -39,66 +103,3 @@ exports.handler = async (event, context) => {
     return sendResponse(500, {}, context);
   }
 };
-
-async function getCurrentPasses(passType, localNow, parkSk, facilityName) {
-  const activeDateSelector = formatISO(localNow, { representation: 'date' });
-
-  console.log(`Loading ${passType} passes on ${activeDateSelector} for ${parkSk} ${facilityName}`);
-
-  const passesQuery = {
-    TableName: TABLE_NAME,
-    KeyConditionExpression: 'pk = :pk',
-    ExpressionAttributeNames: {
-      '#dateselector': 'date',
-      '#passType': 'type'
-    },
-    ExpressionAttributeValues: {
-      ':pk': { S: `pass::${parkSk}` },
-      ':facilityName': { S: facilityName },
-      ':activeDate': { S: activeDateSelector },
-      ':reservedStatus': { S: RESERVED_STATUS },
-      ':passType': { S: passType }
-    },
-    FilterExpression:
-      'begins_with(#dateselector, :activeDate) AND #passType = :passType AND passStatus = :reservedStatus AND facilityName = :facilityName'
-  };
-
-  return await runQuery(passesQuery);
-}
-
-async function activateFacilityPasses(config, park, facility, localNow) {
-  const localHour = localNow.getHours();
-  const defaultOpeningHour = config.BOOKING_OPENING_HOUR || 7;
-
-  let activatedCount = 0;
-  const facilityBookingOpeningHour = facility.bookingOpeningHour || defaultOpeningHour;
-  const isFacilityAmOpen = localHour >= facilityBookingOpeningHour;
-  const isFacilityPmOpen = localHour >= PM_ACTIVATION_HOUR;
-
-  for (const passType of [PASS_TYPE_AM, PASS_TYPE_PM, PASS_TYPE_DAY]) {
-    let isOpen = false;
-    switch (passType) {
-      case PASS_TYPE_AM:
-        isOpen = isFacilityAmOpen;
-        break;
-      case PASS_TYPE_PM:
-        isOpen = isFacilityPmOpen;
-        break;
-      case PASS_TYPE_DAY:
-        // DAY passes open at the same time as AM
-        isOpen = isFacilityAmOpen;
-        break;
-    }
-
-    if (isOpen) {
-      console.log(`Facility ${facility.sk} is open for ${passType} passes`);
-      const passes = await getCurrentPasses(passType, localNow, park.sk, facility.name);
-      await setStatus(passes, ACTIVE_STATUS);
-      activatedCount += passes.length;
-    } else {
-      console.log(`Facility ${facility.sk} is not open for ${passType} passes`);
-    }
-  }
-
-  return activatedCount;
-}
