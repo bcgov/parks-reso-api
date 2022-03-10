@@ -148,6 +148,7 @@ functions:
   ###########
   metric:
     handler: lambda/metric/index.handler
+    memory: 1792
     events:
       - http:
           method: GET
