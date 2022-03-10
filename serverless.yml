@@ -50,6 +50,7 @@ functions:
   ###########
   readConfig:
     handler: lambda/readConfig/index.handler
+    memory: 768
     events:
       - http:
           method: GET
@@ -68,6 +69,7 @@ functions:
   ###########
   readPark:
     handler: lambda/readPark/index.handler
+    memory: 768
     events:
       - http:
           method: GET
@@ -90,6 +92,7 @@ functions:
   ###########
   readFacility:
     handler: lambda/readFacility/index.handler
+    memory: 768
     events:
       - http:
           method: GET
@@ -112,6 +115,7 @@ functions:
   ###########
   readPass:
     handler: lambda/readPass/index.handler
+    memory: 768
     events:
       - http:
           method: GET
@@ -137,6 +141,7 @@ functions:
   ###########
   exportPass:
     handler: lambda/exportPass/index.handler
+    memory: 2048
     events:
       - http:
           method: GET
