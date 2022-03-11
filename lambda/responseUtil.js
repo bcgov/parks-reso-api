@@ -13,5 +13,9 @@ exports.sendResponse = function (code, data, context) {
 };
 
 exports.checkWarmup = function (event) {
-  return event?.queryStringParameters?.warmup === true;
+  if (event?.warmup === true) {
+    return true;
+  } else {
+    return false;
+  }
 }
