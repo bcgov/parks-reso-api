@@ -1,9 +1,12 @@
 const { runQuery, TABLE_NAME } = require('../dynamoUtil');
-const { sendResponse } = require('../responseUtil');
+const { sendResponse, checkWarmup } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
 
 exports.handler = async (event, context) => {
   console.log('Read Park', event);
+  if (checkWarmup(event)) {
+    return sendResponse(200, {});
+  }
 
   let queryObj = {
     TableName: TABLE_NAME

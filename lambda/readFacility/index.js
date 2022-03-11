@@ -1,9 +1,12 @@
 const { runQuery, TABLE_NAME } = require('../dynamoUtil');
-const { sendResponse } = require('../responseUtil');
+const { sendResponse, checkWarmup } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
 
 exports.handler = async (event, context) => {
   console.log('Read Facility', event);
+  if (checkWarmup(event)) {
+    return sendResponse(200, {});
+  }
 
   let queryObj = {
     TableName: TABLE_NAME
@@ -16,6 +19,7 @@ exports.handler = async (event, context) => {
     if (!event.queryStringParameters) {
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
+
     if (event.queryStringParameters.facilities && event.queryStringParameters.park) {
       console.log('Grab facilities for this park');
       // Grab facilities for this park.
