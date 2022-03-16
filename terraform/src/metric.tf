@@ -9,6 +9,8 @@ resource "aws_lambda_function" "metricLambda" {
   timeout = 30
   publish = "true"
 
+  memory_size = 1792
+
   environment {
     variables = {
       TABLE_NAME                   = data.aws_ssm_parameter.db_name.value,

@@ -9,6 +9,8 @@ resource "aws_lambda_function" "exportPassLambda" {
   timeout = 30
   publish = "true"
 
+  memory_size = 2048
+
   environment {
     variables = {
       TABLE_NAME                   = data.aws_ssm_parameter.db_name.value,

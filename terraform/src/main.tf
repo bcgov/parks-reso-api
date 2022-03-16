@@ -23,6 +23,9 @@ resource "aws_lambda_function" "readParkLambda" {
   runtime = "nodejs14.x"
   publish = "true"
 
+  timeout = 30
+  memory_size = 768
+
   environment {
     variables = {
       TABLE_NAME = data.aws_ssm_parameter.db_name.value
@@ -38,7 +41,18 @@ resource "aws_lambda_alias" "readParkLambdaLatest" {
   function_version = aws_lambda_function.readParkLambda.version
 }
 
+resource "null_resource" "alias_provisioned_concurrency_transition_delay_read_park_lambda" {
+  depends_on = [aws_lambda_alias.readParkLambdaLatest]
+  provisioner "local-exec" {
+   command = "sleep 240"
+  }
+  triggers = {
+     function_version = "${aws_lambda_function.readParkLambda.version}"
+  }
+}
+
 resource "aws_lambda_provisioned_concurrency_config" "readParkLambda" {
+  depends_on = [null_resource.alias_provisioned_concurrency_transition_delay_read_park_lambda]
   function_name                     = aws_lambda_alias.readParkLambdaLatest.function_name
   provisioned_concurrent_executions = 2
   qualifier                         = aws_lambda_alias.readParkLambdaLatest.name
@@ -303,6 +317,11 @@ resource "aws_iam_role_policy_attachment" "lambda_delete_logs" {
   policy_arn = aws_iam_policy.lambda_logging.arn
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_invoke_function" {
+  role       = aws_iam_role.warmUpRole.name
+  policy_arn = aws_iam_policy.lambda_invoke_function.arn
+}
+
 resource "aws_api_gateway_account" "DUPAPIGateway" {
   cloudwatch_role_arn = aws_iam_role.cloudwatch.arn
 }
@@ -347,6 +366,31 @@ resource "aws_iam_role_policy" "cloudwatch" {
                 "logs:FilterLogEvents"
             ],
             "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "lambda_invoke_function" {
+  name        = "lambda_invoke_function"
+  path        = "/"
+  description = "IAM policy for Lambda to invoke another Lambda"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Stmt1464440182000",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:InvokeAsync",
+                "lambda:InvokeFunction"
+            ],
+            "Resource": [
+                "*"
+            ]
         }
     ]
 }

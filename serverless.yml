@@ -50,7 +50,6 @@ functions:
   ###########
   readConfig:
     handler: lambda/readConfig/index.handler
-    memory: 768
     events:
       - http:
           method: GET
@@ -69,7 +68,6 @@ functions:
   ###########
   readPark:
     handler: lambda/readPark/index.handler
-    memory: 768
     events:
       - http:
           method: GET
@@ -92,7 +90,6 @@ functions:
   ###########
   readFacility:
     handler: lambda/readFacility/index.handler
-    memory: 768
     events:
       - http:
           method: GET
@@ -115,7 +112,6 @@ functions:
   ###########
   readPass:
     handler: lambda/readPass/index.handler
-    memory: 768
     events:
       - http:
           method: GET
@@ -141,7 +137,6 @@ functions:
   ###########
   exportPass:
     handler: lambda/exportPass/index.handler
-    memory: 2048
     events:
       - http:
           method: GET
@@ -153,7 +148,6 @@ functions:
   ###########
   metric:
     handler: lambda/metric/index.handler
-    memory: 1792
     events:
       - http:
           method: GET
@@ -169,6 +163,11 @@ functions:
   # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-checkExpiry
   checkExpiry:
     handler: lambda/checkExpiry/index.handler
+  warmUp:
+    handler: lambda/warmUp/index.handler
+    package:
+      patterns:
+        - lambda/warmUp/worker.js
 
 custom:
   dynamodb:

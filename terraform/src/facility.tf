@@ -9,6 +9,8 @@ resource "aws_lambda_function" "readFacilityLambda" {
   runtime = "nodejs14.x"
   publish = "true"
 
+  memory_size = 768
+
   environment {
     variables = {
       TABLE_NAME = data.aws_ssm_parameter.db_name.value
@@ -24,7 +26,18 @@ resource "aws_lambda_alias" "readFacilityLambdaLatest" {
   function_version = aws_lambda_function.readFacilityLambda.version
 }
 
+resource "null_resource" "alias_provisioned_concurrency_transition_delay_read_facility_lambda" {
+  depends_on = [aws_lambda_alias.readFacilityLambdaLatest]
+  provisioner "local-exec" {
+   command = "sleep 240"
+  }
+  triggers = {
+     function_version = "${aws_lambda_function.readFacilityLambda.version}"
+  }
+}
+
 resource "aws_lambda_provisioned_concurrency_config" "readFacilityLambda" {
+  depends_on = [null_resource.alias_provisioned_concurrency_transition_delay_read_facility_lambda]
   function_name                     = aws_lambda_alias.readFacilityLambdaLatest.function_name
   provisioned_concurrent_executions = 2
   qualifier                         = aws_lambda_alias.readFacilityLambdaLatest.name
