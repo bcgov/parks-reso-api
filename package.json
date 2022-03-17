@@ -10,7 +10,8 @@
     "jsonwebtoken": "^8.5.1",
     "jwks-rsa": "^2.0.5",
     "node-jose": "^2.0.0",
-    "svg-captcha": "^1.4.0"
+    "svg-captcha": "^1.4.0",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.44.0",
