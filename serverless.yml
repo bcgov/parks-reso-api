@@ -45,6 +45,9 @@ functions:
           path: /captcha/audio
           cors: true
 
+  cloudwatchAlarm:
+    handler: lambda/cloudwatchAlarm/index.handler
+
   ###########
   # config
   ###########
