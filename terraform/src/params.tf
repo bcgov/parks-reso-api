@@ -33,3 +33,15 @@ data "aws_ssm_parameter" "s3_bucket_data" {
 data "aws_ssm_parameter" "public_url" {
   name = "/parks-reso-public/url"
 }
+
+data "aws_ssm_parameter" "aws_account_list" {
+  name = "/parks-reso-api/aws_account_list"
+}
+
+data "aws_ssm_parameter" "rocketchat_url" {
+  name = "/parks-reso-api/rocketchat_url"
+}
+
+data "aws_ssm_parameter" "rocketchat_bearer_token" {
+  name = "/parks-reso-api/rocketchat_bearer_token"
+}
