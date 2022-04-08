@@ -21,6 +21,8 @@ resource "aws_lambda_function" "exportPassLambda" {
       GC_NOTIFY_CANCEL_TEMPLATE_ID = data.aws_ssm_parameter.gc_notify_cancel_template_id.value,
       PASS_CANCELLATION_ROUTE      = data.aws_ssm_parameter.pass_cancellation_route.value,
       S3_BUCKET_DATA               = data.aws_ssm_parameter.s3_bucket_data.value,
+      SSO_ISSUER                   = data.aws_ssm_parameter.sso_issuer.value,
+      SSO_JWKSURI                  = data.aws_ssm_parameter.sso_jwksuri.value,
     }
   }
 
