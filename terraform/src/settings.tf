@@ -14,6 +14,8 @@ resource "aws_lambda_function" "readConfigLambda" {
   environment {
     variables = {
       TABLE_NAME = data.aws_ssm_parameter.db_name.value
+      SSO_ISSUER = data.aws_ssm_parameter.sso_issuer.value,
+      SSO_JWKSURI = data.aws_ssm_parameter.sso_jwksuri.value,
     }
   }
 
