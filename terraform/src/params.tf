@@ -45,3 +45,11 @@ data "aws_ssm_parameter" "rocketchat_url" {
 data "aws_ssm_parameter" "rocketchat_bearer_token" {
   name = "/parks-reso-api/rocketchat_bearer_token"
 }
+
+data "aws_ssm_parameter" "sso_issuer" {
+  name = "/parks-reso-api/sso-issuer"
+}
+
+data "aws_ssm_parameter" "sso_jwksuri" {
+  name = "/parks-reso-api/sso-jwksuri"
+}

@@ -31,6 +31,8 @@ resource "aws_lambda_function" "readPassLambda" {
       GC_NOTIFY_API_KEY            = data.aws_ssm_parameter.gc_notify_api_key.value,
       GC_NOTIFY_CANCEL_TEMPLATE_ID = data.aws_ssm_parameter.gc_notify_cancel_template_id.value,
       PASS_CANCELLATION_ROUTE      = data.aws_ssm_parameter.pass_cancellation_route.value,
+      SSO_ISSUER = data.aws_ssm_parameter.sso_issuer.value,
+      SSO_JWKSURI = data.aws_ssm_parameter.sso_jwksuri.value,
     }
   }
 
@@ -65,6 +67,8 @@ resource "aws_lambda_function" "writePassLambda" {
       GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID = data.aws_ssm_parameter.gc_notify_parking_receipt_template_id.value,
       GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID   = data.aws_ssm_parameter.gc_notify_trail_receipt_template_id.value,
       PASS_CANCELLATION_ROUTE               = data.aws_ssm_parameter.pass_cancellation_route.value,
+      SSO_ISSUER                            = data.aws_ssm_parameter.sso_issuer.value,
+      SSO_JWKSURI                           = data.aws_ssm_parameter.sso_jwksuri.value,
     }
   }
 
@@ -108,7 +112,9 @@ resource "aws_lambda_function" "deletePassLambda" {
   environment {
     variables = {
       TABLE_NAME = data.aws_ssm_parameter.db_name.value,
-      JWT_SECRET = local.jwtSecret.jwtSecret
+      JWT_SECRET = local.jwtSecret.jwtSecret,
+      SSO_ISSUER = data.aws_ssm_parameter.sso_issuer.value,
+      SSO_JWKSURI = data.aws_ssm_parameter.sso_jwksuri.value,
     }
   }
 

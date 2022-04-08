@@ -14,7 +14,9 @@ resource "aws_lambda_function" "metricLambda" {
   environment {
     variables = {
       TABLE_NAME                   = data.aws_ssm_parameter.db_name.value,
-      JWT_SECRET                   = local.jwtSecret.jwtSecret
+      JWT_SECRET                   = local.jwtSecret.jwtSecret.
+      SSO_ISSUER = data.aws_ssm_parameter.sso_issuer.value,
+      SSO_JWKSURI = data.aws_ssm_parameter.sso_jwksuri.value,
     }
   }
 
