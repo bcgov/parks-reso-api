@@ -31,8 +31,8 @@ resource "aws_lambda_function" "readPassLambda" {
       GC_NOTIFY_API_KEY            = data.aws_ssm_parameter.gc_notify_api_key.value,
       GC_NOTIFY_CANCEL_TEMPLATE_ID = data.aws_ssm_parameter.gc_notify_cancel_template_id.value,
       PASS_CANCELLATION_ROUTE      = data.aws_ssm_parameter.pass_cancellation_route.value,
-      SSO_ISSUER = data.aws_ssm_parameter.sso_issuer.value,
-      SSO_JWKSURI = data.aws_ssm_parameter.sso_jwksuri.value,
+      SSO_ISSUER                   = data.aws_ssm_parameter.sso_issuer.value,
+      SSO_JWKSURI                  = data.aws_ssm_parameter.sso_jwksuri.value,
     }
   }
 
