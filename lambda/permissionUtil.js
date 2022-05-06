@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
-const SSO_ISSUER = process.env.SSO_ISSUER || 'https://oidc.gov.bc.ca/auth/realms/g7v0xlf4';
-const SSO_JWKSURI = process.env.SSO_JWKSURI || 'https://oidc.gov.bc.ca/auth/realms/g7v0xlf4/protocol/openid-connect/certs';
+const SSO_ISSUER = process.env.SSO_ISSUER || 'https://dev.oidc.gov.bc.ca/auth/realms/g7v0xlf4';
+const SSO_JWKSURI = process.env.SSO_JWKSURI || 'https://dev.oidc.gov.bc.ca/auth/realms/g7v0xlf4/protocol/openid-connect/certs';
 const INVALID_TOKEN = {
         decoded: false,
         data: null
@@ -84,19 +84,19 @@ const verifyToken = function (token, callback, sendError) {
 function verifySecret(currentScopes, tokenString, secret, callback, sendError) {
   jwt.verify(tokenString, secret, function (verificationError, decodedToken) {
     // check if the JWT was verified correctly
-    if (verificationError == null && Array.isArray(currentScopes) && decodedToken && decodedToken.realm_access.roles) {
+    if (verificationError == null && Array.isArray(currentScopes) && decodedToken && decodedToken.resource_access["parking-pass"].roles) {
       console.log('JWT decoded');
 
       console.log('currentScopes', JSON.stringify(currentScopes));
       console.log('decoded token:', decodedToken);
 
       console.log('decodedToken.iss', decodedToken.iss);
-      console.log('decodedToken.realm_access.roles', decodedToken.realm_access.roles);
+      console.log('decodedToken roles', decodedToken.resource_access["parking-pass"].roles);
 
       console.log('SSO_ISSUER', SSO_ISSUER);
 
       // check if the role is valid for this endpoint
-      let roleMatch = currentScopes.some(role => decodedToken.realm_access.roles.indexOf(role) >= 0);
+      let roleMatch = currentScopes.some(role => decodedToken.resource_access["parking-pass"].roles.indexOf(role) >= 0);
 
       console.log('role match', roleMatch);
 
