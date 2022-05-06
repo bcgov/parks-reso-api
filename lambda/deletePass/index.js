@@ -23,6 +23,8 @@ exports.handler = async (event, context) => {
       if (decodedToken === null) {
         return sendResponse(400, { msg: 'Invalid request' });
       }
+      // We need to lookup the pass to provide user feedback
+      const passNoAuth = await getPass(event.queryStringParameters.park, event.queryStringParameters.passId);
 
       // Get the specific pass, this person is NOT authenticated
       const updatePassQuery = {
@@ -74,21 +76,13 @@ exports.handler = async (event, context) => {
         .promise();
       console.log('res:', res);
 
-      return sendResponse(200, { msg: 'Cancelled' }, context);
+      return sendResponse(200, { msg: 'Cancelled', pass: passNoAuth }, context);
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
       if ((await checkPermissions(event)).decoded !== true) {
         return sendResponse(403, { msg: 'Unauthorized!' });
       } else {
         // We need to lookup the pass to get the date & facility
-        const passQuery = {
-          TableName: TABLE_NAME,
-          ExpressionAttributeValues: {
-            ':pk': { S: `pass::${event.queryStringParameters.park}` },
-            ':sk': { S: event.queryStringParameters.passId }
-          },
-          KeyConditionExpression: 'pk = :pk AND sk = :sk'
-        };
-        const [pass] = await runQuery(passQuery);
+        const pass = await getPass(event.queryStringParameters.park, event.queryStringParameters.passId);
 
         const updatePassQuery = {
           Key: {
@@ -129,7 +123,7 @@ exports.handler = async (event, context) => {
           .promise();
         console.log('res:', res);
 
-        return sendResponse(200, { msg: 'Cancelled' }, context);
+        return sendResponse(200, { msg: 'Cancelled', pass: pass }, context);
       }
     } else {
       console.log('Invalid Request');
@@ -140,3 +134,16 @@ exports.handler = async (event, context) => {
     return sendResponse(400, { msg: 'Invalid Request' }, context);
   }
 };
+
+const getPass = async function (park, id) {
+  const passQuery = {
+    TableName: TABLE_NAME,
+    ExpressionAttributeValues: {
+      ':pk': { S: `pass::${park}` },
+      ':sk': { S: id }
+    },
+    KeyConditionExpression: 'pk = :pk AND sk = :sk'
+  };
+  const [pass] = await runQuery(passQuery);
+  return pass;
+}
