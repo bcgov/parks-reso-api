@@ -161,7 +161,11 @@ exports.handler = async (event, context) => {
       '&email=' +
       email +
       '&park=' +
-      parkName;
+      parkName + 
+      '&date=' +
+      dateselector + 
+      '&type=' +
+      type;
 
     const encodedCancellationLink = encodeURI(cancellationLink);
 

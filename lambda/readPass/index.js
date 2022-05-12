@@ -167,10 +167,18 @@ exports.handler = async (event, context) => {
           token;
 
         const encodedCancellationLink = encodeURI(cancellationLink);
+        const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+        let formattedDate = new Date(passData.data[0].date).toLocaleDateString('en-US', dateOptions);
+        if (passData.data[0].type) {
+          formattedDate += ' (' + passData.data[0].type + ')'
+        }
 
         let personalisation = {
           registrationNumber: passData.data[0].registrationNumber.toString(),
-          link: encodedCancellationLink
+          link: encodedCancellationLink,
+          date: formattedDate,
+          parkName: passData.data[0].pk.split('::')[1] || '',
+          facilityName: passData.data[0].facilityName || ''
         };
 
         // Send email
