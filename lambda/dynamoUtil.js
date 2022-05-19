@@ -22,6 +22,7 @@ const PASS_TYPE_EXPIRY_HOURS = {
   PM: 0,
   DAY: 0
 };
+const DEFAULT_BOOKING_DAYS_AHEAD = 3;
 
 const dynamodb = new AWS.DynamoDB(options);
 
@@ -165,14 +166,15 @@ const getPassesByStatus = async function(status, filterExpression = undefined) {
 
 module.exports = {
   ACTIVE_STATUS,
-  RESERVED_STATUS,
+  DEFAULT_BOOKING_DAYS_AHEAD,
   EXPIRED_STATUS,
   PASS_TYPE_AM,
   PASS_TYPE_PM,
   PASS_TYPE_DAY,
-  TIMEZONE,
+  RESERVED_STATUS,
   PM_ACTIVATION_HOUR,
   PASS_TYPE_EXPIRY_HOURS,
+  TIMEZONE,
   timeZone,
   TABLE_NAME,
   dynamodb,

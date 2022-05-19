@@ -2,10 +2,10 @@ const AWS = require('aws-sdk');
 const axios = require('axios');
 
 const { verifyJWT } = require('../captchaUtil');
-const { dynamodb, runQuery, TABLE_NAME } = require('../dynamoUtil');
+const { dynamodb, runQuery, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD } = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
 const { utcToZonedTime } = require('date-fns-tz');
-const { formatISO } = require('date-fns');
+const { formatISO, add, compareAsc, startOfDay } = require('date-fns');
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
@@ -104,6 +104,17 @@ exports.handler = async (event, context) => {
     facilityObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
     const facilityData = await runQuery(facilityObj);
 
+    // Check bookingDaysAhead
+    const bookingDaysAhead = facilityData[0].bookingDaysAhead === null ? DEFAULT_BOOKING_DAYS_AHEAD : facilityData[0].bookingDaysAhead;
+    const futureDateMax = add(localDate, { days: bookingDaysAhead });
+    const datecompared = compareAsc(startOfDay(new Date(date)), startOfDay(new Date(futureDateMax)));
+    if (datecompared > 0) {
+      return sendResponse(400, {
+        msg: 'You cannot book for a date that far ahead.',
+        title: 'Booking date in the future invalid'
+      });
+    }
+
     // There should only be 1 facility.
     let openingHour = facilityData[0].bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
     let closingHour = DEFAULT_PM_OPENING_HOUR;
@@ -161,11 +172,7 @@ exports.handler = async (event, context) => {
       '&email=' +
       email +
       '&park=' +
-      parkName + 
-      '&date=' +
-      dateselector + 
-      '&type=' +
-      type;
+      parkName;
 
     const encodedCancellationLink = encodeURI(cancellationLink);
 
