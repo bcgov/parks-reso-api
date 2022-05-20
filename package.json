@@ -19,6 +19,7 @@
     "aws-sdk-mock": "^5.4.0",
     "jest": "^28.1.0",
     "mockdate": "^3.0.5",
+    "serverless": "^3.18.1",
     "serverless-dynamodb-local": "^0.2.40",
     "serverless-offline": "^8.2.0",
     "serverless-plugin-include-dependencies": "^5.0.0"
