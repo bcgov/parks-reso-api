@@ -48,7 +48,6 @@ exports.handler = async (event, context) => {
       numberOfGuests,
       phoneNumber,
       facilityType,
-      license,
       captchaJwt,
       ...otherProps
     } = newObject;
@@ -205,11 +204,9 @@ exports.handler = async (event, context) => {
       mapLink: parkData[0].mapLink
     };
 
-    // Mandatory if parking.
+    // Parking.
     if (facilityType === 'Parking') {
-      passObject.Item['license'] = { S: license };
       gcNotifyTemplate = process.env.GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID;
-      personalisation['license'] = license;
     }
 
     if (parkData[0].visible === true) {

@@ -46,8 +46,7 @@ describe('Pass Fails', () => {
         type: '',
         numberOfGuests: '',
         phoneNumber: '',
-        facilityType: '',
-        license: ''
+        facilityType: ''
         // Missing JWT
       })
     };
@@ -79,7 +78,6 @@ describe('Pass Fails', () => {
         numberOfGuests: '',
         phoneNumber: '',
         facilityType: '',
-        license: '',
         captchaJwt: 'This is an invalid JWT'
       })
     };
@@ -111,7 +109,6 @@ describe('Pass Fails', () => {
         numberOfGuests: 5, // Too many
         phoneNumber: '',
         facilityType: 'Trail',
-        license: '',
         captchaJwt: token
       })
     };
@@ -140,7 +137,6 @@ describe('Pass Fails', () => {
         numberOfGuests: 1,
         phoneNumber: '',
         facilityType: '',
-        license: '',
         captchaJwt: token
       })
     };
@@ -172,7 +168,6 @@ describe('Pass Fails', () => {
         numberOfGuests: 1,
         phoneNumber: '',
         facilityType: '',
-        license: '',
         captchaJwt: token
       })
     };
@@ -204,7 +199,6 @@ describe('Pass Fails', () => {
         numberOfGuests: 1,
         phoneNumber: '',
         facilityType: '',
-        license: '',
         captchaJwt: token
       })
     };
@@ -246,7 +240,6 @@ describe('Pass Successes', () => {
         numberOfGuests: 1,
         phoneNumber: '2505555555',
         facilityType: 'Trail',
-        license: 'abc123',
         captchaJwt: token
       })
     };
@@ -284,7 +277,6 @@ describe('Pass Successes', () => {
         phoneNumber: '2505555555',
         facilityType: 'Parking',
         mapLink: 'http://maps.google.com',
-        license: 'abc123',
         captchaJwt: token
       })
     };
