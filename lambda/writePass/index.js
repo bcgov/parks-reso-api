@@ -178,7 +178,7 @@ exports.handler = async (event, context) => {
     let gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
 
     const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-    const formattedDate = new Date(date).toLocaleDateString('en-US', dateOptions) + ' (' + type + ')';
+    const formattedDate = new Date(date).toLocaleDateString('en-US', dateOptions);
 
     // Only let pass come through if there's enough room
     let parkObj = {
@@ -196,12 +196,14 @@ exports.handler = async (event, context) => {
       firstName: firstName,
       lastName: lastName,
       date: formattedDate,
+      type: type,
       facilityName: facilityName,
       numberOfGuests: numberOfGuests.toString(),
       registrationNumber: registrationNumber.toString(),
       cancellationLink: encodedCancellationLink,
       parkName: parkName,
-      mapLink: parkData[0].mapLink
+      mapLink: parkData[0].mapLink,
+      parksLink: parkData[0].bcParksLink
     };
 
     // Parking.
