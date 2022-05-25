@@ -103,7 +103,11 @@ const getReservationCounts = async function (parkName, facilityName) {
     ExpressionAttributeValues: {}
   };  
   queryObj.ExpressionAttributeValues[':pk'] = { S: resCountPK };
-  const today = formatISO(new Date(), { representation: 'date' });
+
+  // get the local date in YYYY-MM-DD format
+  const localTime = new Date(new Date() - new Date().getTimezoneOffset() * 60000);
+  const today = localTime.toISOString().split('T')[0];
+
   // only reservations on or after today are included
   queryObj.ExpressionAttributeValues[':today'] = { S: today };
   queryObj.KeyConditionExpression = 'pk =:pk AND sk >= :today';
