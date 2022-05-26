@@ -171,7 +171,11 @@ exports.handler = async (event, context) => {
       '&email=' +
       email +
       '&park=' +
-      parkName;
+      parkName + 
+      '&date=' +
+      dateselector + 
+      '&type=' +
+      type;
 
     const encodedCancellationLink = encodeURI(cancellationLink);
 
@@ -196,7 +200,7 @@ exports.handler = async (event, context) => {
       firstName: firstName,
       lastName: lastName,
       date: formattedDate,
-      type: type,
+      type: type === 'DAY' ? 'ALL DAY' : type,
       facilityName: facilityName,
       numberOfGuests: numberOfGuests.toString(),
       registrationNumber: registrationNumber.toString(),
