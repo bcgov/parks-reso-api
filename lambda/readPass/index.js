@@ -170,7 +170,8 @@ exports.handler = async (event, context) => {
         const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
         let formattedDate = new Date(passData.data[0].date).toLocaleDateString('en-US', dateOptions);
         if (passData.data[0].type) {
-          formattedDate += ' (' + passData.data[0].type + ')'
+          let formattedType = passData.data[0].type === 'DAY' ? 'ALL DAY' : passData.data[0].type;
+          formattedDate += ' (' + formattedType + ')'
         }
 
         let personalisation = {
