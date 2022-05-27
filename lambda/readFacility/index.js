@@ -1,7 +1,7 @@
 const { runQuery, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
-const { format, parse } = require('date-fns');
+const { format } = require('date-fns');
 
 exports.handler = async (event, context) => {
   console.log('Read Facility', event);
@@ -106,8 +106,8 @@ const getReservationCounts = async function (parkName, facilityName) {
 
   // get the local Vancouver date in YYYY-MM-DD format
   const todayShortDate = format(
-    parse(new Date().toLocaleString('en-us', { timeZone: "America/Vancouver" })), 
-    'YYYY-MM-DD');
+    Date.parse(new Date().toLocaleString('en-us', { timeZone: "America/Vancouver" })), 
+    'yyyy-MM-dd');
 
   // only reservations on or after today are included
   queryObj.ExpressionAttributeValues[':today'] = { S: todayShortDate };
