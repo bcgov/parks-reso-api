@@ -367,6 +367,7 @@ async function databaseOperation(version, mode) {
           }
         })
         .promise();
+        
       await ddb
         .delete({
           TableName: TABLE_NAME,
