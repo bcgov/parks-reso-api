@@ -245,6 +245,9 @@ describe('Pass Successes', () => {
     };
 
     const response = await writePassHandler.handler(event, null);
+    if (response.statusCode === 400) {
+      console.log(response);
+    }
     expect(response.statusCode).toEqual(200);
     const body = JSON.parse(response.body);
     expect(body.pk).toEqual('pass::Test Park 1');
@@ -282,6 +285,9 @@ describe('Pass Successes', () => {
     };
 
     const response = await writePassHandler.handler(event, null);
+    if (response.statusCode === 400) {
+      console.log(response);
+    }    
     expect(response.statusCode).toEqual(200);
     const body = JSON.parse(response.body);
     expect(body.pk).toEqual('pass::Test Park 1');
