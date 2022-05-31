@@ -107,10 +107,6 @@ exports.handler = async (event, context) => {
     const bookingDaysAhead = facilityData[0].bookingDaysAhead === null ? DEFAULT_BOOKING_DAYS_AHEAD : facilityData[0].bookingDaysAhead;
     const futureDateMax = add(localDate, { days: bookingDaysAhead });
     const datecompared = compareAsc(startOfDay(new Date(date)), startOfDay(new Date(futureDateMax)));
-    console.log('GITHUB_DEBUG: futureDateMax', futureDateMax);
-    console.log('GITHUB_DEBUG: startOfDay(new Date(futureDateMax))', startOfDay(new Date(futureDateMax)));
-    console.log('GITHUB_DEBUG: date', date);
-    console.log('GITHUB_DEBUG: startOfDay(new Date(date))', startOfDay(new Date(date)));    
     if (datecompared > 0) {
       return sendResponse(400, {
         msg: 'You cannot book for a date that far ahead.',
