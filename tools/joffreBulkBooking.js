@@ -55,7 +55,7 @@ rl.question('Booking date (YYYY-MM-DD): ', async function (dateInput) {
       console.log((passDate - new Date()) / (24 * 60 * 60 * 1000));
     } else if (
       isNaN(numberOfGuests) ||
-      shortPassDate.length === 10 ||
+      shortPassDate.length !== 10 ||
       new Date(shortPassDate).getFullYear() !== new Date().getFullYear()
     ) {
       console.log('Invalid inputs');
