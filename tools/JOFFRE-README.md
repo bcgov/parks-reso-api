@@ -11,8 +11,6 @@ const parkName = 'Joffre Lakes Provincial Park';
 const facilityName = 'Day-Use Trails';
 ```
 
-WARNING: Do not enter a date for which the public booking window has already opened, or this tool will corrupt the rescount data.
-
 ### Running the script against your local DynamoDB instance
 
 1. uncomment the line `// endpoint: 'http://localhost:8000'`
@@ -32,5 +30,3 @@ WARNING: Do not enter a date for which the public booking window has already ope
 5. run the script `node ./joffreBulkBooking.js`
 6. you will be prompted to enter a date and the number of guests
     - if you subsequently run the script again for the same date, the previous booking will be overwritten
-
-WARNING: Do not enter a date for which the public booking window has already opened, or this tool will corrupt the rescount data.

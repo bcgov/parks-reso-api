@@ -48,11 +48,21 @@ rl.question('Booking date (YYYY-MM-DD): ', async function (dateInput) {
 
   rl.question('Number of guests?: ', async function (guestsInput) {
     numberOfGuests = guestsInput;
-    if (passDate - new Date() < 4 * 24 * 60 * 60 * 1000) {
-      // 4 days is a just rough date check, but should prevent the data corruption
-      // issues that we warn about in JOFFRE-README.md
-      console.log('The booking date must be more than 4 days in the future.');
-      console.log((passDate - new Date()) / (24 * 60 * 60 * 1000));
+
+    // find the booking window for the facility in the db
+    const bookingDaysAhead = +(await getBookingDaysAhead());
+
+    if (isNaN(bookingDaysAhead)) {
+      console.log('bookingDaysAhead for the facility is invalid');
+      process.exit(0);
+    }
+
+    if (passDate - new Date() < (bookingDaysAhead + 1) * 24 * 60 * 60 * 1000) {
+      // check if the booking windows has alread opened.  Add 1 day just to be extra
+      // safe with regard to server and local timezones.
+      console.log(
+        `The ${bookingDaysAhead}-day booking window for this facility/date is already opened or too close to opening.`
+      );
     } else if (
       isNaN(numberOfGuests) ||
       shortPassDate.length !== 10 ||
@@ -60,7 +70,7 @@ rl.question('Booking date (YYYY-MM-DD): ', async function (dateInput) {
     ) {
       console.log('Invalid inputs');
     } else {
-      const transactItems = { TransactItems: [{ Put: getPassObj() }, { Put: getResCountObj() }] };
+      const transactItems = { TransactItems: [{ Put: passObj() }, { Put: resCountObj() }] };
       console.log(transactItems);
       const response = await dynamodb.transactWriteItems(transactItems).promise();
       console.log('response:', AWS.DynamoDB.Converter.unmarshall(response));
@@ -76,7 +86,7 @@ rl.on('close', function () {
   process.exit(0);
 });
 
-function getPassObj() {
+function passObj() {
   return {
     TableName: TABLE_NAME,
     Item: {
@@ -99,7 +109,7 @@ function getPassObj() {
   };
 }
 
-function getResCountObj() {
+function resCountObj() {
   const resCountObj = {
     TableName: TABLE_NAME,
     Item: {
@@ -110,4 +120,20 @@ function getResCountObj() {
   };
   resCountObj.Item.reservations.M[type] = { N: numberOfGuests.toString() };
   return resCountObj;
+}
+
+async function getBookingDaysAhead() {
+  let getFacilityObj = {
+    TableName: TABLE_NAME
+  };
+  getFacilityObj.ExpressionAttributeValues = {};
+  getFacilityObj.ExpressionAttributeValues[':pk'] = { S: `facility::${parkName}` };
+  getFacilityObj.ExpressionAttributeValues[':sk'] = { S: facilityName };
+  getFacilityObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
+  const facilityData = await dynamodb.query(getFacilityObj).promise();
+  if (facilityData.Items.length === 0) {
+    console.log('Invalid facility. Check the  parkName and facilityName constants at the top of the script.');
+    process.exit(0);
+  }
+  return facilityData.Items[0].bookingDaysAhead?.N;
 }
