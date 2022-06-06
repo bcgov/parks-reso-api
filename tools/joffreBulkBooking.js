@@ -10,8 +10,8 @@ const options = {
 
 // todo: need to confirm correct values for parkName, facilityName, email, firstName, lastName
 const parkName = 'Joffre Lakes Provincial Park';
-const facilityName = 'Day-Use Trails';
-const email = 'parkinfo@gov.bc.ca';
+const facilityName = 'Joffre Lakes';
+const email = 'noreply@gov.bc.ca';
 const firstName = 'Bulk';
 const lastName = 'Pre-booking';
 const facilityType = 'Trail';
@@ -53,8 +53,9 @@ rl.question('Booking date (YYYY-MM-DD): ', async function (dateInput) {
     const bookingDaysAhead = +(await getBookingDaysAhead());
 
     if (isNaN(bookingDaysAhead)) {
-      console.log('bookingDaysAhead for the facility is invalid');
-      process.exit(0);
+      // 3 days is the default for env.ADVANCE_BOOKING_LIMIT and the hard-coded
+      // limit for DEFAULT_BOOKING_DAYS_AHEAD
+      bookingDaysAhead = 3;
     }
 
     if (passDate - new Date() < (bookingDaysAhead + 1) * 24 * 60 * 60 * 1000) {
