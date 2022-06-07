@@ -44,33 +44,29 @@ exports.handler = async (event, context) => {
       console.log('updatePassQuery:', updatePassQuery);
 
       // Deduct the pass's numberOfGuests count from the trail period count.
-      const updateFacilityQuery = {
+      const resCountPK = `rescount::${decodedToken.parkName}::${decodedToken.facilityName}`;
+      const updateReservationCountQuery = {
         Key: {
-          pk: { S: 'facility::' + decodedToken.parkName },
-          sk: { S: decodedToken.facilityName }
+          pk: { S: resCountPK },
+          sk: { S: decodedToken.dateselector }
         },
         ExpressionAttributeValues: {
           ':passReducedBy': AWS.DynamoDB.Converter.input(decodedToken.numberOfGuests)
         },
         ExpressionAttributeNames: {
-          '#type': decodedToken.type,
-          '#dateselector': decodedToken.dateselector
+          '#type': decodedToken.type
         },
-        UpdateExpression: 'SET reservations.#dateselector.#type = reservations.#dateselector.#type - :passReducedBy',
+        UpdateExpression: 'SET reservations.#type = reservations.#type - :passReducedBy',
         ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',
         TableName: TABLE_NAME
       };
-      console.log('updateFacilityQuery:', updateFacilityQuery);
+      console.log('updateReservationCountQuery:', updateReservationCountQuery);
 
       const res = await dynamodb
         .transactWriteItems({
           TransactItems: [
-            {
-              Update: updatePassQuery
-            },
-            {
-              Update: updateFacilityQuery
-            }
+            { Update: updatePassQuery },
+            { Update: updateReservationCountQuery }
           ]
         })
         .promise();
@@ -100,25 +96,28 @@ exports.handler = async (event, context) => {
         };
         console.log('updatePassQuery:', updatePassQuery);
 
-        const reservationCountCountQuery = {
+        const resCountPK = `rescount::${event.queryStringParameters.park}::${pass.facilityName}`;
+        const updateReservationCountQuery = {
           Key: {
-            pk: { S: `facility::${event.queryStringParameters.park}` },
-            sk: { S: pass.facilityName }
+            pk: { S: resCountPK },
+            sk: { S: formatISO(new Date(pass.date), { representation: 'date' }) }
           },
           ExpressionAttributeValues: {
             ':passReducedBy': { N: pass.numberOfGuests.toString() }
           },
           ExpressionAttributeNames: {
-            '#type': pass.type,
-            '#dateselector': formatISO(new Date(pass.date), { representation: 'date' })
+            '#type': pass.type
           },
-          UpdateExpression: 'SET reservations.#dateselector.#type = reservations.#dateselector.#type - :passReducedBy',
+          UpdateExpression: 'SET reservations.#type = reservations.#type - :passReducedBy',
           ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',
           TableName: TABLE_NAME
         };
         const res = await dynamodb
           .transactWriteItems({
-            TransactItems: [{ Update: updatePassQuery }, { Update: reservationCountCountQuery }]
+            TransactItems: [
+              { Update: updatePassQuery }, 
+              { Update: updateReservationCountQuery }
+            ]
           })
           .promise();
         console.log('res:', res);

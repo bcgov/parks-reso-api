@@ -118,6 +118,11 @@ exports.handler = async (event, context) => {
     let openingHour = facilityData[0].bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
     let closingHour = DEFAULT_PM_OPENING_HOUR;
 
+    let capacity = 0;
+    if (facilityData.length > 0 && facilityData[0].bookingTimes[type]) {
+      capacity = facilityData[0].bookingTimes[type].max;
+    }
+
     let status = 'reserved';
 
     // check if booking same-day
@@ -251,48 +256,41 @@ exports.handler = async (event, context) => {
         return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
       }
 
+      // insert booking level record if one doesn't already exist
+      const resCountPK = `rescount::${parkName}::${facilityName}`;
+      let insertReservationCount = {
+        TableName: TABLE_NAME
+        //ConditionExpression: 'attribute_not_exists(pk) AND attribute_not_exists(sk)'
+      };      
+      insertReservationCount.Item = {};
+      insertReservationCount.Item['pk'] = { S: resCountPK };
+      insertReservationCount.Item['sk'] = { S: dateselector };
+      insertReservationCount.Item['reservations'] = { M: {} };
+
       try {
-        // Make sure the key for the reservation exists
-        let updateReservationObject = {
-          Key: {
-            pk: { S: 'facility::' + parkName },
-            sk: { S: facilityName }
-          },
-          ExpressionAttributeValues: {
-            ':dateSelectorInitialValue': { M: {} }
-          },
-          ExpressionAttributeNames: {
-            '#dateselector': dateselector
-          },
-          UpdateExpression: 'SET reservations.#dateselector = :dateSelectorInitialValue',
-          ConditionExpression: 'attribute_not_exists(reservations.#dateselector)',
-          ReturnValues: 'ALL_NEW',
-          TableName: TABLE_NAME
-        };
-        console.log('updateReservationObject:', updateReservationObject);
-        const updateReservationObjectRes = await dynamodb.updateItem(updateReservationObject).promise();
-        console.log('updateReservationObjectRes:', updateReservationObjectRes);
+        console.log('putting item:', insertReservationCount);
+        const insertReservationCountRes = await dynamodb.putItem(insertReservationCount).promise();
+        console.log('insertReservationCountRes:', insertReservationCountRes);
       } catch (e) {
-        // Already there.
-        console.log('dateSelectorInitialValue exists', e);
+        console.log('rescount already exists', e);
       }
 
       try {
         // Add the type into the map
         let addingProperty = {
           Key: {
-            pk: { S: 'facility::' + parkName },
-            sk: { S: facilityName }
+            pk: { S: resCountPK },
+            sk: { S: dateselector }
           },
           ExpressionAttributeValues: {
-            ':dateSelectorInitialValue': { N: '0' }
+            ':typeSelectorInitialValue': { N: '0' }
           },
           ExpressionAttributeNames: {
-            '#dateselector': dateselector,
+            '#reservations': 'reservations',
             '#type': type
           },
-          UpdateExpression: 'SET reservations.#dateselector.#type = :dateSelectorInitialValue',
-          ConditionExpression: 'attribute_not_exists(reservations.#dateselector.#type)',
+          UpdateExpression: 'SET #reservations.#type = :typeSelectorInitialValue',
+          ConditionExpression: 'attribute_not_exists(#reservations.#type)',
           ReturnValues: 'ALL_NEW',
           TableName: TABLE_NAME
         };
@@ -305,30 +303,33 @@ exports.handler = async (event, context) => {
       }
 
       try {
-        let updateFacility = {
+        let updateReservationCount = {
           Key: {
-            pk: { S: 'facility::' + parkName },
-            sk: { S: facilityName }
+            pk: { S: resCountPK },
+            sk: { S: dateselector }
           },
           ExpressionAttributeValues: {
             ':inc': AWS.DynamoDB.Converter.input(numberOfGuests),
-            ':start': AWS.DynamoDB.Converter.input(0)
+            ':maxAllowedPreTransactionReservations': AWS.DynamoDB.Converter.input(capacity - numberOfGuests)
           },
           ExpressionAttributeNames: {
-            '#booking': 'bookingTimes',
-            '#type': type,
-            '#dateselector': dateselector,
-            '#maximum': 'max'
+            '#reservations': 'reservations',
+            '#type': type
           },
           UpdateExpression:
-            'SET reservations.#dateselector.#type = if_not_exists(reservations.#dateselector.#type, :start) + :inc',
-          ConditionExpression: '#booking.#type.#maximum > reservations.#dateselector.#type',
-          ReturnValues: 'ALL_NEW',
+            'SET #reservations.#type = #reservations.#type + :inc',
+          ConditionExpression: ':maxAllowedPreTransactionReservations >= #reservations.#type',
           TableName: TABLE_NAME
         };
-        console.log('updateFacility:', updateFacility);
-        const facilityRes = await dynamodb.updateItem(updateFacility).promise();
-        console.log('FacRes:', facilityRes);
+
+        // insert the pass and update the booking count in a transaction
+        const transactItems = { TransactItems: [
+          {'Update' : updateReservationCount },
+          {'Put' : passObject }
+        ]};
+        console.log('transactItems:', transactItems);
+        const transactRes = await dynamodb.transactWriteItems(transactItems).promise();
+        console.log('transactRes:', AWS.DynamoDB.Converter.unmarshall(transactRes));
       } catch (err) {
         // There are no more passes available.
         console.log('err', err);
@@ -337,10 +338,6 @@ exports.handler = async (event, context) => {
           title: 'Sorry, we are unable to fill your specific request.'
         });
       }
-
-      console.log('putting item:', passObject);
-      const res = await dynamodb.putItem(passObject).promise();
-      console.log('res:', res);
 
       try {
         await axios({

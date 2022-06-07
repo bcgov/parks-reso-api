@@ -1,6 +1,7 @@
 const { runQuery, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
+const { format } = require('date-fns');
 
 exports.handler = async (event, context) => {
   console.log('Read Facility', event);
@@ -29,6 +30,12 @@ exports.handler = async (event, context) => {
       if (await parkVisible(event.queryStringParameters.park, isAdmin)) {
         queryObj = visibleFilter(queryObj, isAdmin);
         const facilityData = await runQuery(queryObj);
+
+        // get the reservation data for each facility
+        for (let i = 0; i < facilityData.length; i++) {
+          facilityData[i].reservations = await getReservationCounts(event.queryStringParameters.park, facilityData[i].name);
+        }
+
         return sendResponse(200, facilityData, context);
       } else {
         return sendResponse(400, { msg: 'Invalid Request' }, context);
@@ -43,6 +50,12 @@ exports.handler = async (event, context) => {
       if (await parkVisible(event.queryStringParameters.park, isAdmin)) {
         queryObj = visibleFilter(queryObj, isAdmin);
         const facilityData = await runQuery(queryObj);
+        if (facilityData.length) {
+          facilityData[0].reservations =  await getReservationCounts(
+            event.queryStringParameters.park, 
+            event.queryStringParameters.facilityName
+          );
+        }
         return sendResponse(200, facilityData, context);
       } else {
         return sendResponse(400, { msg: 'Invalid Request' }, context);
@@ -79,6 +92,38 @@ const parkVisible = async function (park, isAdmin) {
     }
   }
 };
+
+const getReservationCounts = async function (parkName, facilityName) {
+  // Gets the reservation counts for a facility and simplifies the results
+  const resCountPK = `rescount::${parkName}::${facilityName}`;
+
+  // query DynamoDB
+  let queryObj = {
+    TableName: TABLE_NAME,
+    ExpressionAttributeValues: {}
+  };  
+  queryObj.ExpressionAttributeValues[':pk'] = { S: resCountPK };
+
+  // get the local Vancouver date in YYYY-MM-DD format
+  const todayShortDate = format(
+    Date.parse(new Date().toLocaleString('en-us', { timeZone: "America/Vancouver" })), 
+    'yyyy-MM-dd');
+
+  // only reservations on or after today are included
+  queryObj.ExpressionAttributeValues[':today'] = { S: todayShortDate };
+  queryObj.KeyConditionExpression = 'pk =:pk AND sk >= :today';
+  console.log('queryObj', queryObj);
+  const resData = await runQuery(queryObj);
+
+  // rewrite the results in a simplified format
+  const reservations = {};
+  resData.forEach(date => {
+    reservations[date.sk] = date.reservations;
+  });
+  console.log(reservations);
+
+  return reservations;
+}
 
 const visibleFilter = function (queryObj, isAdmin) {
   console.log('visibleFilter:', queryObj, isAdmin);

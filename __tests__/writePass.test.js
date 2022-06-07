@@ -336,14 +336,22 @@ async function databaseOperation(version, mode) {
                 max: 25
               }
             },
-            reservations: {
-              20211207: {
-                AM: 1,
-                DAY: 1
-              }
-            },
             status: 'open',
             visible: true
+          }
+        })
+        .promise();
+
+        await ddb
+        .put({
+          TableName: TABLE_NAME,
+          Item: {
+            pk: 'rescount::Test Park 1::Parking lot A',
+            sk: '2021-12-07',
+            reservations: {
+              AM: 1,
+              DAY: 1
+            }
           }
         })
         .promise();
@@ -359,6 +367,7 @@ async function databaseOperation(version, mode) {
           }
         })
         .promise();
+        
       await ddb
         .delete({
           TableName: TABLE_NAME,
@@ -368,6 +377,16 @@ async function databaseOperation(version, mode) {
           }
         })
         .promise();
+      await ddb
+        .delete({
+          TableName: TABLE_NAME,
+          Key: {
+            pk: 'rescount::Test Park 1::Parking lot A',
+            sk: '2021-12-07'
+          }
+        })
+        .promise();
+        
     }
   }
 }
