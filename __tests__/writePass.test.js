@@ -234,7 +234,7 @@ describe('Pass Successes', () => {
         firstName: 'Jest',
         lastName: 'User',
         facilityName: 'Parking lot A',
-        email: 'noreply@gov.bc.ca',
+        email: 'testEmail1@test.ca',
         date: new Date(),
         type: 'DAY',
         numberOfGuests: 1,
@@ -252,7 +252,7 @@ describe('Pass Successes', () => {
     expect(body.firstName).toEqual('Jest');
     expect(body.lastName).toEqual('User');
     expect(body.facilityName).toEqual('Parking lot A');
-    expect(body.email).toEqual('noreply@gov.bc.ca');
+    expect(body.email).toEqual('testEmail1@test.ca');
     expect(typeof body.date).toBe('string');
     expect(body.type).toEqual('DAY');
     expect(typeof body.registrationNumber).toBe('string');
@@ -270,7 +270,7 @@ describe('Pass Successes', () => {
         firstName: 'Jest',
         lastName: 'User',
         facilityName: 'Parking lot A',
-        email: 'noreply@gov.bc.ca',
+        email: 'testEmail2@test.ca',
         date: new Date(),
         type: 'DAY',
         numberOfGuests: 1,
@@ -289,7 +289,7 @@ describe('Pass Successes', () => {
     expect(body.firstName).toEqual('Jest');
     expect(body.lastName).toEqual('User');
     expect(body.facilityName).toEqual('Parking lot A');
-    expect(body.email).toEqual('noreply@gov.bc.ca');
+    expect(body.email).toEqual('testEmail2@test.ca');
     expect(typeof body.date).toBe('string');
     expect(body.type).toEqual('DAY');
     expect(typeof body.registrationNumber).toBe('string');
