@@ -111,6 +111,17 @@ functions:
           cors: true
 
   ###########
+  # Daily Reservation Count
+  ###########
+  readResCount:
+    handler: lambda/readResCount/index.handler
+    events:
+      - http:
+          method: GET
+          path: /rescount
+          cors: true
+
+  ###########
   # Pass
   ###########
   readPass:
