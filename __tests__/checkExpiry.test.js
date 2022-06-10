@@ -1,5 +1,5 @@
 const MockDate = require('mockdate');
-const { formatISO } = require('date-fns');
+const { DateTime } = require('luxon');
 const AWS = require('aws-sdk');
 const { DocumentClient } = require('aws-sdk/clients/dynamodb');
 
@@ -60,7 +60,7 @@ describe('checkExpiryHandler', () => {
   });
 
   test.each([['AM', '123456710'], ['PM', '123456711'], ['DAY', '123456712']])('should set %s passes from yesterday to expired', async (passType, sk) => {
-    const passDate = new Date('2021-12-08T20:00:00.000Z');
+    const passDate = DateTime.fromISO('2021-12-08T20:00:00.000Z');
     await docClient
       .put({
         TableName: TABLE_NAME,
@@ -71,7 +71,7 @@ describe('checkExpiryHandler', () => {
           type: passType,
           registrationNumber: sk,
           passStatus: 'active',
-          date: formatISO(passDate)
+          date: passDate.toISO()
         }
       })
       .promise();
@@ -93,7 +93,7 @@ describe('checkExpiryHandler', () => {
   });
 
   test.each([['PM', '123456713'], ['DAY', '123456714']])('should not set %s passes from today to expired', async (passType, sk) => {
-    const passDate = new Date('2021-12-08T20:00:00.000Z');
+    const passDate = DateTime.fromISO('2021-12-08T20:00:00.000Z');
     await docClient
       .put({
         TableName: TABLE_NAME,
@@ -104,7 +104,7 @@ describe('checkExpiryHandler', () => {
           type: passType,
           registrationNumber: sk,
           passStatus: 'active',
-          date: formatISO(passDate)
+          date: passDate.toISO()
         }
       })
       .promise();
@@ -126,7 +126,7 @@ describe('checkExpiryHandler', () => {
   });
 
   test('should set AM passes to expired after 12:00', async () => {
-    const passDate = new Date('2021-12-08T20:00:00.000Z');
+    const passDate = DateTime.fromISO('2021-12-08T20:00:00.000Z');
     await docClient
       .put({
         TableName: TABLE_NAME,
@@ -137,7 +137,7 @@ describe('checkExpiryHandler', () => {
           type: 'AM',
           registrationNumber: '123456715',
           passStatus: 'active',
-          date: formatISO(passDate)
+          date: passDate.toISO()
         }
       })
       .promise();
@@ -159,7 +159,7 @@ describe('checkExpiryHandler', () => {
   });
 
   test('should set not AM passes to expired before 12:00', async () => {
-    const passDate = new Date('2021-12-08T20:00:00.000Z');
+    const passDate = DateTime.fromISO('2021-12-08T20:00:00.000Z');
     await docClient
       .put({
         TableName: TABLE_NAME,
@@ -170,7 +170,7 @@ describe('checkExpiryHandler', () => {
           type: 'AM',
           registrationNumber: '123456716',
           passStatus: 'active',
-          date: formatISO(passDate)
+          date: passDate.toISO()
         }
       })
       .promise();
