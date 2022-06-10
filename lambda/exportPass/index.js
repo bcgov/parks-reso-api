@@ -99,9 +99,11 @@ exports.handler = async (event, context) => {
       const csvData = csvjson.toCSV(scanResults);
 
       // Write to S3.
+      // TODO: In future, token.data.idir_userid needs to be something else unique,
+      // as we will have BCeID/BCSC card IDPs generating exports.
       const params = {
         Bucket : process.env.S3_BUCKET_DATA,
-        Key : '/' + tokenObj.idir_userid + '/passExport.csv',
+        Key: '/' + token.data.idir_userid + '/passExport.csv',
         Body : csvData
       }
       const expiryTime = 60*15; // 15 minutes
@@ -112,9 +114,9 @@ exports.handler = async (event, context) => {
 
         // Generate URL.
         const URL = await s3.getSignedUrl('getObject', {
-            Bucket: process.env.S3_BUCKET_DATA,
-            Expires: expiryTime,
-            Key : '/' + tokenObj.idir_userid + '/passExport.csv',
+          Bucket: process.env.S3_BUCKET_DATA,
+          Expires: expiryTime,
+          Key: '/' + token.data.idir_userid + '/passExport.csv',
         });
         console.log("URL:", URL);
         return sendResponse(200, { signedURL: URL }, context);
