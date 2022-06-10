@@ -6,9 +6,9 @@ const INVALID_TOKEN = {
         decoded: false,
         data: null
       };
+const { logger } = require('./logger');
 
-exports.checkPermissions = async function (event) {
-  // TODO: Add keycloak decoding based on NRPTI prod
+exports.decodeJWT = async function (event) {
   const token = event.headers.Authorization;
 
   let decoded = null;
@@ -17,21 +17,21 @@ exports.checkPermissions = async function (event) {
       verifyToken(
         token,
         function (data) {
-          console.log('Data:', data);
+          logger.debug('Data:', data);
           resolve(data);
         },
         function (err) {
-          console.log('error:', err);
+          logger.debug('error:', err);
           resolve(false);
         }
       );
     }).catch(e => {
-      console.log('e verify:', e);
+      logger.debug('e verify:', e);
       return INVALID_TOKEN;
     });
-    console.log('token:', decoded);
+    logger.debug('token:', decoded);
     if (decoded === false) {
-      console.log('403');
+      logger.debug('403');
       return INVALID_TOKEN;
     } else {
       // They are good.
@@ -41,22 +41,20 @@ exports.checkPermissions = async function (event) {
       };
     }
   } catch (e) {
-    console.log('err p:', e);
+    logger.debug('err p:', e);
     return INVALID_TOKEN;
   }
 };
 
 const verifyToken = function (token, callback, sendError) {
-  console.log('verifying token');
-  console.log('token:', token);
-
-  let currentScopes = ['sysadmin'];
+  logger.debug('verifying token');
+  logger.debug('token:', token);
 
   // validate the 'Authorization' header. it should have the following format: `Bearer tokenString`
   if (token && token.indexOf('Bearer ') == 0) {
     let tokenString = token.split(' ')[1];
 
-    console.log('Remote JWT verification');
+    logger.debug('Remote JWT verification');
 
     // Get the SSO_JWKSURI and process accordingly.
     const client = jwksClient({
@@ -68,54 +66,92 @@ const verifyToken = function (token, callback, sendError) {
 
     client.getSigningKey(kid, (err, key) => {
       if (err) {
-        console.log('Signing Key Error:', err);
+        logger.debug('Signing Key Error:', err);
         callback(sendError());
       } else {
         const signingKey = key.publicKey || key.rsaPublicKey;
-        verifySecret(currentScopes, tokenString, signingKey, callback, sendError);
+        verifySecret(tokenString, signingKey, callback, sendError);
       }
     });
   } else {
-    console.log("Token didn't have a bearer.");
+    logger.debug("Token didn't have a bearer.");
     return callback(sendError());
   }
 };
 
-function verifySecret(currentScopes, tokenString, secret, callback, sendError) {
+function verifySecret(tokenString, secret, callback, sendError) {
   jwt.verify(tokenString, secret, function (verificationError, decodedToken) {
     // check if the JWT was verified correctly
-    if (verificationError == null && Array.isArray(currentScopes) && decodedToken && decodedToken.resource_access["parking-pass"].roles) {
-      console.log('JWT decoded');
+    if (verificationError == null && decodedToken && decodedToken.resource_access["parking-pass"].roles) {
+      logger.debug('JWT decoded');
 
-      console.log('currentScopes', JSON.stringify(currentScopes));
-      console.log('decoded token:', decodedToken);
+      logger.debug('decoded token:', decodedToken);
 
-      console.log('decodedToken.iss', decodedToken.iss);
-      console.log('decodedToken roles', decodedToken.resource_access["parking-pass"].roles);
+      logger.debug('decodedToken.iss', decodedToken.iss);
+      logger.debug('decodedToken roles', decodedToken.resource_access["parking-pass"].roles);
 
-      console.log('SSO_ISSUER', SSO_ISSUER);
-
-      // check if the role is valid for this endpoint
-      let roleMatch = currentScopes.some(role => decodedToken.resource_access["parking-pass"].roles.indexOf(role) >= 0);
-
-      console.log('role match', roleMatch);
+      logger.debug('SSO_ISSUER', SSO_ISSUER);
 
       // check if the dissuer matches
       let issuerMatch = decodedToken.iss == SSO_ISSUER;
 
-      console.log('issuerMatch', issuerMatch);
+      logger.debug('issuerMatch', issuerMatch);
 
-      if (roleMatch && issuerMatch) {
-        console.log('JWT Verified');
+      if (issuerMatch) {
+        logger.debug('JWT Verified');
         return callback(decodedToken);
       } else {
-        console.log('JWT Role/Issuer mismatch');
+        logger.debug('JWT Role/Issuer mismatch');
         return callback(sendError());
       }
     } else {
       // return the error in the callback if the JWT was not verified
-      console.log('JWT Verification Error:', verificationError);
+      logger.debug('JWT Verification Error:', verificationError);
       return callback(sendError());
     }
   });
+}
+
+exports.roleFilter = function (records, roles) {
+  return new Promise(async (resolve) => {
+    const data = records.filter(record => {
+      logger.debug("record:", record.roles);
+      // Sanity check if `roles` isn't defined on reacord. Default to readable.
+      if (record?.roles?.length > 0) {
+        return roles.some(role => record.roles.indexOf(role) != -1);
+      } else {
+        return false;
+      }
+    })
+    resolve(data);
+  })
+};
+
+exports.resolvePermissions = function(token) {
+  let roles = ['public'];
+  let isAdmin = false;
+  let isAuthenticated = false;
+
+  try {
+    logger.debug(JSON.stringify(token.data));
+    roles = token.data.resource_access['parking-pass'].roles;
+    // If we get here, they have authenticated and have some roles in the parking-pass client.  Treat them as
+    // an admin of some sort
+    isAuthenticated = true;
+
+    logger.debug(JSON.stringify(roles))
+    if (roles.includes('sysadmin')) {
+      isAdmin = true;
+    }
+    logger.debug("ISADMIN:", isAdmin)
+  } catch (e) {
+    // Fall through, assume public.
+    logger.error(e);
+  }
+
+  return {
+    roles: roles,
+    isAdmin: isAdmin,
+    isAuthenticated: isAuthenticated
+  }
 }

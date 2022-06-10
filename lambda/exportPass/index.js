@@ -3,7 +3,7 @@ const s3 = new AWS.S3();
 const csvjson = require('csvjson');
 const { runQuery } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
-const { checkPermissions } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { formatISO } = require('date-fns');
 
 exports.handler = async (event, context) => {
@@ -20,8 +20,9 @@ exports.handler = async (event, context) => {
     }
     if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
 
-      const tokenObj = await checkPermissions(event);
-      if (tokenObj.decoded !== true) {
+      const token = await decodeJWT(event);
+      const permissionObject = resolvePermissions(token);
+      if (permissionObject.isAdmin !== true) {
         return sendResponse(403, { msg: 'Unauthorized' });
       }
       // Get all the passes for a specific facility

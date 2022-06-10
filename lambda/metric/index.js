@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const { runScan, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
-const { checkPermissions } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 
 exports.handler = async (event, context) => {
   console.log('Metric', event);
@@ -16,8 +16,9 @@ exports.handler = async (event, context) => {
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
 
-    const tokenObj = await checkPermissions(event);
-    if (tokenObj.decoded !== true) {
+    const token = await decodeJWT(event);
+    const permissionObject = resolvePermissions(token);
+    if (permissionObject.isAdmin !== true) {
       return sendResponse(403, { msg: 'Unauthorized' });
     }
 

@@ -2,7 +2,7 @@ const AWS = require('aws-sdk');
 
 const { dynamodb, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
-const { checkPermissions } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 
 exports.handler = async (event, context) => {
   if (!event || !event.headers) {
@@ -13,7 +13,10 @@ exports.handler = async (event, context) => {
     return sendResponse(405, { msg: 'Not Implemented' }, context);
   }
 
-  if ((await checkPermissions(event)).decoded !== true) {
+  const token = await decodeJWT(event);
+  const permissionObject = resolvePermissions(token);
+
+  if (permissionObject.isAdmin !== true) {
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
@@ -43,11 +46,14 @@ async function createItem(obj, context) {
 
   parkObject.Item = {};
   parkObject.Item['pk'] = { S: 'park' };
-  parkObject.Item['sk'] = { S: park.name };
+  // This should be an orcs
+  parkObject.Item['sk'] = { S: park.orcs };
   if (park.bcParksLink) {
     parkObject.Item['bcParksLink'] = { S: park.bcParksLink };
   }
   parkObject.Item['description'] = { S: description };
+
+  // TODO: Lookup name from database via orcs
   parkObject.Item['name'] = { S: park.name };
   if (park.capacity) {
     parkObject.Item['capacity'] = AWS.DynamoDB.Converter.input(park.capacity);

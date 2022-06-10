@@ -28,6 +28,8 @@ const dynamodb = new AWS.DynamoDB(options);
 
 exports.dynamodb = new AWS.DynamoDB();
 
+const { logger } = require('./logger');
+
 async function setStatus(passes, status) {
   for (let i = 0; i < passes.length; i++) {
     let updateParams = {
@@ -44,18 +46,18 @@ async function setStatus(passes, status) {
     };
 
     const res = await dynamodb.updateItem(updateParams).promise();
-    console.log(`Set status of ${res.Attributes?.type?.S} pass ${res.Attributes?.sk?.S} to ${status}`);
+    logger.info(`Set status of ${res.Attributes?.type?.S} pass ${res.Attributes?.sk?.S} to ${status}`);
   }
 }
 
 async function runQuery(query, paginated = false) {
-  console.log('query:', query);
+  logger.debug('query:', query);
   const data = await dynamodb.query(query).promise();
-  // console.log('data:', data);
+  logger.debug('data:', JSON.stringify(data));
   var unMarshalled = data.Items.map(item => {
     return AWS.DynamoDB.Converter.unmarshall(item);
   });
-  // console.log(unMarshalled);
+  // logger.info(unMarshalled);
   if (paginated) {
     return {
       LastEvaluatedKey: data.LastEvaluatedKey,
@@ -67,13 +69,13 @@ async function runQuery(query, paginated = false) {
 }
 
 async function runScan(query, paginated = false) {
-  console.log('query:', query);
+  logger.debug('query:', query);
   const data = await dynamodb.scan(query).promise();
-  // console.log('data:', data);
+  // logger.debug('data:', data);
   var unMarshalled = data.Items.map(item => {
     return AWS.DynamoDB.Converter.unmarshall(item);
   });
-  // console.log(unMarshalled);
+  // logger.debug(unMarshalled);
   if (paginated) {
     return {
       LastEvaluatedKey: data.LastEvaluatedKey,
@@ -127,7 +129,7 @@ const expressionBuilder = function (operator, existingExpression, newFilterExpre
 };
 
 const getPassesByStatus = async function(status, filterExpression = undefined) {
-  console.log(`Loading passes`, filterExpression);
+  logger.info(`Loading passes`, filterExpression);
 
   const passesQuery = {
     TableName: TABLE_NAME,
@@ -150,7 +152,7 @@ const getPassesByStatus = async function(status, filterExpression = undefined) {
   }
   passesQuery.ExpressionAttributeValues[':activeStatus'] = { S: status };
 
-  console.log("Query:", passesQuery);
+  logger.info("Query:", passesQuery);
 
   // Grab all the results, don't skip any.
   let results = [];
@@ -163,6 +165,15 @@ const getPassesByStatus = async function(status, filterExpression = undefined) {
 
   return results;
 }
+
+const visibleFilter = function (queryObj, isAdmin) {
+  logger.info('visibleFilter:', queryObj, isAdmin);
+  if (!isAdmin) {
+    queryObj.ExpressionAttributeValues[':visible'] = { BOOL: true };
+    queryObj.FilterExpression = 'visible =:visible';
+  }
+  return queryObj;
+};
 
 module.exports = {
   ACTIVE_STATUS,
@@ -185,5 +196,6 @@ module.exports = {
   getParks,
   getFacilities,
   getPassesByStatus,
-  expressionBuilder
+  expressionBuilder,
+  visibleFilter
 };

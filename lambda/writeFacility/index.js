@@ -2,7 +2,7 @@ const AWS = require('aws-sdk');
 
 const { dynamodb, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
-const { checkPermissions } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 
 exports.handler = async (event, context) => {
   if (!event || !event.headers) {
@@ -13,7 +13,9 @@ exports.handler = async (event, context) => {
     return sendResponse(405, { msg: 'Not Implemented' }, context);
   }
 
-  if ((await checkPermissions(event)).decoded !== true) {
+  const token = await decodeJWT(event);
+  const permissionObject = resolvePermissions(token);
+  if (permissionObject.isAdmin !== true) {
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
