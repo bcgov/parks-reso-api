@@ -5,7 +5,7 @@ const axios = require('axios');
 const { runQuery, TABLE_NAME, expressionBuilder } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { checkPermissions } = require('../permissionUtil');
-const { formatISO } = require('date-fns');
+const { DateTime } = require('luxon');
 
 exports.handler = async (event, context) => {
   console.log('Read Pass', event);
@@ -26,7 +26,7 @@ exports.handler = async (event, context) => {
       // Get all the passes for a specific facility
       if (event.queryStringParameters.date) {
         // Use GSI on shortPassDate if date is provided
-        const shortDate = formatISO(new Date(event.queryStringParameters.date), { representation: 'date' });
+        const shortDate = DateTime.fromISO(event.queryStringParameters.date).toISODate();
 
         queryObj.ExpressionAttributeValues = {};
         queryObj.IndexName = 'shortPassDate-index';
@@ -141,8 +141,8 @@ exports.handler = async (event, context) => {
       console.log('passData', passData);
 
       if (passData && passData.data && passData.data.length !== 0) {
-        const dateselector = formatISO(new Date(passData.data[0].date), { representation: 'date' });
-
+        const dateselector = DateTime.fromISO(passData.data[0].date).toISODate();
+        
         // Build cancellation email payload
         const claims = {
           iss: 'bcparks-lambda',
@@ -168,7 +168,7 @@ exports.handler = async (event, context) => {
 
         const encodedCancellationLink = encodeURI(cancellationLink);
         const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-        let formattedDate = new Date(passData.data[0].date).toLocaleDateString('en-US', dateOptions);
+        let formattedDate = DateTime.fromISO(passData.data[0].date).toLocaleString(dateOptions);
         if (passData.data[0].type) {
           let formattedType = passData.data[0].type === 'DAY' ? 'ALL DAY' : passData.data[0].type;
           formattedDate += ' (' + formattedType + ')'
