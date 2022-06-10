@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 
 const { dynamodb, runQuery, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
-const { checkPermissions } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { formatISO } = require('date-fns');
 
 exports.handler = async (event, context) => {
@@ -78,7 +78,9 @@ exports.handler = async (event, context) => {
 
       return sendResponse(200, { msg: 'Cancelled', pass: passNoAuth }, context);
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
-      if ((await checkPermissions(event)).decoded !== true) {
+      const token = await decodeJWT(event);
+      const permissionObject = resolvePermissions(token);
+      if (permissionObject.isAdmin !== true) {
         return sendResponse(403, { msg: 'Unauthorized!' });
       } else {
         // We need to lookup the pass to get the date & facility

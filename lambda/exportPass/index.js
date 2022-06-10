@@ -3,7 +3,7 @@ const s3 = new AWS.S3();
 const csvjson = require('csvjson');
 const { runQuery } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
-const { checkPermissions } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { formatISO } = require('date-fns');
 
 exports.handler = async (event, context) => {
@@ -20,8 +20,9 @@ exports.handler = async (event, context) => {
     }
     if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
 
-      const tokenObj = await checkPermissions(event);
-      if (tokenObj.decoded !== true) {
+      const token = await decodeJWT(event);
+      const permissionObject = resolvePermissions(token);
+      if (permissionObject.isAdmin !== true) {
         return sendResponse(403, { msg: 'Unauthorized' });
       }
       // Get all the passes for a specific facility
@@ -98,9 +99,11 @@ exports.handler = async (event, context) => {
       const csvData = csvjson.toCSV(scanResults);
 
       // Write to S3.
+      // TODO: In future, token.data.idir_userid needs to be something else unique,
+      // as we will have BCeID/BCSC card IDPs generating exports.
       const params = {
         Bucket : process.env.S3_BUCKET_DATA,
-        Key : '/' + tokenObj.idir_userid + '/passExport.csv',
+        Key: '/' + token.data.idir_userid + '/passExport.csv',
         Body : csvData
       }
       const expiryTime = 60*15; // 15 minutes
@@ -111,9 +114,9 @@ exports.handler = async (event, context) => {
 
         // Generate URL.
         const URL = await s3.getSignedUrl('getObject', {
-            Bucket: process.env.S3_BUCKET_DATA,
-            Expires: expiryTime,
-            Key : '/' + tokenObj.idir_userid + '/passExport.csv',
+          Bucket: process.env.S3_BUCKET_DATA,
+          Expires: expiryTime,
+          Key: '/' + token.data.idir_userid + '/passExport.csv',
         });
         console.log("URL:", URL);
         return sendResponse(200, { signedURL: URL }, context);

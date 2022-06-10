@@ -4,7 +4,7 @@ const axios = require('axios');
 
 const { runQuery, TABLE_NAME, expressionBuilder } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
-const { checkPermissions } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { formatISO } = require('date-fns');
 
 exports.handler = async (event, context) => {
@@ -18,8 +18,12 @@ exports.handler = async (event, context) => {
     if (!event.queryStringParameters) {
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
+
+    const token = await decodeJWT(event);
+    const permissionObject = resolvePermissions(token);
+
     if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
-      if ((await checkPermissions(event)).decoded !== true) {
+      if (permissionObject.isAdmin !== true) {
         return sendResponse(403, { msg: 'Unauthorized' });
       }
 
@@ -112,7 +116,7 @@ exports.handler = async (event, context) => {
       return sendResponse(200, passData, context);
     } else if (event.queryStringParameters.passes && event.queryStringParameters.park) {
       console.log('Grab passes for this park');
-      if ((await checkPermissions(event)).decoded !== true) {
+      if (permissionObject.isAdmin !== true) {
         return sendResponse(403, { msg: 'Unauthorized' });
       }
       // Grab passes for this park.
@@ -209,7 +213,7 @@ exports.handler = async (event, context) => {
         return sendResponse(400, { msg: 'Invalid Request, pass does not exist' }, context);
       }
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
-      if ((await checkPermissions(event)).decoded !== true) {
+      if (permissionObject.isAdmin !== true) {
         return sendResponse(403, { msg: 'Unauthorized!' });
       } else {
         // Get the specific pass

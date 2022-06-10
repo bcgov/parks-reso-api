@@ -1,6 +1,6 @@
 const { runQuery, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
-const { checkPermissions } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 
 exports.handler = async (event, context) => {
   console.log('Read Facility', event);
@@ -12,8 +12,9 @@ exports.handler = async (event, context) => {
     TableName: TABLE_NAME
   };
 
-  const isAdmin = (await checkPermissions(event)).decoded;
-  console.log('isAdmin:', isAdmin);
+  const token = await decodeJWT(event);
+  const permissionObject = resolvePermissions(token);
+  console.log('isAdmin:', permissionObject.isAdmin);
 
   try {
     if (!event.queryStringParameters) {
@@ -26,8 +27,8 @@ exports.handler = async (event, context) => {
       queryObj.ExpressionAttributeValues = {};
       queryObj.ExpressionAttributeValues[':pk'] = { S: 'facility::' + event.queryStringParameters.park };
       queryObj.KeyConditionExpression = 'pk =:pk';
-      if (await parkVisible(event.queryStringParameters.park, isAdmin)) {
-        queryObj = visibleFilter(queryObj, isAdmin);
+      if (await parkVisible(event.queryStringParameters.park, permissionObject.isAdmin)) {
+        queryObj = visibleFilter(queryObj, permissionObject.isAdmin);
         const facilityData = await runQuery(queryObj);
         return sendResponse(200, facilityData, context);
       } else {
@@ -40,8 +41,8 @@ exports.handler = async (event, context) => {
       queryObj.ExpressionAttributeValues[':pk'] = { S: 'facility::' + event.queryStringParameters.park };
       queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.facilityName };
       queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
-      if (await parkVisible(event.queryStringParameters.park, isAdmin)) {
-        queryObj = visibleFilter(queryObj, isAdmin);
+      if (await parkVisible(event.queryStringParameters.park, permissionObject.isAdmin)) {
+        queryObj = visibleFilter(queryObj, permissionObject.isAdmin);
         const facilityData = await runQuery(queryObj);
         return sendResponse(200, facilityData, context);
       } else {
