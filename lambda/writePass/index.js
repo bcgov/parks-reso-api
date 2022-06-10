@@ -2,10 +2,9 @@ const AWS = require('aws-sdk');
 const axios = require('axios');
 
 const { verifyJWT } = require('../captchaUtil');
-const { dynamodb, runQuery, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD } = require('../dynamoUtil');
+const { dynamodb, runQuery, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE } = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
-const { utcToZonedTime } = require('date-fns-tz');
-const { formatISO, add, compareAsc, startOfDay } = require('date-fns');
+const { DateTime } = require('luxon');
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
@@ -80,17 +79,30 @@ exports.handler = async (event, context) => {
     }
 
     // Get current time vs booking time information
-    const localDate = utcToZonedTime(Date.now(), 'America/Vancouver');
-    const currentHour = localDate.getHours();
-    const bookingDate = new Date(date);
+    // Log server DateTime
+    console.log('Server Time Zone:',
+      Intl.DateTimeFormat().resolvedOptions().timeZone || 'undefined',
+      `(${DateTime.now().toISO()})`
+    );
+    const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
+    const bookingPSTDateTime = DateTime.fromISO(date)
+      .setZone(TIMEZONE)
+      .set(
+        {
+          hour: 12,
+          minutes: 0,
+          seconds: 0,
+          milliseconds: 0
+        }
+      );
 
     let facilityObj = {
       TableName: TABLE_NAME
     };
 
     // check if booking date in the past
-    localDate.setHours(0, 0, 0, 0);
-    if (localDate > bookingDate) {
+    const currentPSTDateStart = currentPSTDateTime.startOf('day');
+    if (currentPSTDateStart.toISO() > bookingPSTDateTime.toISO()) {
       return sendResponse(400, {
         msg: 'You cannot book for a date in the past.',
         title: 'Booking date in the past'
@@ -105,9 +117,8 @@ exports.handler = async (event, context) => {
 
     // Check bookingDaysAhead
     const bookingDaysAhead = facilityData[0].bookingDaysAhead === null ? DEFAULT_BOOKING_DAYS_AHEAD : facilityData[0].bookingDaysAhead;
-    const futureDateMax = add(localDate, { days: bookingDaysAhead });
-    const datecompared = compareAsc(startOfDay(new Date(date)), startOfDay(new Date(futureDateMax)));
-    if (datecompared > 0) {
+    const futurePSTDateTimeMax = currentPSTDateTime.plus({ days: bookingDaysAhead });
+    if (bookingPSTDateTime.startOf('day') > futurePSTDateTimeMax.startOf('day')) {
       return sendResponse(400, {
         msg: 'You cannot book for a date that far ahead.',
         title: 'Booking date in the future invalid'
@@ -121,9 +132,10 @@ exports.handler = async (event, context) => {
     let status = 'reserved';
 
     // check if booking same-day
-    if (localDate.getDate() === bookingDate.getDate()) {
+    if (currentPSTDateTime.get('day') === bookingPSTDateTime.get('day')) {
       // check if AM/PM/DAY is currently open
-      if (type === 'AM' && currentHour >= DEFAULT_PM_OPENING_HOUR) {
+      const currentPSTHour = currentPSTDateTime.get('hour');
+      if (type === 'AM' && currentPSTHour >= DEFAULT_PM_OPENING_HOUR) {
         // it is beyond AM closing time
         return sendResponse(400, {
           msg:
@@ -138,12 +150,12 @@ exports.handler = async (event, context) => {
       if (type === 'PM') {
         openingHour = DEFAULT_PM_OPENING_HOUR;
       }
-      if (currentHour >= openingHour) {
+      if (currentPSTHour >= openingHour) {
         status = 'active';
       }
     }
 
-    const dateselector = formatISO(new Date(date), { representation: 'date' });
+    const bookingPSTShortDate = bookingPSTDateTime.toISODate();
 
     passObject.Item = {};
     passObject.Item['pk'] = { S: 'pass::' + parkName };
@@ -154,8 +166,8 @@ exports.handler = async (event, context) => {
     passObject.Item['searchLastName'] = { S: lastName.toLowerCase() };
     passObject.Item['facilityName'] = { S: facilityName };
     passObject.Item['email'] = { S: email };
-    passObject.Item['date'] = { S: date };
-    passObject.Item['shortPassDate'] = { S: dateselector };
+    passObject.Item['date'] = { S: bookingPSTDateTime.toUTC().toISO() };
+    passObject.Item['shortPassDate'] = { S: bookingPSTShortDate };
     passObject.Item['type'] = { S: type };
     passObject.Item['registrationNumber'] = { S: registrationNumber };
     passObject.Item['numberOfGuests'] = AWS.DynamoDB.Converter.input(numberOfGuests);
@@ -173,7 +185,7 @@ exports.handler = async (event, context) => {
       '&park=' +
       parkName + 
       '&date=' +
-      dateselector + 
+      bookingPSTShortDate +
       '&type=' +
       type;
 
@@ -182,7 +194,7 @@ exports.handler = async (event, context) => {
     let gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
 
     const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-    const formattedDate = new Date(date).toLocaleDateString('en-US', dateOptions);
+    const formattedBookingDate = bookingPSTDateTime.toLocaleString(dateOptions);
 
     // Only let pass come through if there's enough room
     let parkObj = {
@@ -199,7 +211,7 @@ exports.handler = async (event, context) => {
     let personalisation = {
       firstName: firstName,
       lastName: lastName,
-      date: formattedDate,
+      date: formattedBookingDate,
       type: type === 'DAY' ? 'ALL DAY' : type,
       facilityName: facilityName,
       numberOfGuests: numberOfGuests.toString(),
@@ -222,7 +234,7 @@ exports.handler = async (event, context) => {
           TableName: TABLE_NAME,
           KeyConditionExpression: 'pk = :pk',
           FilterExpression:
-            'facilityName = :facilityName AND email = :email AND #type = :type AND #date = :date AND (passStatus = :reserved OR passStatus = :active)',
+            'facilityName = :facilityName AND email = :email AND #type = :type AND begins_with(#date, :date) AND (passStatus = :reserved OR passStatus = :active)',
           ExpressionAttributeNames: {
             '#type': 'type',
             '#date': 'date'
@@ -232,7 +244,7 @@ exports.handler = async (event, context) => {
             ':facilityName': { S: facilityName },
             ':email': { S: email },
             ':type': { S: type },
-            ':date': { S: date },
+            ':date': { S: bookingPSTShortDate },
             ':reserved': { S: 'reserved' },
             ':active': { S: 'active' }
           }
@@ -262,7 +274,7 @@ exports.handler = async (event, context) => {
             ':dateSelectorInitialValue': { M: {} }
           },
           ExpressionAttributeNames: {
-            '#dateselector': dateselector
+            '#dateselector': bookingPSTShortDate
           },
           UpdateExpression: 'SET reservations.#dateselector = :dateSelectorInitialValue',
           ConditionExpression: 'attribute_not_exists(reservations.#dateselector)',
@@ -288,7 +300,7 @@ exports.handler = async (event, context) => {
             ':dateSelectorInitialValue': { N: '0' }
           },
           ExpressionAttributeNames: {
-            '#dateselector': dateselector,
+            '#dateselector': bookingPSTShortDate,
             '#type': type
           },
           UpdateExpression: 'SET reservations.#dateselector.#type = :dateSelectorInitialValue',
@@ -317,7 +329,7 @@ exports.handler = async (event, context) => {
           ExpressionAttributeNames: {
             '#booking': 'bookingTimes',
             '#type': type,
-            '#dateselector': dateselector,
+            '#dateselector': bookingPSTShortDate,
             '#maximum': 'max'
           },
           UpdateExpression:
