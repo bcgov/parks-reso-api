@@ -1,5 +1,5 @@
 const MockDate = require('mockdate');
-const { formatISO } = require('date-fns');
+const { DateTime } = require('luxon');
 const AWS = require('aws-sdk');
 const { DocumentClient } = require('aws-sdk/clients/dynamodb');
 
@@ -88,7 +88,7 @@ describe('checkActivationHandler', () => {
   });
 
   test.each([['AM', '123456702'], ['DAY', '123456703']])('should set %s passes with default opening hour to active', async (passType, sk) => {
-    const passDate = new Date('2021-12-08T19:01:58.135Z');
+    const passDate = DateTime.fromISO('2021-12-08T19:01:58.135Z').setZone('America/Vancouver');
     await docClient
       .put({
         TableName: TABLE_NAME,
@@ -99,7 +99,7 @@ describe('checkActivationHandler', () => {
           type: passType,
           registrationNumber: sk,
           passStatus: 'reserved',
-          date: formatISO(passDate)
+          date: passDate.toUTC().toISO()
         }
       })
       .promise();
@@ -121,7 +121,7 @@ describe('checkActivationHandler', () => {
   });
 
   test.each([['AM', '123456704'], ['DAY', '123456705']])('should leave %s passes inactive before custom opening hour', async (passType, sk) => {
-    const passDate = new Date('2021-12-08T19:01:58.135Z');
+    const passDate = DateTime.fromISO('2021-12-08T19:01:58.135Z').setZone('America/Vancouver');
     await docClient
       .put({
         TableName: TABLE_NAME,
@@ -132,7 +132,7 @@ describe('checkActivationHandler', () => {
           type: passType,
           registrationNumber: sk,
           passStatus: 'reserved',
-          date: formatISO(passDate)
+          date: passDate.toUTC().toISO()
         }
       })
       .promise();
@@ -154,7 +154,7 @@ describe('checkActivationHandler', () => {
   });
 
   test.each([['AM', '123456706'], ['DAY', '123456707']])('should set %s passes to active after custom opening hour', async (passType, sk) => {
-    const passDate = new Date('2021-12-08T19:01:58.135Z');
+    const passDate = DateTime.fromISO('2021-12-08T19:01:58.135Z').setZone('America/Vancouver');
     await docClient
       .put({
         TableName: TABLE_NAME,
@@ -165,7 +165,7 @@ describe('checkActivationHandler', () => {
           type: passType,
           registrationNumber: sk,
           passStatus: 'reserved',
-          date: formatISO(passDate)
+          date: passDate.toUTC().toISO()
         }
       })
       .promise();
@@ -187,7 +187,7 @@ describe('checkActivationHandler', () => {
   });
 
   test('should leave PM passes before 12:00 inactive', async () => {
-    const passDate = new Date('2021-12-08T19:01:58.135Z');
+    const passDate = DateTime.fromISO('2021-12-08T19:01:58.135Z').setZone('America/Vancouver');
     await docClient
       .put({
         TableName: TABLE_NAME,
@@ -198,7 +198,7 @@ describe('checkActivationHandler', () => {
           type: 'PM',
           registrationNumber: '123456708',
           passStatus: 'reserved',
-          date: formatISO(passDate)
+          date: passDate.toUTC().toISO()
         }
       })
       .promise();
@@ -220,7 +220,7 @@ describe('checkActivationHandler', () => {
   });
 
   test('should set PM passes after 12:00 to active', async () => {
-    const passDate = new Date('2021-12-08T19:01:58.135Z');
+    const passDate = DateTime.fromISO('2021-12-08T19:01:58.135Z').setZone('America/Vancouver');
     await docClient
       .put({
         TableName: TABLE_NAME,
@@ -231,7 +231,7 @@ describe('checkActivationHandler', () => {
           type: 'PM',
           registrationNumber: '123456709',
           passStatus: 'reserved',
-          date: formatISO(passDate)
+          date: passDate.toUTC().toISO()
         }
       })
       .promise();
