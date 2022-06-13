@@ -1,6 +1,5 @@
 const AWS = require('aws-sdk');
 const axios = require('axios');
-
 const { verifyJWT } = require('../captchaUtil');
 const { dynamodb, runQuery, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE } = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
