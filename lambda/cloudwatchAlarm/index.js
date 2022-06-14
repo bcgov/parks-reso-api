@@ -1,6 +1,5 @@
 const axios = require('axios');
 const { DateTime } = require('luxon');
-
 const { TIMEZONE } = require('../dynamoUtil');
 const ROCKETCHAT_URL = process.env.ROCKETCHAT_URL;
 const ROCKETCHAT_BEARER_TOKEN = process.env.ROCKETCHAT_BEARER_TOKEN;
