@@ -1,6 +1,7 @@
 const axios = require('axios');
-const { utcToZonedTime } = require('date-fns-tz');
-const { timeZone } = require('../dynamoUtil');
+const { DateTime } = require('luxon');
+
+const { TIMEZONE } = require('../dynamoUtil');
 const ROCKETCHAT_URL = process.env.ROCKETCHAT_URL;
 const ROCKETCHAT_BEARER_TOKEN = process.env.ROCKETCHAT_BEARER_TOKEN;
 const AWS_ACCOUNT_LIST = JSON.parse(process.env.AWS_ACCOUNT_LIST);
@@ -30,7 +31,7 @@ exports.handler = async (event, context) => {
       });
       fields.push({
         "title": "Date (America/Vancouver Time)",
-        "value": utcToZonedTime(message.StateChangeTime, timeZone),
+        "value": DateTime.fromISO(message.StateChangeTime).setZone(TIMEZONE).toISO(),
         "short": true
       });
       fields.push({
