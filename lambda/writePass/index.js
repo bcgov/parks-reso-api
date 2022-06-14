@@ -173,6 +173,7 @@ exports.handler = async (event, context) => {
     passObject.Item['passStatus'] = { S: status };
     passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
     passObject.Item['facilityType'] = { S: facilityType };
+    passObject.Item['creationDate'] = {S: currentPSTDateTime.toUTC().toISO() };
 
     const cancellationLink =
       process.env.PUBLIC_FRONTEND +
