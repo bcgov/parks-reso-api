@@ -1,28 +1,33 @@
-const { endOfToday, compareAsc, addHours, startOfDay } = require('date-fns');
-const { utcToZonedTime, zonedTimeToUtc } = require('date-fns-tz');
+const { DateTime } = require('luxon');
 
 const { setStatus,
-        getPassesByStatus,
-        getParks,
-        getFacilities,
-        RESERVED_STATUS,
-        ACTIVE_STATUS,
-        EXPIRED_STATUS,
-        PASS_TYPE_PM,
-        timeZone } = require('../dynamoUtil');
+  getPassesByStatus,
+  getParks,
+  getFacilities,
+  RESERVED_STATUS,
+  ACTIVE_STATUS,
+  EXPIRED_STATUS,
+  PM_ACTIVATION_HOUR,
+  PASS_TYPE_PM,
+  TIMEZONE } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 
 exports.handler = async (event, context) => {
   console.log('Event:', event, context);
+  console.log('Server Time Zone:',
+    Intl.DateTimeFormat().resolvedOptions().timeZone || 'undefined',
+    `(${DateTime.now().toISO()})`
+  );
   try {
-    const theDate = zonedTimeToUtc(endOfToday(), timeZone);
+    const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
+    const endOfPSTDayUTCDateTime = currentPSTDateTime.endOf('day').toUTC();
 
-    console.log("Checking against date:", theDate);
+    console.log("Checking against date:", endOfPSTDayUTCDateTime.toISO());
 
     const filter = {
-      FilterExpression: '#theDate <=:theDate',
+      FilterExpression: '#theDate <= :theDate',
       ExpressionAttributeValues: {
-        ':theDate': { S: theDate.toISOString() }
+        ':theDate': { S: endOfPSTDayUTCDateTime.toISO() }
       },
       ExpressionAttributeNames: {
         '#theDate': 'date'
@@ -37,13 +42,18 @@ exports.handler = async (event, context) => {
     // Query the passStatus-index for passStatus = 'reserved'
     // NB: Filter on date <= endOfToday for fixing previous bad data.
     // What period are we in? AM/PM?
-    const currentTime = utcToZonedTime(new Date(), timeZone);
-    const noonTime = addHours(startOfDay(currentTime), 12);
-    const startOfDayLocalTime = startOfDay(currentTime);
+    const startPMHourPSTDateTime = currentPSTDateTime.set({
+      hour: PM_ACTIVATION_HOUR,
+      minute: 0,
+      second: 0,
+      millisecond: 0
+    });
+    const startDayPSTDateTime = currentPSTDateTime.startOf('day');
 
-    // 1. If currentTimeLocal < noon => AM
-    // 2. If currentTimeLocal >= noon => PM
-    const isAM = compareAsc(currentTime, noonTime) <= 0 ? true : false;
+    // 1. If currentTimeLocal < PM_ACTIVATION_HOUR => AM
+    // 2. If currentTimeLocal >= PM_ACTIVATION_HOUR => PM
+    const isAM = currentPSTDateTime < startPMHourPSTDateTime ? true : false;
+    // const isAM = compareAsc(currentTime, noonTime) <= 0 ? true : false;
 
     let passesToActiveStatus = [];
     let passesToExpiredStatus = [];
@@ -51,17 +61,18 @@ exports.handler = async (event, context) => {
     // Get all facilities for opening hour lookups.
     let facilities = [];
     const parks = await getParks();
-    for(let i=0;i<parks.length;i++) {
+    for (let i = 0; i < parks.length; i++) {
       const results = await getFacilities(parks[i].sk);
       facilities = facilities.concat(results);
     }
-    // console.log("Facilities:", facilities);
 
     // For each pass determine if we're in the AM/DAY for that pass or the PM.  Push into active
     // accordingly, or set it to expired if it's anything < today
-    for (let i=0;i < passes.length;i++) {
+    for (let i = 0; i < passes.length; i++) {
       let pass = passes[i];
 
+      // pass dates are saved in UTC.
+      const passPSTDateTime = DateTime.fromISO(pass.date).setZone(TIMEZONE);
       const passParkName = pass.pk.split('::')[1];
       const passFacilityName = pass.facilityName;
 
@@ -73,7 +84,14 @@ exports.handler = async (event, context) => {
         openingHourTimeForFacility = theFacility[0].bookingOpeningHour;
       }
 
-      const isWithinOpeningHour = compareAsc(currentTime, addHours(startOfDayLocalTime, openingHourTimeForFacility)) >= 0 ? true : false;
+      const openingHourPSTDateTime = currentPSTDateTime.set({
+        hour: openingHourTimeForFacility,
+        minute: 0,
+        second: 0,
+        millisecond: 0
+      });
+      
+      const isWithinOpeningHour = currentPSTDateTime >= openingHourPSTDateTime ? true : false;
 
       if (isAM === true && pass.type !== PASS_TYPE_PM && isWithinOpeningHour) {
         passesToActiveStatus.push(pass);
@@ -82,7 +100,7 @@ exports.handler = async (event, context) => {
       }
 
       // If we added an item to passesToActiveStatus that was date < begginingOfToday, set to expired, woops!
-      if (compareAsc(new Date(pass.date), startOfDayLocalTime) <= 0) {
+      if (passPSTDateTime < startDayPSTDateTime){
         // Prune from the active list
         passesToActiveStatus = passesToActiveStatus.filter(item => item.sk !== pass.sk && item.date !== pass.date);
 
