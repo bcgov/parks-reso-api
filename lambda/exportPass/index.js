@@ -1,10 +1,10 @@
 const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
 const csvjson = require('csvjson');
-const { runQuery } = require('../dynamoUtil');
+const { runQuery, TIMEZONE } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
-const { formatISO } = require('date-fns');
+const { DateTime } = require('luxon');
 
 exports.handler = async (event, context) => {
   console.log('Export Pass', event);
@@ -34,8 +34,7 @@ exports.handler = async (event, context) => {
 
       // Filter Date
       if (event.queryStringParameters.date) {
-        const theDate = new Date(event.queryStringParameters.date);
-        const dateselector = formatISO(theDate, { representation: 'date' });
+        const dateselector = DateTime.fromISO(event.queryStringParameters.date).setZone(TIMEZONE).toISODate();
         queryObj = checkAddExpressionAttributeNames(queryObj);
         queryObj.ExpressionAttributeNames['#theDate'] = 'date';
         queryObj.ExpressionAttributeValues[':theDate'] = AWS.DynamoDB.Converter.input(dateselector);
