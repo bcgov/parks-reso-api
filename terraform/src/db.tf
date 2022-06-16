@@ -57,8 +57,10 @@ resource "aws_dynamodb_table" "park_dup_table" {
       "passStatus",
       "phoneNumber",
       "facilityType",
-      "license"
-    ]
+      "license",
+      "creationDate",
+      "isOverbooked"
+]
   }
 
   global_secondary_index {

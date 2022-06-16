@@ -46,7 +46,6 @@ exports.handler = async (event, context) => {
       type,
       numberOfGuests,
       phoneNumber,
-      facilityType,
       captchaJwt,
       ...otherProps
     } = newObject;
@@ -66,15 +65,17 @@ exports.handler = async (event, context) => {
       });
     }
 
+    const facilityData = await getFacility(parkName, facilityName);
+  
     // Enforce maximum limit per pass
-    if (facilityType === 'Trail' && numberOfGuests > 4) {
+    if (facilityData.type === 'Trail' && numberOfGuests > 4) {
       return sendResponse(400, {
         msg: 'You cannot have more than 4 guests on a trail.',
         title: 'Too many guests'
       });
     }
 
-    if (facilityType === 'Parking') {
+    if (facilityData.type === 'Parking') {
       numberOfGuests = 1;
     }
 
@@ -85,20 +86,12 @@ exports.handler = async (event, context) => {
       `(${DateTime.now().toISO()})`
     );
     const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
-    const bookingPSTDateTime = DateTime.fromISO(date)
-      .setZone(TIMEZONE)
-      .set(
-        {
-          hour: 12,
-          minutes: 0,
-          seconds: 0,
-          milliseconds: 0
-        }
-      );
-
-    let facilityObj = {
-      TableName: TABLE_NAME
-    };
+    const bookingPSTDateTime = DateTime.fromISO(date).setZone(TIMEZONE).set({
+      hour: 12,
+      minutes: 0,
+      seconds: 0,
+      milliseconds: 0
+    });
 
     // check if booking date in the past
     const currentPSTDateStart = currentPSTDateTime.startOf('day');
@@ -109,14 +102,9 @@ exports.handler = async (event, context) => {
       });
     }
 
-    facilityObj.ExpressionAttributeValues = {};
-    facilityObj.ExpressionAttributeValues[':pk'] = { S: 'facility::' + parkName };
-    facilityObj.ExpressionAttributeValues[':sk'] = { S: facilityName };
-    facilityObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
-    const facilityData = await runQuery(facilityObj);
-
     // Check bookingDaysAhead
-    const bookingDaysAhead = facilityData[0].bookingDaysAhead === null ? DEFAULT_BOOKING_DAYS_AHEAD : facilityData[0].bookingDaysAhead;
+    const bookingDaysAhead =
+      facilityData.bookingDaysAhead === null ? DEFAULT_BOOKING_DAYS_AHEAD : facilityData.bookingDaysAhead;
     const futurePSTDateTimeMax = currentPSTDateTime.plus({ days: bookingDaysAhead });
     if (bookingPSTDateTime.startOf('day') > futurePSTDateTimeMax.startOf('day')) {
       return sendResponse(400, {
@@ -126,7 +114,7 @@ exports.handler = async (event, context) => {
     }
 
     // There should only be 1 facility.
-    let openingHour = facilityData[0].bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
+    let openingHour = facilityData.bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
     let closingHour = DEFAULT_PM_OPENING_HOUR;
 
     let status = 'reserved';
@@ -173,8 +161,9 @@ exports.handler = async (event, context) => {
     passObject.Item['numberOfGuests'] = AWS.DynamoDB.Converter.input(numberOfGuests);
     passObject.Item['passStatus'] = { S: status };
     passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
-    passObject.Item['facilityType'] = { S: facilityType };
-    passObject.Item['creationDate'] = {S: currentPSTDateTime.toUTC().toISO() };
+    passObject.Item['facilityType'] = { S: facilityData.type };
+    passObject.Item['creationDate'] = { S: currentPSTDateTime.toUTC().toISO() };
+    passObject.Item['isOverbooked'] = { BOOL: false };
 
     const cancellationLink =
       process.env.PUBLIC_FRONTEND +
@@ -184,7 +173,7 @@ exports.handler = async (event, context) => {
       '&email=' +
       email +
       '&park=' +
-      parkName + 
+      parkName +
       '&date=' +
       bookingPSTShortDate +
       '&type=' +
@@ -197,7 +186,6 @@ exports.handler = async (event, context) => {
     const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
     const formattedBookingDate = bookingPSTDateTime.toLocaleString(dateOptions);
 
-    // Only let pass come through if there's enough room
     let parkObj = {
       TableName: TABLE_NAME
     };
@@ -224,7 +212,7 @@ exports.handler = async (event, context) => {
     };
 
     // Parking.
-    if (facilityType === 'Parking') {
+    if (facilityData.type === 'Parking') {
       gcNotifyTemplate = process.env.GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID;
     }
 
@@ -250,8 +238,14 @@ exports.handler = async (event, context) => {
             ':active': { S: 'active' }
           }
         };
-
-        const existingItems = await dynamodb.query(existingPassCheckObject).promise();
+        let existingItems;
+        try {
+          existingItems = await dynamodb.query(existingPassCheckObject).promise();
+        } catch (error) {
+          logger.error('Error while running query for existingPassCheckObject');
+          logger.error(error);
+          throw error;
+        }
 
         if (existingItems.Count > 0) {
           return sendResponse(400, {
@@ -264,96 +258,96 @@ exports.handler = async (event, context) => {
         return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
       }
 
-      try {
-        // Make sure the key for the reservation exists
-        let updateReservationObject = {
-          Key: {
-            pk: { S: 'facility::' + parkName },
-            sk: { S: facilityName }
-          },
-          ExpressionAttributeValues: {
-            ':dateSelectorInitialValue': { M: {} }
-          },
-          ExpressionAttributeNames: {
-            '#dateselector': bookingPSTShortDate
-          },
-          UpdateExpression: 'SET reservations.#dateselector = :dateSelectorInitialValue',
-          ConditionExpression: 'attribute_not_exists(reservations.#dateselector)',
-          ReturnValues: 'ALL_NEW',
-          TableName: TABLE_NAME
-        };
-        logger.debug('updateReservationObject:', updateReservationObject);
-        const updateReservationObjectRes = await dynamodb.updateItem(updateReservationObject).promise();
-        logger.debug('updateReservationObjectRes:', updateReservationObjectRes);
-      } catch (e) {
-        // Already there.
-        logger.debug('dateSelectorInitialValue exists', e);
-      }
+      // Here, we must create/update a reservation object
+      // https://github.com/bcgov/parks-reso-api/wiki/Models
 
-      try {
-        // Add the type into the map
-        let addingProperty = {
-          Key: {
-            pk: { S: 'facility::' + parkName },
-            sk: { S: facilityName }
-          },
-          ExpressionAttributeValues: {
-            ':dateSelectorInitialValue': { N: '0' }
-          },
-          ExpressionAttributeNames: {
-            '#dateselector': bookingPSTShortDate,
-            '#type': type
-          },
-          UpdateExpression: 'SET reservations.#dateselector.#type = :dateSelectorInitialValue',
-          ConditionExpression: 'attribute_not_exists(reservations.#dateselector.#type)',
-          ReturnValues: 'ALL_NEW',
-          TableName: TABLE_NAME
-        };
-        logger.debug('addingProperty:', addingProperty);
-        const addingPropertyRes = await dynamodb.updateItem(addingProperty).promise();
-        logger.debug('addingPropertyRes:', AWS.DynamoDB.Converter.unmarshall(addingPropertyRes));
-      } catch (e) {
-        // Already there.
-        logger.debug('Type Prop exists', e);
-      }
+      // TODO: We need to change park name in the PK to use orcs instead.
+      const reservationsObjectPK = `reservations::${parkName}::${facilityName}`;
 
-      try {
-        let updateFacility = {
-          Key: {
-            pk: { S: 'facility::' + parkName },
-            sk: { S: facilityName }
-          },
-          ExpressionAttributeValues: {
-            ':inc': AWS.DynamoDB.Converter.input(numberOfGuests),
-            ':start': AWS.DynamoDB.Converter.input(0)
-          },
-          ExpressionAttributeNames: {
-            '#booking': 'bookingTimes',
-            '#type': type,
-            '#dateselector': bookingPSTShortDate,
-            '#maximum': 'max'
-          },
-          UpdateExpression:
-            'SET reservations.#dateselector.#type = if_not_exists(reservations.#dateselector.#type, :start) + :inc',
-          ConditionExpression: '#booking.#type.#maximum > reservations.#dateselector.#type',
-          ReturnValues: 'ALL_NEW',
-          TableName: TABLE_NAME
-        };
-        logger.debug('updateFacility:', updateFacility);
-        const facilityRes = await dynamodb.updateItem(updateFacility).promise();
-        logger.debug('FacRes:', facilityRes);
-      } catch (err) {
-        // There are no more passes available.
-        logger.error(err);
-        return sendResponse(400, {
-          msg: 'We have sold out of allotted passes for this time, please check back on the site from time to time as new passes may come available.',
-          title: 'Sorry, we are unable to fill your specific request.'
-        });
-      }
+      // We need to ensure that the reservations object exists.
+      // Attempt to create reservations object. If it fails, so what...
 
-      logger.debug('putting item:', passObject);
-      const res = await dynamodb.putItem(passObject).promise();
-      logger.debug('res:', res);
+      await createNewReservationsObj(facilityData.bookingTimes, reservationsObjectPK, bookingPSTShortDate, type);
+
+      // Perform a transaction where we decrement the available passes and create the pass
+      // If the conditions where the related facility object has a lock, we then fail the whole transaction.
+      // This is to prevent a race condition related to available pass tallies.
+      passObject.ReturnValuesOnConditionCheckFailure = 'ALL_OLD';
+      const transactionObj = {
+        TransactItems: [
+          {
+            ConditionCheck: {
+              TableName: TABLE_NAME,
+              Key: {
+                // TODO: Make this use Orcs instead of parkName
+                pk: { S: `facility::${parkName}` },
+                sk: { S: facilityName }
+              },
+              ExpressionAttributeValues: {
+                ':isUpdating': { BOOL: false }
+              },
+              ConditionExpression: 'isUpdating = :isUpdating',
+              ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
+            }
+          },
+          {
+            Update: {
+              TableName: TABLE_NAME,
+              Key: {
+                pk: { S: reservationsObjectPK },
+                sk: { S: bookingPSTShortDate }
+              },
+              ExpressionAttributeValues: {
+                ':dec': AWS.DynamoDB.Converter.input(numberOfGuests)
+              },
+              ExpressionAttributeNames: {
+                '#type': type,
+                '#availablePasses': 'availablePasses'
+              },
+              UpdateExpression: 'SET capacities.#type.#availablePasses = capacities.#type.#availablePasses - :dec',
+              ConditionExpression: 'capacities.#type.#availablePasses >= :dec',
+              ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
+            }
+          },
+          {
+            Put: passObject
+          }
+        ]
+      };
+      logger.debug('Transact obj:', transactionObj);
+      logger.debug('Putting item:', passObject);
+      try {
+        const res = await dynamodb.transactWriteItems(transactionObj).promise();
+        logger.debug('Res:', res);
+      } catch (error) {
+        logger.error('Transaction failed:', error);
+        if (error.code === 'TransactionCanceledException') {
+          let cancellationReasons = error.message.slice(error.message.lastIndexOf('[') + 1);
+          cancellationReasons = cancellationReasons.slice(0, -1);
+          cancellationReasons = cancellationReasons.split(', ');
+          let message = error.message;
+          if (cancellationReasons[0] != 'None') {
+            logger.error('Facility is currently locked');
+            message = "An error has occured, please try again."
+            // TODO: we could implement a retry transaction here.
+          }
+          if (cancellationReasons[1] != 'None') {
+            logger.error('Sold out of passes.');
+            message = "We have sold out of allotted passes for this time, please check back on the site from time to time as new passes may come available."
+          }
+          if (cancellationReasons[2] != 'None') {
+            logger.error('Error creating pass.');
+            message = "An error has occured, please try again."
+          }
+
+          return sendResponse(400, {
+            msg: message,
+            title: 'Sorry, we are unable to fill your specific request.'
+          });
+        } else {
+          throw error;
+        }
+      }
 
       try {
         await axios({
@@ -402,4 +396,73 @@ function to12hTimeString(hour) {
 function generate(count) {
   // TODO: Make this better
   return Math.random().toString().substr(count);
+}
+
+async function getFacility(parkName, facilityName) {
+  let getFacilityQueryObject = {
+    TableName: TABLE_NAME
+  };
+  getFacilityQueryObject.ExpressionAttributeValues = {};
+  getFacilityQueryObject.ExpressionAttributeValues[':pk'] = { S: `facility::${parkName}` };
+  getFacilityQueryObject.ExpressionAttributeValues[':sk'] = { S: facilityName };
+  getFacilityQueryObject.KeyConditionExpression = 'pk =:pk AND sk =:sk';
+  try {
+    const facilityDataRaw = await runQuery(getFacilityQueryObject);
+    if (facilityDataRaw.length > 0) {
+      return facilityDataRaw[0];
+    } else {
+      logger.error('Write Pass', getFacilityQueryObject);
+      throw 'Facility does not exist.';
+    }
+  } catch (err) {
+    logger.error('Facility Object Error: Failed to get facility');
+    logger.error(err);
+    logger.error(getFacilityQueryObject);
+    logger.error('Write Pass', getFacilityQueryObject);
+    return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
+  }
+}
+
+async function createNewReservationsObj(facilityBookingTimes, reservationsObjectPK, bookingPSTShortDate, type) {
+  const bookingTimeTypes = Object.keys(facilityBookingTimes);
+
+  // Type given does not exist in the facility.
+  if (!bookingTimeTypes.includes(type)) {
+    logger.debug('Booking Time Type Error: type provided does not exist in facility');
+    logger.debug(type);
+    logger.error('Write Pass', bookingTimeTypes, type);
+    return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
+  }
+
+  let rawReservationsObject = {
+    pk: reservationsObjectPK,
+    sk: bookingPSTShortDate,
+    capacities: {}
+  };
+
+  // We are initing capacities
+  for (let i = 0; i < bookingTimeTypes.length; i++) {
+    const property = bookingTimeTypes[i];
+    rawReservationsObject.capacities[property] = {
+      baseCapacity: facilityBookingTimes[property].max,
+      capacityModifier: 0,
+      availablePasses: facilityBookingTimes[property].max
+    };
+  }
+
+  // Attempt to create a new reservations object
+  const reservationsObject = {
+    TableName: TABLE_NAME,
+    Item: AWS.DynamoDB.Converter.marshall(rawReservationsObject),
+    ConditionExpression: 'attribute_not_exists(pk) AND attribute_not_exists(sk)'
+  };
+
+  try {
+    const res = await dynamodb.putItem(reservationsObject).promise();
+    logger.debug(res);
+  } catch (err) {
+    // If this fails, that means the object already exists.
+    // We can continue to our allocated increment logic.
+    logger.info('Reservation object already exists', rawReservationsObject);
+  }
 }
