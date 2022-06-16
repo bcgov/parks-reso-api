@@ -11,7 +11,6 @@ if (process.env.IS_OFFLINE) {
 const ACTIVE_STATUS = 'active';
 const RESERVED_STATUS = 'reserved';
 const EXPIRED_STATUS = 'expired';
-const timeZone = 'America/Vancouver';
 const PASS_TYPE_AM = 'AM';
 const PASS_TYPE_PM = 'PM';
 const PASS_TYPE_DAY = 'DAY';
@@ -186,7 +185,6 @@ module.exports = {
   PM_ACTIVATION_HOUR,
   PASS_TYPE_EXPIRY_HOURS,
   TIMEZONE,
-  timeZone,
   TABLE_NAME,
   dynamodb,
   setStatus,
