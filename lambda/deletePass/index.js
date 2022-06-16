@@ -1,10 +1,10 @@
 const AWS = require('aws-sdk');
 const jwt = require('jsonwebtoken');
 
-const { dynamodb, runQuery, TABLE_NAME } = require('../dynamoUtil');
+const { dynamodb, runQuery, TABLE_NAME, TIMEZONE } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
-const { formatISO } = require('date-fns');
+const { DateTime } = require('luxon');
 
 exports.handler = async (event, context) => {
   console.log('Delete Pass', event);
@@ -102,6 +102,9 @@ exports.handler = async (event, context) => {
         };
         console.log('updatePassQuery:', updatePassQuery);
 
+        const dateselector = DateTime.fromISO(pass.date).setZone(TIMEZONE).toISODate();
+        console.log('dateselector', dateselector)
+
         const reservationCountCountQuery = {
           Key: {
             pk: { S: `facility::${event.queryStringParameters.park}` },
@@ -112,7 +115,7 @@ exports.handler = async (event, context) => {
           },
           ExpressionAttributeNames: {
             '#type': pass.type,
-            '#dateselector': formatISO(new Date(pass.date), { representation: 'date' })
+            '#dateselector': dateselector
           },
           UpdateExpression: 'SET reservations.#dateselector.#type = reservations.#dateselector.#type - :passReducedBy',
           ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',
