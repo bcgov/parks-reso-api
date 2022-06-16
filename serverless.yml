@@ -249,6 +249,8 @@ resources:
                 - phoneNumber
                 - facilityType
                 - license
+                - creationDate
+                - isOverbooked
             ProvisionedThroughput:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
