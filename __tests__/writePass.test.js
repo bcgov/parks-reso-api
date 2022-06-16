@@ -328,18 +328,13 @@ async function databaseOperation(version, mode) {
             sk: 'Parking lot A',
             name: 'Parking lot A',
             description: 'A Parking Lot!',
+            isUpdating: false,
             bookingTimes: {
               AM: {
                 max: 25
               },
               DAY: {
                 max: 25
-              }
-            },
-            reservations: {
-              20211207: {
-                AM: 1,
-                DAY: 1
               }
             },
             status: 'open',
