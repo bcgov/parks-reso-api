@@ -22,6 +22,7 @@
     "cross-env": "^7.0.3",
     "jest": "^28.1.0",
     "mockdate": "^3.0.5",
+    "read-excel-file": "^5.3.4",
     "serverless": "^3.18.1",
     "serverless-dynamodb-local": "^0.2.40",
     "serverless-offline": "^8.2.0",
@@ -31,7 +32,7 @@
     "start": "sls offline start",
     "build": "sls package --package ./artifacts",
     "test": "cross-env IS_OFFLINE=1 TABLE_NAME=parksreso-tests jest --coverage",
-    "migrate": "node ./node_modules/@digitalspace/dynamodb-migrate/migrate.js"
+    "migration": "node ./node_modules/@digitalspace/dynamodb-migrate/migrate.js"
   },
   "jest": {
     "verbose": true,
