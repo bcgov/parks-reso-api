@@ -4,16 +4,17 @@ const { TIMEZONE } = require('../dynamoUtil');
 const ROCKETCHAT_URL = process.env.ROCKETCHAT_URL;
 const ROCKETCHAT_BEARER_TOKEN = process.env.ROCKETCHAT_BEARER_TOKEN;
 const AWS_ACCOUNT_LIST = JSON.parse(process.env.AWS_ACCOUNT_LIST);
+const { logger } = require('../logger');
 
 exports.handler = async (event, context) => {
-  console.log('Cloudwatch Alarm Event:', event, context);
+  logger.debug('Cloudwatch Alarm Event:', event, context);
   try {
     // parse through the records
     for(const record of event.Records) {
       // Event this to Rocket.cat
-      console.log("record.body.Subject:", record.body);
+      logger.debug("record.body.Subject:", record.body);
       const body = JSON.parse(record.body);
-      console.log("body:", body);
+      logger.debug("body:", body);
       const message = JSON.parse(body.Message);
 
       // Build the message fields.
@@ -65,11 +66,11 @@ exports.handler = async (event, context) => {
           }
         });
       } catch (e) {
-        console.log("Error, couldn't send notification.", e);
+        logger.error("Error, couldn't send notification.", e);
       }
     }
   } catch (e) {
-    console.log("Error parsing cloudwatch alarm data!", e);
+    logger.error("Error parsing cloudwatch alarm data!", e);
   }
 
     return {};

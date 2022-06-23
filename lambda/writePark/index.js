@@ -2,7 +2,8 @@ const AWS = require('aws-sdk');
 
 const { dynamodb, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
-const { decodeJWT, resolvePermissions } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions, getParkAccess } = require('../permissionUtil');
+const { logger } = require('../logger');
 
 exports.handler = async (event, context) => {
   if (!event || !event.headers) {
@@ -16,22 +17,33 @@ exports.handler = async (event, context) => {
   const token = await decodeJWT(event);
   const permissionObject = resolvePermissions(token);
 
-  if (permissionObject.isAdmin !== true) {
+  if (permissionObject.isAuthenticated !== true) {
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
   try {
-    console.log(event.body);
+    logger.debug(event.body);
     const obj = JSON.parse(event.body);
+    try {
+      await getParkAccess(obj.sk, permissionObject);
+    } catch (error) {
+      logger.error(error);
+      return sendResponse(403, { msg: error.msg });
+    }
 
     // If this is a PUT operation ensure to protect against creating a new item instead of updating the old one.
     if (event.httpMethod === 'PUT') {
       return await updateItem(obj);
     } else {
-      return await createItem(obj);
+      // Only let admins create parks.
+      if (permissionObject.isAdmin) {
+        return await createItem(obj);
+      } else {
+        throw "Unauthorized Access.";
+      }
     }
   } catch (err) {
-    console.log('err', err);
+    logger.error('err', err);
     return sendResponse(400, err, context);
   }
 };
@@ -66,9 +78,9 @@ async function createItem(obj, context) {
     parkObject.Item['mapLink'] = { NULL: true };
   }
 
-  console.log('putting item:', parkObject);
+  logger.debug('putting item:', parkObject);
   const res = await dynamodb.putItem(parkObject).promise();
-  console.log('res:', res);
+  logger.debug('res:', res);
   return sendResponse(200, res, context);
 }
 
@@ -166,8 +178,8 @@ async function updateItem(obj, context) {
   // Trim the last , from the updateExpression
   updateParams.UpdateExpression = updateParams.UpdateExpression.slice(0, -1);
 
-  console.log('Updating item:', updateParams);
+  logger.debug('Updating item:', updateParams);
   const res = await dynamodb.updateItem(updateParams).promise();
-  console.log('res:', res);
+  logger.debug('res:', res);
   return sendResponse(200, res, context);
 }

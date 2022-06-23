@@ -5,10 +5,11 @@ const { runQuery, TIMEZONE } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { DateTime } = require('luxon');
+const { logger } = require('../logger');
 
 exports.handler = async (event, context) => {
-  console.log('Export Pass', event);
-  console.log('event.queryStringParameters', event.queryStringParameters);
+  logger.debug('Export Pass', event);
+  logger.debug('event.queryStringParameters', event.queryStringParameters);
 
   let queryObj = {
     TableName: process.env.TABLE_NAME
@@ -85,7 +86,7 @@ exports.handler = async (event, context) => {
         queryObj.FilterExpression += ' AND #email =:email';
       }
 
-      console.log('queryObj:', queryObj);
+      logger.debug('queryObj:', queryObj);
       
       let scanResults = [];
       do {
@@ -117,18 +118,18 @@ exports.handler = async (event, context) => {
           Expires: expiryTime,
           Key: '/' + token.data.idir_userid + '/passExport.csv',
         });
-        console.log("URL:", URL);
+        logger.debug("URL:", URL);
         return sendResponse(200, { signedURL: URL }, context);
       } catch (e) {
-        console.log("Error uploading to S3.", e);
+        logger.error("Error uploading to S3.", e);
         return sendResponse(400, { msg: 'Invalid Request' }, context);
       }
     } else {
-      console.log('Invalid Request');
+      logger.error('Invalid Request');
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
   } catch (err) {
-    console.log(err);
+    logger.error(err);
     return sendResponse(400, err, context);
   }
 };

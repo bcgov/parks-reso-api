@@ -5,20 +5,21 @@ const { dynamodb, runQuery, TABLE_NAME, TIMEZONE } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { DateTime } = require('luxon');
+const { logger } = require('../logger');
 
 exports.handler = async (event, context) => {
-  console.log('Delete Pass', event);
-  console.log('event.queryStringParameters', event.queryStringParameters);
+  logger.debug('Delete Pass', event);
+  logger.debug('event.queryStringParameters', event.queryStringParameters);
 
   try {
     if (!event.queryStringParameters) {
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
     if (event.queryStringParameters.passId && event.queryStringParameters.park && event.queryStringParameters.code) {
-      console.log('Get the specific pass, this person is NOT authenticated but has a code');
+      logger.debug('Get the specific pass, this person is NOT authenticated but has a code');
 
       let decodedToken = jwt.verify(event.queryStringParameters.code, process.env.JWT_SECRET);
-      console.log(decodedToken);
+      logger.debug(decodedToken);
 
       if (decodedToken === null) {
         return sendResponse(400, { msg: 'Invalid request' });
@@ -41,7 +42,7 @@ exports.handler = async (event, context) => {
         UpdateExpression: 'SET passStatus = :cancelled',
         TableName: TABLE_NAME
       };
-      console.log('updatePassQuery:', updatePassQuery);
+      logger.debug('updatePassQuery:', updatePassQuery);
 
       // Deduct the pass's numberOfGuests count from the trail period count.
       const updateFacilityQuery = {
@@ -60,7 +61,7 @@ exports.handler = async (event, context) => {
         ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',
         TableName: TABLE_NAME
       };
-      console.log('updateFacilityQuery:', updateFacilityQuery);
+      logger.debug('updateFacilityQuery:', updateFacilityQuery);
 
       const res = await dynamodb
         .transactWriteItems({
@@ -74,7 +75,7 @@ exports.handler = async (event, context) => {
           ]
         })
         .promise();
-      console.log('res:', res);
+      logger.debug('res:', res);
 
       return sendResponse(200, { msg: 'Cancelled', pass: passNoAuth }, context);
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
@@ -100,10 +101,10 @@ exports.handler = async (event, context) => {
           UpdateExpression: 'SET passStatus = :cancelled',
           TableName: TABLE_NAME
         };
-        console.log('updatePassQuery:', updatePassQuery);
+        logger.debug('updatePassQuery:', updatePassQuery);
 
         const dateselector = DateTime.fromISO(pass.date).setZone(TIMEZONE).toISODate();
-        console.log('dateselector', dateselector)
+        logger.debug('dateselector', dateselector)
 
         const reservationCountCountQuery = {
           Key: {
@@ -126,16 +127,16 @@ exports.handler = async (event, context) => {
             TransactItems: [{ Update: updatePassQuery }, { Update: reservationCountCountQuery }]
           })
           .promise();
-        console.log('res:', res);
+        logger.debug('res:', res);
 
         return sendResponse(200, { msg: 'Cancelled', pass: pass }, context);
       }
     } else {
-      console.log('Invalid Request');
+      logger.debug('Invalid Request');
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
   } catch (err) {
-    console.log(err);
+    logger.error(err);
     return sendResponse(400, { msg: 'Invalid Request' }, context);
   }
 };

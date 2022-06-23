@@ -4,6 +4,7 @@ const { verifyJWT } = require('../captchaUtil');
 const { dynamodb, runQuery, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE } = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
 const { DateTime } = require('luxon');
+const { logger } = require('../logger');
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
@@ -79,7 +80,7 @@ exports.handler = async (event, context) => {
 
     // Get current time vs booking time information
     // Log server DateTime
-    console.log('Server Time Zone:',
+    logger.debug('Server Time Zone:',
       Intl.DateTimeFormat().resolvedOptions().timeZone || 'undefined',
       `(${DateTime.now().toISO()})`
     );
@@ -206,7 +207,7 @@ exports.handler = async (event, context) => {
     parkObj.ExpressionAttributeValues[':sk'] = { S: parkName };
     parkObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
     const parkData = await runQuery(parkObj);
-    console.log('ParkData:', parkData);
+    logger.debug('ParkData:', parkData);
 
     let personalisation = {
       firstName: firstName,
@@ -259,7 +260,7 @@ exports.handler = async (event, context) => {
           });
         }
       } catch (err) {
-        console.log('err', err);
+        logger.error(err);
         return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
       }
 
@@ -281,12 +282,12 @@ exports.handler = async (event, context) => {
           ReturnValues: 'ALL_NEW',
           TableName: TABLE_NAME
         };
-        console.log('updateReservationObject:', updateReservationObject);
+        logger.debug('updateReservationObject:', updateReservationObject);
         const updateReservationObjectRes = await dynamodb.updateItem(updateReservationObject).promise();
-        console.log('updateReservationObjectRes:', updateReservationObjectRes);
+        logger.debug('updateReservationObjectRes:', updateReservationObjectRes);
       } catch (e) {
         // Already there.
-        console.log('dateSelectorInitialValue exists', e);
+        logger.debug('dateSelectorInitialValue exists', e);
       }
 
       try {
@@ -308,12 +309,12 @@ exports.handler = async (event, context) => {
           ReturnValues: 'ALL_NEW',
           TableName: TABLE_NAME
         };
-        console.log('addingProperty:', addingProperty);
+        logger.debug('addingProperty:', addingProperty);
         const addingPropertyRes = await dynamodb.updateItem(addingProperty).promise();
-        console.log('addingPropertyRes:', AWS.DynamoDB.Converter.unmarshall(addingPropertyRes));
+        logger.debug('addingPropertyRes:', AWS.DynamoDB.Converter.unmarshall(addingPropertyRes));
       } catch (e) {
         // Already there.
-        console.log('Type Prop exists', e);
+        logger.debug('Type Prop exists', e);
       }
 
       try {
@@ -338,21 +339,21 @@ exports.handler = async (event, context) => {
           ReturnValues: 'ALL_NEW',
           TableName: TABLE_NAME
         };
-        console.log('updateFacility:', updateFacility);
+        logger.debug('updateFacility:', updateFacility);
         const facilityRes = await dynamodb.updateItem(updateFacility).promise();
-        console.log('FacRes:', facilityRes);
+        logger.debug('FacRes:', facilityRes);
       } catch (err) {
         // There are no more passes available.
-        console.log('err', err);
+        logger.error(err);
         return sendResponse(400, {
           msg: 'We have sold out of allotted passes for this time, please check back on the site from time to time as new passes may come available.',
           title: 'Sorry, we are unable to fill your specific request.'
         });
       }
 
-      console.log('putting item:', passObject);
+      logger.debug('putting item:', passObject);
       const res = await dynamodb.putItem(passObject).promise();
-      console.log('res:', res);
+      logger.debug('res:', res);
 
       try {
         await axios({
@@ -368,10 +369,10 @@ exports.handler = async (event, context) => {
             personalisation: personalisation
           }
         });
-        console.log('GCNotify email sent.');
+        logger.debug('GCNotify email sent.');
         return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
       } catch (err) {
-        console.log('GCNotify error:', err);
+        logger.error('GCNotify error:', err);
         let errRes = AWS.DynamoDB.Converter.unmarshall(passObject.Item);
         errRes['err'] = 'Email Failed to Send';
         return sendResponse(200, errRes);
@@ -381,7 +382,7 @@ exports.handler = async (event, context) => {
       return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
     }
   } catch (err) {
-    console.log('err', err);
+    logger.error('err', err);
     return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
   }
 };
