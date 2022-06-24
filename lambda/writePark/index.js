@@ -24,17 +24,13 @@ exports.handler = async (event, context) => {
   try {
     logger.debug(event.body);
     const obj = JSON.parse(event.body);
-    try {
-      if (!permissionObject.isAdmin) {
-        await getParkAccess(obj.park.orcs, permissionObject);
-      }
-    } catch (error) {
-      logger.error(error);
-      return sendResponse(403, { msg: error.msg });
-    }
 
     // If this is a PUT operation ensure to protect against creating a new item instead of updating the old one.
     if (event.httpMethod === 'PUT') {
+      // Ensure PO's can update this particular park.
+      if (!permissionObject.isAdmin) {
+        await getParkAccess(obj.park.orcs, permissionObject);
+      }
       return await updateItem(obj);
     } else {
       // Only let admins create parks.
