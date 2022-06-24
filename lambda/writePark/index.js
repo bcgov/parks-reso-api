@@ -25,7 +25,9 @@ exports.handler = async (event, context) => {
     logger.debug(event.body);
     const obj = JSON.parse(event.body);
     try {
-      await getParkAccess(obj.sk, permissionObject);
+      if (!permissionObject.isAdmin) {
+        await getParkAccess(obj.park.orcs, permissionObject);
+      }
     } catch (error) {
       logger.error(error);
       return sendResponse(403, { msg: error.msg });
