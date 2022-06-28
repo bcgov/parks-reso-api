@@ -11,10 +11,11 @@ const { setStatus,
   PASS_TYPE_PM,
   TIMEZONE } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
+const { logger } = require('../logger');
 
 exports.handler = async (event, context) => {
-  console.log('Event:', event, context);
-  console.log('Server Time Zone:',
+  logger.debug('Event:', event, context);
+  logger.debug('Server Time Zone:',
     Intl.DateTimeFormat().resolvedOptions().timeZone || 'undefined',
     `(${DateTime.now().toISO()})`
   );
@@ -22,7 +23,7 @@ exports.handler = async (event, context) => {
     const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
     const endOfPSTDayUTCDateTime = currentPSTDateTime.endOf('day').toUTC();
 
-    console.log("Checking against date:", endOfPSTDayUTCDateTime.toISO());
+    logger.debug("Checking against date:", endOfPSTDayUTCDateTime.toISO());
 
     const filter = {
       FilterExpression: '#theDate <= :theDate',
@@ -34,10 +35,10 @@ exports.handler = async (event, context) => {
       }
     };
 
-    console.log("Getting passes by status:", RESERVED_STATUS, filter);
+    logger.debug("Getting passes by status:", RESERVED_STATUS, filter);
 
     const passes = await getPassesByStatus(RESERVED_STATUS, filter);
-    console.log("Reserved Passes:", passes.length);
+    logger.debug("Reserved Passes:", passes.length);
 
     // Query the passStatus-index for passStatus = 'reserved'
     // NB: Filter on date <= endOfToday for fixing previous bad data.
@@ -108,15 +109,15 @@ exports.handler = async (event, context) => {
         passesToExpiredStatus.push(pass);
       }
     }
-    console.log("Passes => active:", passesToActiveStatus.length);
-    console.log("Passes => expired:", passesToExpiredStatus.length);
+    logger.debug("Passes => active:", passesToActiveStatus.length);
+    logger.debug("Passes => expired:", passesToExpiredStatus.length);
 
     await setStatus(passesToActiveStatus, ACTIVE_STATUS);
     await setStatus(passesToExpiredStatus, EXPIRED_STATUS);
 
     return sendResponse(200, {}, context);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
 
     return sendResponse(500, {}, context);
   }

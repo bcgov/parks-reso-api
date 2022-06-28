@@ -3,6 +3,7 @@ const AWS = require('aws-sdk');
 const { dynamodb, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
+const { logger } = require('../logger');
 
 exports.handler = async (event, context) => {
   const token = await decodeJWT(event);
@@ -15,7 +16,7 @@ exports.handler = async (event, context) => {
   };
 
   try {
-    console.log(event.body);
+    logger.debug(event.body);
     let newObject = JSON.parse(event.body);
 
     configObject.Item = {};
@@ -23,12 +24,12 @@ exports.handler = async (event, context) => {
     configObject.Item['sk'] = { S: 'config' };
     configObject.Item['configData'] = { M: AWS.DynamoDB.Converter.marshall(newObject) };
 
-    console.log('putting item:', configObject);
+    logger.debug('putting item:', configObject);
     const res = await dynamodb.putItem(configObject).promise();
-    console.log('res:', res);
+    logger.debug('res:', res);
     return sendResponse(200, res);
   } catch (err) {
-    console.log('err', err);
+    logger.error('err', err);
     return sendResponse(400, err);
   }
 };

@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const { logger } = require('./logger');
 
 const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 const options = {
@@ -27,7 +28,6 @@ const dynamodb = new AWS.DynamoDB(options);
 
 exports.dynamodb = new AWS.DynamoDB();
 
-const { logger } = require('./logger');
 
 async function setStatus(passes, status) {
   for (let i = 0; i < passes.length; i++) {
@@ -52,7 +52,7 @@ async function setStatus(passes, status) {
 async function runQuery(query, paginated = false) {
   logger.debug('query:', query);
   const data = await dynamodb.query(query).promise();
-  logger.debug('data:', JSON.stringify(data));
+  logger.debug('data:', data);
   var unMarshalled = data.Items.map(item => {
     return AWS.DynamoDB.Converter.unmarshall(item);
   });
@@ -70,11 +70,11 @@ async function runQuery(query, paginated = false) {
 async function runScan(query, paginated = false) {
   logger.debug('query:', query);
   const data = await dynamodb.scan(query).promise();
-  // logger.debug('data:', data);
+  logger.debug('data:', data);
   var unMarshalled = data.Items.map(item => {
     return AWS.DynamoDB.Converter.unmarshall(item);
   });
-  // logger.debug(unMarshalled);
+  logger.debug(unMarshalled);
   if (paginated) {
     return {
       LastEvaluatedKey: data.LastEvaluatedKey,

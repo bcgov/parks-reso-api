@@ -15,6 +15,7 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY
       alg: 'A256GCM',
       k: 'FK3d8WvSRdxlUHs4Fs_xxYO3-6dCiUarBwiYNFw5hv8'
     };
+const { logger } = require('./logger');
 
 const AWS_REGION = process.env.AWS_DEFAULT_REGION || 'ca-central-1';
 
@@ -55,7 +56,7 @@ async function getCaptcha(options) {
       return responseBody;
     }
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return {
       valid: false
     };
@@ -89,7 +90,7 @@ async function getCaptchaAudio(payload) {
       audio: `data:audio/mp3;base64,${audioData.AudioStream.toString('base64')}`
     };
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     throw err;
   }
 }
@@ -137,7 +138,7 @@ function verifyJWT(token) {
       };
     }
   } catch (e) {
-    console.error(e);
+    logger.error(e);
     return {
       valid: false
     };
@@ -150,7 +151,7 @@ async function encrypt(body) {
     const cr = await jose.JWE.createEncrypt(PRIVATE_KEY).update(buff).final();
     return cr;
   } catch (e) {
-    console.error(e);
+    logger.error(e);
     throw e;
   }
 }
@@ -162,7 +163,7 @@ async function decrypt(body, private_key) {
     const decryptedObject = JSON.parse(decrypted.plaintext.toString('utf8'));
     return decryptedObject;
   } catch (e) {
-    console.error(e);
+    logger.error(e);
     throw e;
   }
 }

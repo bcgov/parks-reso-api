@@ -7,6 +7,7 @@ const INVALID_TOKEN = {
         data: null
       };
 const { logger } = require('./logger');
+const { runQuery, TABLE_NAME } = require('./dynamoUtil');
 
 exports.decodeJWT = async function (event) {
   const token = event.headers.Authorization;
@@ -41,7 +42,7 @@ exports.decodeJWT = async function (event) {
       };
     }
   } catch (e) {
-    logger.debug('err p:', e);
+    logger.error('err p:', e);
     return INVALID_TOKEN;
   }
 };
@@ -112,7 +113,7 @@ function verifySecret(tokenString, secret, callback, sendError) {
   });
 }
 
-exports.roleFilter = function (records, roles) {
+async function roleFilter(records, roles) {
   return new Promise(async (resolve) => {
     const data = records.filter(record => {
       logger.debug("record:", record.roles);
@@ -126,6 +127,7 @@ exports.roleFilter = function (records, roles) {
     resolve(data);
   })
 };
+exports.roleFilter = roleFilter;
 
 exports.resolvePermissions = function(token) {
   let roles = ['public'];
@@ -141,17 +143,38 @@ exports.resolvePermissions = function(token) {
 
     logger.debug(JSON.stringify(roles))
     if (roles.includes('sysadmin')) {
+      logger.debug("ISADMIN")
       isAdmin = true;
     }
-    logger.debug("ISADMIN:", isAdmin)
   } catch (e) {
     // Fall through, assume public.
-    logger.error(e);
+    logger.debug(e);
   }
 
   return {
     roles: roles,
     isAdmin: isAdmin,
     isAuthenticated: isAuthenticated
+  }
+}
+
+exports.getParkAccess = async function getParkAccess(park, permissionObject) {
+  let queryObj = {
+    TableName: TABLE_NAME
+  };
+
+  queryObj.ExpressionAttributeValues = {
+    ':pk': { S: 'park' },
+    ':sk': { S: park }
+  };
+  queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
+  let parksData = await runQuery(queryObj);
+  logger.debug("parksData:", parksData);
+  logger.debug("permissionObject.roles:", permissionObject.roles);
+  parksData = await roleFilter(parksData, permissionObject.roles);
+  logger.debug("parksData:", parksData);
+  if (parksData.length < 1) {
+    // They are not authorized.
+    throw { msg: "Unauthorized Access." };
   }
 }

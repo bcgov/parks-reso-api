@@ -4,12 +4,13 @@ const axios = require('axios');
 
 const { runQuery, TABLE_NAME, expressionBuilder } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
-const { decodeJWT, resolvePermissions } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions, getParkAccess } = require('../permissionUtil');
 const { DateTime } = require('luxon');
+const { logger } = require('../logger');
 
 exports.handler = async (event, context) => {
-  console.log('Read Pass', event);
-  console.log('event.queryStringParameters', event.queryStringParameters);
+  logger.debug('Read Pass', event);
+  logger.debug('event.queryStringParameters', event.queryStringParameters);
 
   let queryObj = {
     TableName: TABLE_NAME
@@ -23,8 +24,17 @@ exports.handler = async (event, context) => {
     const permissionObject = resolvePermissions(token);
 
     if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
-      if (permissionObject.isAdmin !== true) {
+
+      if (permissionObject.isAuthenticated !== true) {
         return sendResponse(403, { msg: 'Unauthorized' });
+      }
+
+      // Ensure they have park level access.  Returns 403 if they are not allowed.
+      try {
+        await getParkAccess(event.queryStringParameters.park, permissionObject);
+      } catch (error) {
+        logger.error(error);
+        return sendResponse(403, { msg: error.msg });
       }
 
       // Get all the passes for a specific facility
@@ -111,11 +121,11 @@ exports.handler = async (event, context) => {
       }
       queryObj = paginationHandler(queryObj, event);
 
-      console.log('queryObj:', queryObj);
+      logger.debug('queryObj:', queryObj);
       const passData = await runQuery(queryObj, true);
       return sendResponse(200, passData, context);
     } else if (event.queryStringParameters.passes && event.queryStringParameters.park) {
-      console.log('Grab passes for this park');
+      logger.debug('Grab passes for this park');
       if (permissionObject.isAdmin !== true) {
         return sendResponse(403, { msg: 'Unauthorized' });
       }
@@ -131,7 +141,7 @@ exports.handler = async (event, context) => {
       event.queryStringParameters.email &&
       event.queryStringParameters.park
     ) {
-      console.log('Get the specific pass, this person is NOT authenticated');
+      logger.debug('Get the specific pass, this person is NOT authenticated');
       // Get the specific pass, this person is NOT authenticated
       queryObj.ExpressionAttributeValues = {};
       queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
@@ -139,10 +149,10 @@ exports.handler = async (event, context) => {
       queryObj.ExpressionAttributeValues[':email'] = { S: event.queryStringParameters.email };
       queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
       queryObj.FilterExpression = 'email =:email';
-      console.log('queryObj', queryObj);
+      logger.debug('queryObj', queryObj);
       queryObj = paginationHandler(queryObj, event);
       const passData = await runQuery(queryObj, true);
-      console.log('passData', passData);
+      logger.debug('passData', passData);
 
       if (passData && passData.data && passData.data.length !== 0) {
         const dateselector = DateTime.fromISO(passData.data[0].date).toISODate();
@@ -205,6 +215,7 @@ exports.handler = async (event, context) => {
 
           return sendResponse(200, personalisation);
         } catch (err) {
+          logger.error(err);
           let errRes = personalisation;
           errRes['err'] = 'Email Failed to Send';
           return sendResponse(200, errRes);
@@ -225,11 +236,11 @@ exports.handler = async (event, context) => {
         return sendResponse(200, passData, context);
       }
     } else {
-      console.log('Invalid Request');
+      logger.debug('Invalid Request');
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
   } catch (err) {
-    console.log(err);
+    logger.error(err);
     return sendResponse(400, err, context);
   }
 };

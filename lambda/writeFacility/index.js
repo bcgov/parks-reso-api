@@ -2,7 +2,8 @@ const AWS = require('aws-sdk');
 
 const { dynamodb, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
-const { decodeJWT, resolvePermissions } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions, getParkAccess } = require('../permissionUtil');
+const { logger } = require('../logger');
 
 exports.handler = async (event, context) => {
   if (!event || !event.headers) {
@@ -15,22 +16,35 @@ exports.handler = async (event, context) => {
 
   const token = await decodeJWT(event);
   const permissionObject = resolvePermissions(token);
-  if (permissionObject.isAdmin !== true) {
+
+  if (permissionObject.isAuthenticated !== true) {
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
   try {
-    console.log(event.body);
+    logger.debug(event.body);
     const obj = JSON.parse(event.body);
+
+    try {
+      await getParkAccess(obj.parkName, permissionObject);
+    } catch (error) {
+      logger.error("ERR:", error);
+      return sendResponse(403, { msg: error.msg });
+    }
 
     // If this is a PUT operation ensure to protect against creating a new item instead of updating the old one.
     if (event.httpMethod === 'PUT') {
       return await updateFacility(obj);
     } else {
-      return await createFacility(obj);
+      // Only let admins create facilities
+      if (permissionObject.isAdmin) {
+        return await createFacility(obj);
+      } else {
+        throw "Unauthorized Access.";
+      }
     }
   } catch (err) {
-    console.log('err', err);
+    logger.error('err', err);
     return sendResponse(400, err, context);
   }
 };
@@ -81,9 +95,9 @@ async function createFacility(obj) {
     }
   };
 
-  console.log('putting item:', facilityObj);
+  logger.debug('putting item:', facilityObj);
   const res = await dynamodb.putItem(facilityObj).promise();
-  console.log('res:', res);
+  logger.debug('res:', res);
   return sendResponse(200, res);
 }
 
