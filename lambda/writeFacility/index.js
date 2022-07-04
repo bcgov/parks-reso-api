@@ -80,7 +80,7 @@ async function createFacility(obj) {
 
   const facilityObj = {
     TableName: TABLE_NAME,
-    ConditionExpression: 'attribute_not_exists(pk) AND attribute_not_exists(sk)',
+    ConditionExpression: 'attribute_not_exists(sk)',
     Item: {
       pk: { S: `facility::${parkName}` },
       sk: { S: name },
