@@ -1,7 +1,5 @@
 'use strict';
-const AWS = require('aws-sdk');
-const { runScan, TABLE_NAME, dynamodb } = require('../lambda/dynamoUtil');
-const { DateTime } = require('luxon');
+const { TABLE_NAME, dynamodb, runQuery } = require('../lambda/dynamoUtil');
 
 exports.up = async function (dbOptions) {
   await updateAllFacilities();
@@ -9,23 +7,56 @@ exports.up = async function (dbOptions) {
 
 // Adds isUpdating attribute to all facilities
 async function updateAllFacilities() {
-  const scanObj = {
+
+  console.log('Adding isUpdating attribute to all facilities');
+
+  // get all parks
+  const parkQueryObj = {
     TableName: TABLE_NAME,
     ConsistentRead: true,
     ExpressionAttributeNames: {
       '#pk': 'pk'
     },
     ExpressionAttributeValues: {
-      ':pk': { S: 'facility::' }
+      ':pk': { S: 'park' }
     },
-    FilterExpression: 'begins_with(#pk, :pk)'
+    KeyConditionExpression: '#pk = :pk'
   };
 
   let errors = [];
   let completed = [];
 
+  // get all facilities within each park
   try {
-    const facilities = await runScan(scanObj);
+    const parks = await runQuery(parkQueryObj);
+
+    let facilities = [];
+
+    for (const park of parks) {
+      const facilityPk = `facility::${park.sk}`;
+      const facilityQueryObj = {
+        TableName: TABLE_NAME,
+        ConsistentRead: true,
+        ExpressionAttributeNames: {
+          '#pk': 'pk'
+        },
+        ExpressionAttributeValues: {
+          ':pk': { S: facilityPk }
+        },
+        KeyConditionExpression: '#pk = :pk'
+      };
+
+      try {
+        const parkFacilities = await runQuery(facilityQueryObj);
+        if (parkFacilities.length > 0) {
+          for (const facility of parkFacilities) {
+            facilities.push(facility);
+          }
+        }
+      } catch (err) {
+        console.log('ERROR:', err);
+      }
+    }
 
     for (const facility of facilities) {
       const updateObj = {
@@ -61,7 +92,7 @@ async function updateAllFacilities() {
   console.log(`Successfully updated ${completed.length} facilities. \n`)
   process.stdout.write(`Failed to update ${errors.length}\n`);
   let firstTime = true;
-  for(const item of errors) {
+  for (const item of errors) {
     if (firstTime) {
       console.log("Failed Items:");
       firstTime = false;
