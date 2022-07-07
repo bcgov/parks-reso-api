@@ -58,7 +58,7 @@ resource "aws_dynamodb_table" "park_dup_table" {
       "phoneNumber",
       "facilityType",
       "license",
-      "creationData",
+      "creationDate",
       "isOverbooked"
 ]
   }

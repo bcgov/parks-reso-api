@@ -103,7 +103,7 @@ module.exports = async () => {
                 'passStatus',
                 'phoneNumber',
                 'facilityType',
-                'creationData',
+                'creationDate',
                 'isOverbooked'
               ]
             },
