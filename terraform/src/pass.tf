@@ -108,6 +108,7 @@ resource "aws_lambda_function" "deletePassLambda" {
   handler = "lambda/deletePass/index.handler"
   runtime = "nodejs14.x"
   publish = "true"
+  timeout = 10
 
   environment {
     variables = {

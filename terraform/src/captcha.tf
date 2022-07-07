@@ -16,6 +16,7 @@ resource "aws_lambda_function" "generateCaptchaLambda" {
   handler = "lambda/captcha/handler.generateCaptcha"
   runtime = "nodejs14.x"
   publish = "true"
+  timeout = 10
 
   environment {
     variables = {
@@ -67,6 +68,7 @@ resource "aws_lambda_function" "verifyCaptchaLambda" {
   handler = "lambda/captcha/handler.verifyAnswer"
   runtime = "nodejs14.x"
   publish = "true"
+  timeout = 10
 
   environment {
     variables = {
@@ -120,6 +122,7 @@ resource "aws_lambda_function" "generateCaptchaAudioLambda" {
   handler = "lambda/captcha/handler.generateAudio"
   runtime = "nodejs14.x"
   publish = "true"
+  timeout = 10
 
   environment {
     variables = {

@@ -10,6 +10,7 @@ resource "aws_lambda_function" "readFacilityLambda" {
   publish = "true"
 
   memory_size = 768
+  timeout = 10
 
   environment {
     variables = {
