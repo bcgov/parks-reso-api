@@ -111,6 +111,17 @@ functions:
           cors: true
 
   ###########
+  # Reservations
+  ###########
+  readReservation:
+    handler: lambda/readReservation/index.handler
+    events:
+      - http:
+          method: GET
+          path: /reservations
+          cors: true
+
+  ###########
   # Pass
   ###########
   readPass:

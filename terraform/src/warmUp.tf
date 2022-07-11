@@ -51,6 +51,11 @@ resource "aws_cloudwatch_event_target" "warm_up_every_morning" {
           "concurrency": "10"
         },
         {
+          "funcName": "readReservation",
+          "funcVersion": "latest",
+          "concurrency": "10"
+        },
+        {
           "funcName": "generateCaptcha",
           "funcVersion": "latest",
           "concurrency": "5"
