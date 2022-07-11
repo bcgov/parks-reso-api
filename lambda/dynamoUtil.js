@@ -49,6 +49,17 @@ async function setStatus(passes, status) {
   }
 }
 
+// simple way to return a single Item by primary key.
+async function getOne(pk, sk) {
+  logger.debug(`getItem: { pk: ${pk}, sk: ${sk} }`);
+  const params = {
+    TableName: TABLE_NAME,
+    Key: AWS.DynamoDB.Converter.marshall({pk, sk})
+  };
+  let item = await dynamodb.getItem(params).promise();
+  return item?.Item || {};
+};
+
 // TODO: set paginated to TRUE by default. Query results will then be at most 1 page
 // (1MB) unless they are explicitly specified to retrieve more.
 // TODO: Ensure the returned object has the same structure whether results are paginated or not. 
@@ -133,6 +144,16 @@ async function getConfig() {
   return await runQuery(configQuery);
 }
 
+// get a single park by park sk.
+// if not authenticated, invisible parks will not be returned.
+async function getPark(sk, authenticated = false) {
+  const park = await getOne('park', sk);
+  if (!authenticated && !park.visible) {
+    return {};
+  };
+  return AWS.DynamoDB.Converter.unmarshall(park);
+};
+
 async function getParks() {
   const parksQuery = {
     TableName: TABLE_NAME,
@@ -143,6 +164,16 @@ async function getParks() {
   };
   return await runQuery(parksQuery);
 }
+
+// get a single facility by park name & facility sk.
+// if not authenticated, invisible facilities will not be returned.
+async function getFacility(parkName, sk, authenticated = false){
+  const facility = await getOne(`facility::${parkName}`, sk);
+  if (!authenticated && !facility.visible) {
+    return {};
+  };
+  return AWS.DynamoDB.Converter.unmarshall(facility);
+};
 
 async function getFacilities(parkName) {
   const facilitiesQuery = {
@@ -226,8 +257,11 @@ module.exports = {
   setStatus,
   runQuery,
   runScan,
+  getOne,
   getConfig,
+  getPark,
   getParks,
+  getFacility,
   getFacilities,
   getPassesByStatus,
   expressionBuilder,
