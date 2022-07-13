@@ -18,13 +18,10 @@ async function createReservationObject() {
   const parkQueryObj = {
     TableName: TABLE_NAME,
     ConsistentRead: true,
-    ExpressionAttributeNames: {
-      '#pk': 'pk'
-    },
     ExpressionAttributeValues: {
-      ':pk': { S: 'park' }
+      ':pk': {S: 'park'}
     },
-    KeyConditionExpression: '#pk = :pk'
+    KeyConditionExpression: 'pk =:pk'
   };
 
   let parks;
@@ -43,13 +40,10 @@ async function createReservationObject() {
     const facilityPk = `facility::${park.sk}`;
     const facilityQueryObj = {
       TableName: TABLE_NAME,
-      ExpressionAttributeNames: {
-        '#pk': 'pk'
-      },
       ExpressionAttributeValues: {
-        ':pk': { S: facilityPk }
+        ':pk': {S: facilityPk}
       },
-      KeyConditionExpression: '#pk = :pk'
+      KeyConditionExpression: 'pk =:pk'
     };
 
     let facilities;
@@ -140,7 +134,7 @@ async function createReservationObject() {
       console.log('Failed Reservation Objects:');
       firstTime = false;
     }
-    process.stdout.write(`${item}\n`);
+    process.stdout.write(`${item}`);
   }
   //log facility errors
   firstTime = true;
@@ -149,7 +143,7 @@ async function createReservationObject() {
       console.log('Failed Facility Updates:');
       firstTime = false;
     }
-    process.stdout.write(`${item}\n`);
+    process.stdout.write(`${item}`);
   }
   console.log('------------------------------------------------------------------');
 }
