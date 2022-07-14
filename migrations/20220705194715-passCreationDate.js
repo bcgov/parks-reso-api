@@ -13,13 +13,10 @@ async function updateAllPasses() {
   const parkQueryObj = {
     TableName: TABLE_NAME,
     ConsistentRead: true,
-    ExpressionAttributeNames: {
-      '#pk': 'pk'
-    },
     ExpressionAttributeValues: {
       ':pk': { S: 'park' }
     },
-    KeyConditionExpression: '#pk = :pk'
+    KeyConditionExpression: 'pk = :pk'
   };
 
   let errors = [];
@@ -36,13 +33,11 @@ async function updateAllPasses() {
       const passQueryObj = {
         TableName: TABLE_NAME,
         ConsistentRead: true,
-        ExpressionAttributeNames: {
-          '#pk': 'pk'
-        },
         ExpressionAttributeValues: {
-          ':pk': { S: passPk }
+          ':pk': { S: passPk },
         },
-        KeyConditionExpression: '#pk = :pk'
+        KeyConditionExpression: 'pk = :pk',
+        FilterExpression: 'attribute_not_exists(isOverbooked) OR attribute_not_exists(creationDate)' 
       };
 
       try {
@@ -76,6 +71,10 @@ async function updateAllPasses() {
       try {
         const passData = await dynamodb.updateItem(updateObj).promise();
         completed.push(passData.Attributes?.sk);
+        if (completed.length % 100 === 0){
+          const percent = (completed.length/passes.length)*100;
+          process.stdout.write(` Updating passes: ${completed.length}/${passes.length} completed (${percent.toFixed(1)}%)\r`);
+        }
       } catch (err) {
         console.log('ERROR:', err);
         errors.push(pass.sk);
