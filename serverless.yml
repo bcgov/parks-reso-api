@@ -118,7 +118,7 @@ functions:
     events:
       - http:
           method: GET
-          path: /reservations
+          path: /reservation
           cors: true
 
   ###########
