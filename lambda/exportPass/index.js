@@ -89,6 +89,7 @@ exports.handler = async (event, context) => {
       logger.debug('queryObj:', queryObj);
       
       let scanResults = [];
+      let passData;
       do {
         passData = await runQuery(queryObj, true);
         passData.data.forEach((item) => scanResults.push(item));
