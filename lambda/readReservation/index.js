@@ -12,14 +12,14 @@ exports.handler = async (event, context) => {
   logger.debug('Read Facility', event);
   logger.debug('event.queryStringParameters', event.queryStringParameters);
 
-  const token = await decodeJWT(event);
-  const permissionObject = resolvePermissions(token);
-
   try {
     if (!event.queryStringParameters) {
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
 
+    const token = await decodeJWT(event);
+    const permissionObject = resolvePermissions(token);
+    
     let park = {};
     let facility = {};
     let date = '';
