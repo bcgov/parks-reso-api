@@ -7,6 +7,8 @@ const { DateTime } = require('luxon');
 // TODO: provide these as vars in Parameter Store
 const LOW_CAPACITY_THRESHOLD = process.env.LOW_CAPACITY_THRESHOLD || 0.25;
 const MODERATE_CAPACITY_THRESHOLD = process.env.MODERATE_CAPACITY_THRESHOLD || 0.75;
+const PARKING_MAX_PER_PASS = 1;
+const TRAIL_MAX_PER_PASS = 4;
 
 exports.handler = async (event, context) => {
   logger.debug('Read Reservation', event);
@@ -57,13 +59,13 @@ exports.handler = async (event, context) => {
       if (!facilityObj) {
         return sendResponse(404, { msg: 'Facility not found' }, context);
       };
-       
+
       const window = getBookingWindow(facilityObj);
 
       if (!date) {
         bookingWindow = window;
       } else if (!window.includes(date)) {
-        return sendResponse(400, {msg: `Provided date must be between today's date and ${facilityObj.bookingDaysAhead} days in the future`});
+        return sendResponse(400, { msg: `Provided date must be between today's date and ${facilityObj.bookingDaysAhead} days in the future` });
       };
     };
 
@@ -109,7 +111,8 @@ function formatPublicResults(reservations, facility, bookingWindow) {
   let publicObj = buildPublicTemplate(facility, bookingWindow);
   for (let reservation of reservations) {
     for (const [key, value] of Object.entries(reservation.capacities)) {
-      publicObj[reservation.sk][key] = getCapacityLevel(value.baseCapacity, value.availablePasses, value.capacityModifier);
+      publicObj[reservation.sk][key].capacity = getCapacityLevel(value.baseCapacity, value.availablePasses, value.capacityModifier);
+      publicObj[reservation.sk][key].max = checkMaxPasses(facility, value.availablePasses);
     };
   };
   return publicObj;
@@ -121,9 +124,12 @@ function buildPublicTemplate(facility, bookingWindow) {
   for (let date of bookingWindow) {
     let dateEntry = {};
     for (const key of Object.keys(facility.bookingTimes)) {
-      dateEntry[key] = 'High';
+      dateEntry[key] = {
+        capacity: 'High',
+        max: checkMaxPasses(facility)
+      };
+      template[date] = dateEntry;
     };
-    template[date] = dateEntry;
   };
   return template;
 };
@@ -153,4 +159,20 @@ function getCapacityLevel(base, available, modifier) {
   } else {
     return 'Full';
   };
+};
+
+function checkMaxPasses(facility, availablePasses = null){
+  let max = 1;
+  switch (facility.type) {
+    case 'Parking':
+      max = PARKING_MAX_PER_PASS;
+      break;
+    case 'Trail':
+      max = TRAIL_MAX_PER_PASS;
+      break;
+  };
+  if (availablePasses > max){
+    return max;
+  };
+  return availablePasses ?? max;
 };
