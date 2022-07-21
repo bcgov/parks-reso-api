@@ -102,7 +102,9 @@ module.exports = async () => {
                 'numberOfGuests',
                 'passStatus',
                 'phoneNumber',
-                'facilityType'
+                'facilityType',
+                'creationDate',
+                'isOverbooked'
               ]
             },
             ProvisionedThroughput: {
