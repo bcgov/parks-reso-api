@@ -84,8 +84,15 @@ exports.handler = async (event, context) => {
       }
       // Filter reservation number
       if (event.queryStringParameters.reservationNumber) {
-        queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.reservationNumber };
-        queryObj.KeyConditionExpression += expressionBuilder('AND', queryObj.KeyConditionExpression, 'sk =:sk');
+        queryObj.ExpressionAttributeNames['#registrationNumber'] = 'registrationNumber';
+        queryObj.ExpressionAttributeValues[':registrationNumber'] = AWS.DynamoDB.Converter.input(
+          event.queryStringParameters.reservationNumber
+        );
+        queryObj.FilterExpression += expressionBuilder(
+          'AND',
+          queryObj.FilterExpression,
+          '#registrationNumber =:registrationNumber'
+        );
       }
       // Filter first/last
       if (event.queryStringParameters.firstName) {
