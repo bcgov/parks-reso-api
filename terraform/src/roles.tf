@@ -277,7 +277,8 @@ resource "aws_iam_role_policy" "dynamoDBWriteRole" {
               "dynamodb:CreateTable",
               "dynamodb:Delete*",
               "dynamodb:Update*",
-              "dynamodb:PutItem"
+              "dynamodb:PutItem",
+              "dynamodb:ConditionCheckItem"
           ],
           "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
         }
