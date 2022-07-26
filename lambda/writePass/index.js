@@ -1,8 +1,9 @@
 const AWS = require('aws-sdk');
 const axios = require('axios');
 const { verifyJWT } = require('../captchaUtil');
-const { dynamodb, runQuery, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE } = require('../dynamoUtil');
+const { dynamodb, runQuery, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE, getFacility } = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
+const { decodeJWT, resolvePermissions } = require('../permissionUtil')
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
 
@@ -32,6 +33,9 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    const token = await decodeJWT(event);
+    const permissionObject = resolvePermissions(token);
+
     let newObject = JSON.parse(event.body);
 
     const registrationNumber = generate(10);
@@ -50,34 +54,52 @@ exports.handler = async (event, context) => {
       ...otherProps
     } = newObject;
 
-    if (!captchaJwt || !captchaJwt.length) {
+    const facilityData = await getFacility(parkName, facilityName, permissionObject.isAdmin);
+
+    if (Object.keys(facilityData).length === 0) {
+      throw 'Facility not found.';
+    };
+
+    if (!permissionObject.isAdmin) {
+      // Do extra checks if user is not sysadmin. 
+      if (!captchaJwt || !captchaJwt.length) {
+        return sendResponse(400, {
+          msg: 'Missing CAPTCHA verification.',
+          title: 'Missing CAPTCHA verification'
+        });
+      }
+
+      const verification = verifyJWT(captchaJwt);
+      if (!verification.valid) {
+        return sendResponse(400, {
+          msg: 'CAPTCHA verification failed.',
+          title: 'CAPTCHA verification failed'
+        });
+      }
+
+      // Enforce maximum limit per pass
+      if (facilityData.type === 'Trail' && numberOfGuests > 4) {
+        return sendResponse(400, {
+          msg: 'You cannot have more than 4 guests on a trail.',
+          title: 'Too many guests'
+        });
+      }
+
+      if (facilityData.type === 'Parking') {
+        numberOfGuests = 1;
+      }
+
+
+    };
+
+    // numberOfGuests cannot be less than 1.
+    if (numberOfGuests < 1) {
       return sendResponse(400, {
-        msg: 'Missing CAPTCHA verification.',
-        title: 'Missing CAPTCHA verification'
+        msg: 'Passes must have at least 1 guest.',
+        title: 'Invalid number of guests'
       });
     }
 
-    const verification = verifyJWT(captchaJwt);
-    if (!verification.valid) {
-      return sendResponse(400, {
-        msg: 'CAPTCHA verification failed.',
-        title: 'CAPTCHA verification failed'
-      });
-    }
-
-    const facilityData = await getFacility(parkName, facilityName);
-  
-    // Enforce maximum limit per pass
-    if (facilityData.type === 'Trail' && numberOfGuests > 4) {
-      return sendResponse(400, {
-        msg: 'You cannot have more than 4 guests on a trail.',
-        title: 'Too many guests'
-      });
-    }
-
-    if (facilityData.type === 'Parking') {
-      numberOfGuests = 1;
-    }
 
     // Get current time vs booking time information
     // Log server DateTime
@@ -85,6 +107,7 @@ exports.handler = async (event, context) => {
       Intl.DateTimeFormat().resolvedOptions().timeZone || 'undefined',
       `(${DateTime.now().toISO()})`
     );
+
     const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
     const bookingPSTDateTime = DateTime.fromISO(date).setZone(TIMEZONE).set({
       hour: 12,
@@ -106,12 +129,13 @@ exports.handler = async (event, context) => {
     const bookingDaysAhead =
       facilityData.bookingDaysAhead === null ? DEFAULT_BOOKING_DAYS_AHEAD : facilityData.bookingDaysAhead;
     const futurePSTDateTimeMax = currentPSTDateTime.plus({ days: bookingDaysAhead });
-    if (bookingPSTDateTime.startOf('day') > futurePSTDateTimeMax.startOf('day')) {
+    if (bookingPSTDateTime.startOf('day') > futurePSTDateTimeMax.startOf('day') && !permissionObject.isAdmin) {
       return sendResponse(400, {
         msg: 'You cannot book for a date that far ahead.',
         title: 'Booking date in the future invalid'
       });
-    }
+    };
+
 
     // There should only be 1 facility.
     let openingHour = facilityData.bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
@@ -247,7 +271,7 @@ exports.handler = async (event, context) => {
           throw error;
         }
 
-        if (existingItems.Count > 0) {
+        if (existingItems.Count > 0 && !permissionObject.isAdmin) {
           return sendResponse(400, {
             title: 'This email account already has a reservation for this booking time.',
             msg: 'A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>'
@@ -396,31 +420,6 @@ function to12hTimeString(hour) {
 function generate(count) {
   // TODO: Make this better
   return Math.random().toString().substr(count);
-}
-
-async function getFacility(parkName, facilityName) {
-  let getFacilityQueryObject = {
-    TableName: TABLE_NAME
-  };
-  getFacilityQueryObject.ExpressionAttributeValues = {};
-  getFacilityQueryObject.ExpressionAttributeValues[':pk'] = { S: `facility::${parkName}` };
-  getFacilityQueryObject.ExpressionAttributeValues[':sk'] = { S: facilityName };
-  getFacilityQueryObject.KeyConditionExpression = 'pk =:pk AND sk =:sk';
-  try {
-    const facilityDataRaw = await runQuery(getFacilityQueryObject);
-    if (facilityDataRaw.length > 0) {
-      return facilityDataRaw[0];
-    } else {
-      logger.error('Write Pass', getFacilityQueryObject);
-      throw 'Facility does not exist.';
-    }
-  } catch (err) {
-    logger.error('Facility Object Error: Failed to get facility');
-    logger.error(err);
-    logger.error(getFacilityQueryObject);
-    logger.error('Write Pass', getFacilityQueryObject);
-    return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
-  }
 }
 
 async function createNewReservationsObj(facilityBookingTimes, reservationsObjectPK, bookingPSTShortDate, type) {
