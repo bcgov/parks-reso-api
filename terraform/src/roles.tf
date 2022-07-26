@@ -205,7 +205,16 @@ resource "aws_iam_role_policy" "park_reso_dynamodb_export" {
               "dynamodb:Scan"
           ],
           "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
-        }
+      },
+      {
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ],
+          "Resource": "arn:aws:logs:*:*:*"
+      }
     ]
   }
   EOF
