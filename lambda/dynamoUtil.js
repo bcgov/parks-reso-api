@@ -148,7 +148,7 @@ async function getConfig() {
 // if not authenticated, invisible parks will not be returned.
 async function getPark(sk, authenticated = false) {
   const park = await getOne('park', sk);
-  if (!authenticated && !park.visible) {
+  if (!authenticated && !park.visible.BOOL) {
     return {};
   };
   return AWS.DynamoDB.Converter.unmarshall(park);
@@ -169,7 +169,7 @@ async function getParks() {
 // if not authenticated, invisible facilities will not be returned.
 async function getFacility(parkName, sk, authenticated = false){
   const facility = await getOne(`facility::${parkName}`, sk);
-  if (!authenticated && !facility.visible) {
+  if (!authenticated && !facility.visible.BOOL) {
     return {};
   };
   return AWS.DynamoDB.Converter.unmarshall(facility);
