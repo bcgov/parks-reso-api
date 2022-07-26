@@ -35,11 +35,8 @@ exports.handler = async (event, context) => {
 
       // Filter Date
       if (event.queryStringParameters.date) {
-        const dateselector = DateTime.fromISO(event.queryStringParameters.date).setZone(TIMEZONE).toISODate();
-        queryObj = checkAddExpressionAttributeNames(queryObj);
-        queryObj.ExpressionAttributeNames['#theDate'] = 'date';
-        queryObj.ExpressionAttributeValues[':theDate'] = AWS.DynamoDB.Converter.input(dateselector);
-        queryObj.FilterExpression += ' AND contains(#theDate, :theDate)';
+        queryObj.ExpressionAttributeValues[':theDate'] = AWS.DynamoDB.Converter.input(event.queryStringParameters.date);
+        queryObj.FilterExpression += ' AND shortPassDate =:theDate';
       }
       // Filter Multiple Statuses
       if (event.queryStringParameters.passStatus) {
@@ -87,14 +84,14 @@ exports.handler = async (event, context) => {
       }
 
       logger.debug('queryObj:', queryObj);
-      
+
       let scanResults = [];
       let passData;
       do {
         passData = await runQuery(queryObj, true);
         passData.data.forEach((item) => scanResults.push(item));
-        queryObj.ExclusiveStartKey  = passData.LastEvaluatedKey;
-      } while(typeof passData.LastEvaluatedKey !== "undefined");
+        queryObj.ExclusiveStartKey = passData.LastEvaluatedKey;
+      } while (typeof passData.LastEvaluatedKey !== "undefined");
 
       // Convert into CSV and deploy.
       const csvData = csvjson.toCSV(scanResults);
@@ -103,11 +100,11 @@ exports.handler = async (event, context) => {
       // TODO: In future, token.data.idir_userid needs to be something else unique,
       // as we will have BCeID/BCSC card IDPs generating exports.
       const params = {
-        Bucket : process.env.S3_BUCKET_DATA,
+        Bucket: process.env.S3_BUCKET_DATA,
         Key: '/' + token.data.idir_userid + '/passExport.csv',
-        Body : csvData
+        Body: csvData
       }
-      const expiryTime = 60*15; // 15 minutes
+      const expiryTime = 60 * 15; // 15 minutes
       let res = null;
       try {
         // Upload file
