@@ -309,7 +309,8 @@ resource "aws_iam_role_policy" "dynamoDBDeleteRole" {
               "dynamodb:Query",
               "dynamodb:Scan",
               "dynamodb:Update*",
-              "dynamodb:PutItem"
+              "dynamodb:PutItem",
+              "dynamodb:ConditionCheckItem"
           ],
           "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
         }
