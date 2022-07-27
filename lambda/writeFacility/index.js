@@ -242,12 +242,13 @@ async function processReservationObjects(resObjs, timesToUpdate) {
       if (resAvailablePassCount < 0) {
         try {
           // If we detect there's going to be an overflow, grab all overflow passes.
-          passDiff = await updatePassObjectsAsOverbooked(
+          let remainder = await updatePassObjectsAsOverbooked(
             resObj.pk.split('::').pop(),
             resObj.sk,
             timeToUpdate.time,
             passDiff * -1
           );
+          passDiff = resObj.capacities[timeToUpdate.time].availablePasses * -1 + remainder;
         } catch (error) {
           logger.error('Error occured while executing updatePassObjectsAsOverbooked()');
           throw error;
@@ -312,7 +313,7 @@ async function updatePassObjectsAsOverbooked(facilityName, shortPassDate, type, 
   } catch (error) {
     logger.error('Error occured while getting overbooked passes in updatePassObjectsAsOverbooked');
     logger.error(passesQuery);
-    logger.error(error)
+    logger.error(error);
     throw { msg: 'Something went wrong.', title: 'Operation Failed' };
   }
 
@@ -345,7 +346,7 @@ async function updatePassObjectsAsOverbooked(facilityName, shortPassDate, type, 
   }
   // Return remainder.
   // We might not get a perfect number of passes due to group so this number could be > 0
-  return overbookObj.passDiff;
+  return overbookObj.remainder;
 }
 
 async function unlockFacility(pk, sk) {
@@ -377,7 +378,7 @@ async function getOverbookedPassSet(passes, numberOfPassesOverbooked) {
   passes.sort((a, b) => new Date(b.creationDate) - new Date(a.creationDate));
   let overbookObj = {
     overbookedPasses: [],
-    passDiff: 0
+    remainder: 0
   };
   let cancelledGuestTally = 0;
   for (let i = 0; i < passes.length; i++) {
@@ -388,7 +389,7 @@ async function getOverbookedPassSet(passes, numberOfPassesOverbooked) {
       break;
     }
   }
-  overbookObj.passDiff = cancelledGuestTally - numberOfPassesOverbooked;
+  overbookObj.remainder = cancelledGuestTally - numberOfPassesOverbooked;
   return overbookObj;
 }
 
