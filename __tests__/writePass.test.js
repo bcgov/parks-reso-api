@@ -18,6 +18,14 @@ const token = jwt.sign(
 );
 
 describe('Pass Fails', () => {
+  beforeEach(async () => {
+    await databaseOperation(1, 'setup');
+  });
+
+  afterEach(async () => {
+    await databaseOperation(1, 'teardown');
+  });
+
   test('Handler - 400 Bad Request - nothing passed in', async () => {
     expect(await writePassHandler.handler(null, null)).toMatchObject({
       body: JSON.stringify({
@@ -45,8 +53,7 @@ describe('Pass Fails', () => {
         date: '',
         type: '',
         numberOfGuests: '',
-        phoneNumber: '',
-        facilityType: ''
+        phoneNumber: ''
         // Missing JWT
       })
     };
@@ -77,7 +84,6 @@ describe('Pass Fails', () => {
         type: '',
         numberOfGuests: '',
         phoneNumber: '',
-        facilityType: '',
         captchaJwt: 'This is an invalid JWT'
       })
     };
@@ -99,16 +105,15 @@ describe('Pass Fails', () => {
   test('Handler - 400 Bad Request - Trail pass limit maximum', async () => {
     const event = {
       body: JSON.stringify({
-        parkName: '',
+        parkName: 'Test Park 1',
         firstName: '',
         lastName: '',
-        facilityName: '',
+        facilityName: 'Trail B',
         email: '',
         date: '',
         type: '',
         numberOfGuests: 5, // Too many
         phoneNumber: '',
-        facilityType: 'Trail',
         captchaJwt: token
       })
     };
@@ -136,7 +141,6 @@ describe('Pass Fails', () => {
         type: '',
         numberOfGuests: 1,
         phoneNumber: '',
-        facilityType: '',
         captchaJwt: token
       })
     };
@@ -167,7 +171,6 @@ describe('Pass Fails', () => {
         type: '',
         numberOfGuests: 1,
         phoneNumber: '',
-        facilityType: '',
         captchaJwt: token
       })
     };
@@ -198,7 +201,6 @@ describe('Pass Fails', () => {
         type: '',
         numberOfGuests: 1,
         phoneNumber: '',
-        facilityType: '',
         captchaJwt: token
       })
     };
@@ -233,13 +235,12 @@ describe('Pass Successes', () => {
         parkName: 'Test Park 1',
         firstName: 'Jest',
         lastName: 'User',
-        facilityName: 'Parking lot A',
+        facilityName: 'Trail B',
         email: 'testEmail1@test.ca',
         date: new Date(),
         type: 'DAY',
         numberOfGuests: 1,
         phoneNumber: '2505555555',
-        facilityType: 'Trail',
         captchaJwt: token
       })
     };
@@ -251,7 +252,7 @@ describe('Pass Successes', () => {
     expect(typeof body.sk).toBe('string');
     expect(body.firstName).toEqual('Jest');
     expect(body.lastName).toEqual('User');
-    expect(body.facilityName).toEqual('Parking lot A');
+    expect(body.facilityName).toEqual('Trail B');
     expect(body.email).toEqual('testEmail1@test.ca');
     expect(typeof body.date).toBe('string');
     expect(body.type).toEqual('DAY');
@@ -328,6 +329,8 @@ async function databaseOperation(version, mode) {
             sk: 'Parking lot A',
             name: 'Parking lot A',
             description: 'A Parking Lot!',
+            isUpdating: false,
+            type: "Parking",
             bookingTimes: {
               AM: {
                 max: 25
@@ -336,10 +339,28 @@ async function databaseOperation(version, mode) {
                 max: 25
               }
             },
-            reservations: {
-              20211207: {
-                AM: 1,
-                DAY: 1
+            status: 'open',
+            visible: true
+          }
+        })
+        .promise();
+
+        await ddb
+        .put({
+          TableName: TABLE_NAME,
+          Item: {
+            pk: 'facility::Test Park 1',
+            sk: 'Trail B',
+            name: 'Trail B',
+            description: 'A Trail!',
+            isUpdating: false,
+            type: "Trail",
+            bookingTimes: {
+              AM: {
+                max: 25
+              },
+              DAY: {
+                max: 25
               }
             },
             status: 'open',

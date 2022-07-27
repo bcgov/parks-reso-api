@@ -205,7 +205,16 @@ resource "aws_iam_role_policy" "park_reso_dynamodb_export" {
               "dynamodb:Scan"
           ],
           "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
-        }
+      },
+      {
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ],
+          "Resource": "arn:aws:logs:*:*:*"
+      }
     ]
   }
   EOF
@@ -265,22 +274,30 @@ resource "aws_iam_role_policy" "dynamoDBWriteRole" {
     "Version": "2012-10-17",
     "Statement": [
       {
-          "Effect": "Allow",
-          "Action": [
-              "dynamodb:BatchGet*",
-              "dynamodb:DescribeStream",
-              "dynamodb:DescribeTable",
-              "dynamodb:Get*",
-              "dynamodb:Query",
-              "dynamodb:Scan",
-              "dynamodb:BatchWrite*",
-              "dynamodb:CreateTable",
-              "dynamodb:Delete*",
-              "dynamodb:Update*",
-              "dynamodb:PutItem"
-          ],
-          "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
-        }
+        "Effect": "Allow",
+        "Action": [
+            "dynamodb:BatchGet*",
+            "dynamodb:DescribeStream",
+            "dynamodb:DescribeTable",
+            "dynamodb:Get*",
+            "dynamodb:Query",
+            "dynamodb:Scan",
+            "dynamodb:BatchWrite*",
+            "dynamodb:CreateTable",
+            "dynamodb:Delete*",
+            "dynamodb:Update*",
+            "dynamodb:PutItem",
+            "dynamodb:ConditionCheckItem"
+        ],
+        "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+            "dynamodb:Query"
+        ],
+        "Resource": "${aws_dynamodb_table.park_dup_table.arn}/index/*"
+      }
     ]
   }
   EOF
@@ -301,7 +318,8 @@ resource "aws_iam_role_policy" "dynamoDBDeleteRole" {
               "dynamodb:Query",
               "dynamodb:Scan",
               "dynamodb:Update*",
-              "dynamodb:PutItem"
+              "dynamodb:PutItem",
+              "dynamodb:ConditionCheckItem"
           ],
           "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
         }
