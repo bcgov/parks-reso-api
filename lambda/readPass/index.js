@@ -84,47 +84,43 @@ exports.handler = async (event, context) => {
       }
       // Filter reservation number
       if (event.queryStringParameters.reservationNumber) {
-        queryObj.ExpressionAttributeNames['#registrationNumber'] = 'registrationNumber';
-        queryObj.ExpressionAttributeValues[':registrationNumber'] = AWS.DynamoDB.Converter.input(
+        queryObj.ExpressionAttributeValues[':reservationNumber'] = AWS.DynamoDB.Converter.input(
           event.queryStringParameters.reservationNumber
         );
         queryObj.FilterExpression += expressionBuilder(
           'AND',
           queryObj.FilterExpression,
-          '#registrationNumber =:registrationNumber'
+          'registrationNumber =:reservationNumber'
         );
       }
       // Filter first/last
       if (event.queryStringParameters.firstName) {
         queryObj = checkAddExpressionAttributeNames(queryObj);
-        queryObj.ExpressionAttributeNames['#searchFirstName'] = 'searchFirstName';
         queryObj.ExpressionAttributeValues[':searchFirstName'] = AWS.DynamoDB.Converter.input(
           event.queryStringParameters.firstName.toLowerCase()
         );
         queryObj.FilterExpression += expressionBuilder(
           'AND',
           queryObj.FilterExpression,
-          '#searchFirstName =:searchFirstName'
+          'searchFirstName =:searchFirstName'
         );
       }
       if (event.queryStringParameters.lastName) {
         queryObj = checkAddExpressionAttributeNames(queryObj);
-        queryObj.ExpressionAttributeNames['#searchLastName'] = 'searchLastName';
         queryObj.ExpressionAttributeValues[':searchLastName'] = AWS.DynamoDB.Converter.input(
           event.queryStringParameters.lastName.toLowerCase()
         );
         queryObj.FilterExpression += expressionBuilder(
           'AND',
           queryObj.FilterExpression,
-          '#searchLastName =:searchLastName'
+          'searchLastName =:searchLastName'
         );
       }
       // Filter email
       if (event.queryStringParameters.email) {
         queryObj = checkAddExpressionAttributeNames(queryObj);
-        queryObj.ExpressionAttributeNames['#email'] = 'email';
         queryObj.ExpressionAttributeValues[':email'] = AWS.DynamoDB.Converter.input(event.queryStringParameters.email);
-        queryObj.FilterExpression += expressionBuilder('AND', queryObj.FilterExpression, '#email =:email');
+        queryObj.FilterExpression += expressionBuilder('AND', queryObj.FilterExpression, 'email =:email');
       }
       queryObj = paginationHandler(queryObj, event);
 
