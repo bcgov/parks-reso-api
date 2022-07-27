@@ -1,6 +1,7 @@
 'use strict';
 const AWS = require('aws-sdk');
 const { TABLE_NAME, dynamodb, runQuery } = require('../lambda/dynamoUtil');
+const { DateTime } = require('luxon');
 
 exports.up = async function (dbOptions) {
   await createReservationObject();
@@ -19,7 +20,7 @@ async function createReservationObject() {
     TableName: TABLE_NAME,
     ConsistentRead: true,
     ExpressionAttributeValues: {
-      ':pk': {S: 'park'}
+      ':pk': { S: 'park' }
     },
     KeyConditionExpression: 'pk =:pk'
   };
@@ -41,7 +42,7 @@ async function createReservationObject() {
     const facilityQueryObj = {
       TableName: TABLE_NAME,
       ExpressionAttributeValues: {
-        ':pk': {S: facilityPk}
+        ':pk': { S: facilityPk }
       },
       KeyConditionExpression: 'pk =:pk'
     };
@@ -64,9 +65,15 @@ async function createReservationObject() {
         let reservationsPutObj = {
           TableName: TABLE_NAME
         };
+
+        let resObjSK = key;
+        if (key.length === 8) {
+          resObjSK = DateTime.ParseExact(key, 'yyyyMMdd', null).ToString('yyyy-MM-dd');
+        }
+
         const marshalledReservationsObj = {
           pk: { S: `reservations::${parkName}::${facility.name}` },
-          sk: { S: key }
+          sk: { S: resObjSK }
         };
 
         //set capacities
