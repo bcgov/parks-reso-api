@@ -44,11 +44,14 @@ describe('Pass Fails', () => {
 
   test('Handler - 400 Bad Request - Missing JWT', async () => {
     const event = {
-      body: JSON.stringify({
-        parkName: '',
+      headers: {
+        Authorization: 'None'
+      },
+       body: JSON.stringify({
+        parkName: 'Test Park 1',
         firstName: '',
         lastName: '',
-        facilityName: '',
+        facilityName: 'Parking lot A',
         email: '',
         date: '',
         type: '',
@@ -74,11 +77,14 @@ describe('Pass Fails', () => {
 
   test('Handler - 400 Bad Request - JWT Invalid', async () => {
     const event = {
+      headers: {
+        Authorization: 'None'
+      },
       body: JSON.stringify({
-        parkName: '',
+        parkName: 'Test Park 1',
         firstName: '',
         lastName: '',
-        facilityName: '',
+        facilityName: 'Parking lot A',
         email: '',
         date: '',
         type: '',
@@ -104,6 +110,9 @@ describe('Pass Fails', () => {
 
   test('Handler - 400 Bad Request - Trail pass limit maximum', async () => {
     const event = {
+      headers: {
+        Authorization: 'None'
+      },
       body: JSON.stringify({
         parkName: 'Test Park 1',
         firstName: '',
@@ -131,6 +140,9 @@ describe('Pass Fails', () => {
 
   test('Handler - 400 Bad Request - Invalid Date', async () => {
     const event = {
+      headers: {
+        Authorization: 'None'
+      },
       body: JSON.stringify({
         parkName: '',
         firstName: '',
@@ -161,11 +173,14 @@ describe('Pass Fails', () => {
 
   test('Handler - 400 Bad Request - Booking date in the past', async () => {
     const event = {
+      headers: {
+        Authorization: 'None'
+      },
       body: JSON.stringify({
-        parkName: '',
+        parkName: 'Test Park 1',
         firstName: '',
         lastName: '',
-        facilityName: '',
+        facilityName: 'Parking lot A',
         email: '',
         date: '1970-01-01T00:00:00.758Z',
         type: '',
@@ -191,6 +206,9 @@ describe('Pass Fails', () => {
 
   test('Handler - 400 Bad Request - One or more params are invalid.', async () => {
     const event = {
+      headers: {
+        Authorization: 'None'
+      },
       body: JSON.stringify({
         parkName: '',
         firstName: '',
@@ -231,6 +249,9 @@ describe('Pass Successes', () => {
 
   test('Handler - 200 Email Failed to Send, but pass has been created for a Trail.', async () => {
     const event = {
+      headers: {
+        Authorization: 'None'
+      },
       body: JSON.stringify({
         parkName: 'Test Park 1',
         firstName: 'Jest',
@@ -266,6 +287,9 @@ describe('Pass Successes', () => {
 
   test('Handler - 200 Email Failed to Send, but pass has been created for a Parking Pass.', async () => {
     const event = {
+      headers: {
+        Authorization: 'None'
+      },
       body: JSON.stringify({
         parkName: 'Test Park 1',
         firstName: 'Jest',
