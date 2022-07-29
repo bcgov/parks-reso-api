@@ -252,10 +252,33 @@ async function processReservationObjects(resObjs, timesToUpdate) {
           logger.error('Error occured while executing updatePassObjectsAsOverbooked()');
           throw error;
         }
+      } else {
+        // If we are increasing capacity, we need to pull overbooked passes.
+        let overbookedPasses = [];
+        try {
+          overbookedPasses = await checkForOverbookedPasses(resObj.pk.split('::').pop(), resObj.sk, timeToUpdate.time);
+        } catch (error) {
+          logger.error('Error occured while executing checkForOverbookedPasses()');
+          throw error;
+        }
+        if (overbookedPasses.length > 0) {
+          try {
+            const restoredPassQuantity = await reverseOverbookedPasses(overbookedPasses, newResAvailability);
+            newResAvailability -= restoredPassQuantity;
+          } catch (error) {
+            logger.error('Error occured while executing reverseOverbookedPasses()');
+            throw error;
+          }
+        }
       }
-      // We want to do this instead of a batch operation. This is to prevent race conditions.
       try {
-        await updateReservationsObjectCapacity(resObj.pk, resObj.sk, timeToUpdate.time, newBaseCapacity, newResAvailability);
+        await updateReservationsObjectCapacity(
+          resObj.pk,
+          resObj.sk,
+          timeToUpdate.time,
+          newBaseCapacity,
+          newResAvailability
+        );
       } catch (error) {
         logger.error('Error occured while executing updateReservationsObjectCapacity()', error);
         throw error;
@@ -289,6 +312,72 @@ async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, n
   return;
 }
 
+async function checkForOverbookedPasses(facilityName, shortPassDate, type) {
+  const passesQuery = {
+    TableName: TABLE_NAME,
+    IndexName: 'shortPassDate-index',
+    ExpressionAttributeValues: {
+      ':shortPassDate': { S: shortPassDate },
+      ':facilityName': { S: facilityName },
+      ':passType': { S: type },
+      ':isOverbooked': { BOOL: true },
+      ':reservedStatus': { S: 'reserved'},
+      ':activeStatus': { S: 'active' }
+    },
+    ExpressionAttributeNames: {
+      '#theType': 'type'
+    },
+    KeyConditionExpression: 'shortPassDate =:shortPassDate AND facilityName =:facilityName',
+    FilterExpression: '#theType =:passType AND isOverbooked =:isOverbooked AND passStatus IN (:reservedStatus, :activeStatus)'
+  };
+  let passes = [];
+  try {
+    passes = await runQuery(passesQuery);
+    passes.sort((a, b) => new Date(a.creationDate) - new Date(b.creationDate));
+  } catch (error) {
+    logger.error('Error occured while getting overbooked passes in reverseOverbookedPasses');
+    logger.error(passesQuery);
+    logger.error(error);
+    throw { msg: 'Something went wrong.', title: 'Operation Failed' };
+  }
+  return passes;
+}
+
+async function reverseOverbookedPasses(passes, passDiff) {
+  // Figure out which passes we want to reverse
+  let passTally = 0;
+  for (let i = 0; i < passes.length; i++) {
+    const pass = passes[i];
+    if (passTally + pass.numberOfGuests > passDiff) {
+      break;
+    }
+    passTally += pass.numberOfGuests;
+
+    // Reverse the pass
+    const updatePassObject = {
+      TableName: TABLE_NAME,
+      Key: {
+        pk: { S: pass.pk },
+        sk: { S: pass.sk }
+      },
+      ExpressionAttributeValues: {
+        ':isOverbooked': AWS.DynamoDB.Converter.input(false)
+      },
+      UpdateExpression: 'SET isOverbooked = :isOverbooked',
+      ReturnValues: 'ALL_NEW'
+    };
+    try {
+      const res = await dynamodb.updateItem(updatePassObject).promise();
+      logger.debug('Reversed pass overbooked status', res);
+    } catch (error) {
+      logger.error('Error occured while updating pass in reverseOverbookedPasses');
+      logger.error(updatePassObject);
+      throw { msg: 'Something went wrong.', title: 'Operation Failed' };
+    }
+  }
+  return passTally;
+}
+
 async function updatePassObjectsAsOverbooked(facilityName, shortPassDate, type, numberOfPassesOverbooked) {
   const passesQuery = {
     TableName: TABLE_NAME,
@@ -300,15 +389,15 @@ async function updatePassObjectsAsOverbooked(facilityName, shortPassDate, type, 
       ':false': { BOOL: false }
     },
     ExpressionAttributeNames: {
-      '#theType': 'type',
-      '#isOverbooked': 'isOverbooked'
+      '#theType': 'type'
     },
     KeyConditionExpression: 'shortPassDate =:shortPassDate AND facilityName =:facilityName',
-    FilterExpression: '#theType =:passType AND #isOverbooked =:false'
+    FilterExpression: '#theType =:passType AND isOverbooked =:false'
   };
   let passes;
   try {
     passes = await runQuery(passesQuery);
+    passes.sort((a, b) => new Date(b.creationDate) - new Date(a.creationDate));
   } catch (error) {
     logger.error('Error occured while getting overbooked passes in updatePassObjectsAsOverbooked');
     logger.error(passesQuery);
@@ -374,7 +463,6 @@ async function unlockFacility(pk, sk) {
 }
 
 async function getOverbookedPassSet(passes, numberOfPassesOverbooked) {
-  passes.sort((a, b) => new Date(b.creationDate) - new Date(a.creationDate));
   let overbookObj = {
     overbookedPasses: [],
     remainder: 0
