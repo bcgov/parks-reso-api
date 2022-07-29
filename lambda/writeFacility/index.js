@@ -271,7 +271,13 @@ async function processReservationObjects(resObjs, timesToUpdate) {
         }
       }
       try {
-        await updateReservationsObjectCapacity(resObj.pk, resObj.sk, timeToUpdate.time, newBaseCapacity, newResAvailability);
+        await updateReservationsObjectCapacity(
+          resObj.pk,
+          resObj.sk,
+          timeToUpdate.time,
+          newBaseCapacity,
+          newResAvailability
+        );
       } catch (error) {
         logger.error('Error occured while executing updateReservationsObjectCapacity()', error);
         throw error;
@@ -316,11 +322,10 @@ async function checkForOverbookedPasses(facilityName, shortPassDate, type) {
       ':true': { BOOL: true }
     },
     ExpressionAttributeNames: {
-      '#theType': 'type',
-      '#isOverbooked': 'isOverbooked'
+      '#theType': 'type'
     },
     KeyConditionExpression: 'shortPassDate =:shortPassDate AND facilityName =:facilityName',
-    FilterExpression: '#theType =:passType AND #isOverbooked =:true'
+    FilterExpression: '#theType =:passType AND isOverbooked =:true'
   };
   let passes = [];
   try {
@@ -381,11 +386,10 @@ async function updatePassObjectsAsOverbooked(facilityName, shortPassDate, type, 
       ':false': { BOOL: false }
     },
     ExpressionAttributeNames: {
-      '#theType': 'type',
-      '#isOverbooked': 'isOverbooked'
+      '#theType': 'type'
     },
     KeyConditionExpression: 'shortPassDate =:shortPassDate AND facilityName =:facilityName',
-    FilterExpression: '#theType =:passType AND #isOverbooked =:false'
+    FilterExpression: '#theType =:passType AND isOverbooked =:false'
   };
   let passes;
   try {
