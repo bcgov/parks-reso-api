@@ -263,7 +263,8 @@ async function processReservationObjects(resObjs, timesToUpdate) {
         }
         if (overbookedPasses.length > 0) {
           try {
-            newResAvailability = await reverseOverbookedPasses(overbookedPasses, passDiff);
+            const restoredPassQuantity = await reverseOverbookedPasses(overbookedPasses, newResAvailability);
+            newResAvailability -= restoredPassQuantity;
           } catch (error) {
             logger.error('Error occured while executing reverseOverbookedPasses()');
             throw error;
@@ -319,13 +320,15 @@ async function checkForOverbookedPasses(facilityName, shortPassDate, type) {
       ':shortPassDate': { S: shortPassDate },
       ':facilityName': { S: facilityName },
       ':passType': { S: type },
-      ':true': { BOOL: true }
+      ':isOverbooked': { BOOL: true },
+      ':reservedStatus': { S: 'reserved'},
+      ':activeStatus': { S: 'active' }
     },
     ExpressionAttributeNames: {
       '#theType': 'type'
     },
     KeyConditionExpression: 'shortPassDate =:shortPassDate AND facilityName =:facilityName',
-    FilterExpression: '#theType =:passType AND isOverbooked =:true'
+    FilterExpression: '#theType =:passType AND isOverbooked =:isOverbooked AND passStatus IN (:reservedStatus, :activeStatus)'
   };
   let passes = [];
   try {
@@ -372,7 +375,7 @@ async function reverseOverbookedPasses(passes, passDiff) {
       throw { msg: 'Something went wrong.', title: 'Operation Failed' };
     }
   }
-  return passDiff - passTally;
+  return passTally;
 }
 
 async function updatePassObjectsAsOverbooked(facilityName, shortPassDate, type, numberOfPassesOverbooked) {
