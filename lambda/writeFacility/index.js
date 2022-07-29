@@ -236,19 +236,18 @@ async function processReservationObjects(resObjs, timesToUpdate) {
 
       let newBaseCapacity = timeToUpdate.newCapacity;
       let passDiff = timeToUpdate.passDiff;
-      const resAvailablePassCount = resObj.capacities[timeToUpdate.time].availablePasses + passDiff;
+      let newResAvailability = resObj.capacities[timeToUpdate.time].availablePasses + passDiff;
 
-      // If passDiff is negative, then we have overbooked passes.
-      if (resAvailablePassCount < 0) {
+      // If newResAvailability is negative, then we have overbooked passes.
+      if (newResAvailability < 0) {
         try {
           // If we detect there's going to be an overflow, grab all overflow passes.
-          let remainder = await updatePassObjectsAsOverbooked(
+          newResAvailability = await updatePassObjectsAsOverbooked(
             resObj.pk.split('::').pop(),
             resObj.sk,
             timeToUpdate.time,
-            passDiff * -1
+            newResAvailability * -1
           );
-          passDiff = resObj.capacities[timeToUpdate.time].availablePasses * -1 + remainder;
         } catch (error) {
           logger.error('Error occured while executing updatePassObjectsAsOverbooked()');
           throw error;
@@ -256,7 +255,7 @@ async function processReservationObjects(resObjs, timesToUpdate) {
       }
       // We want to do this instead of a batch operation. This is to prevent race conditions.
       try {
-        await updateReservationsObjectCapacity(resObj.pk, resObj.sk, timeToUpdate.time, newBaseCapacity, passDiff);
+        await updateReservationsObjectCapacity(resObj.pk, resObj.sk, timeToUpdate.time, newBaseCapacity, newResAvailability);
       } catch (error) {
         logger.error('Error occured while executing updateReservationsObjectCapacity()', error);
         throw error;
@@ -265,7 +264,7 @@ async function processReservationObjects(resObjs, timesToUpdate) {
   }
 }
 
-async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, passDiff) {
+async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, newResAvailability) {
   const updateReservationsObject = {
     TableName: TABLE_NAME,
     Key: {
@@ -274,7 +273,7 @@ async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, p
     },
     ExpressionAttributeValues: {
       ':newBaseCapacity': { N: String(newBaseCapacity) },
-      ':passDiff': { N: String(passDiff) }
+      ':newResAvailability': { N: String(newResAvailability) }
     },
     ExpressionAttributeNames: {
       '#type': type,
@@ -282,7 +281,7 @@ async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, p
       '#availablePasses': 'availablePasses'
     },
     UpdateExpression:
-      'SET capacities.#type.#baseCapacity = :newBaseCapacity ADD capacities.#type.#availablePasses :passDiff'
+      'SET capacities.#type.#baseCapacity = :newBaseCapacity, capacities.#type.#availablePasses = :newResAvailability'
   };
 
   const res = await dynamodb.updateItem(updateReservationsObject).promise();
