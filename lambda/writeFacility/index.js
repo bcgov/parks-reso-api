@@ -118,19 +118,18 @@ async function updateFacility(obj) {
       // We need to ensure that our future reservation objects are up to date
       let timesToUpdate = [];
       for (const bookingTime in bookingTimes) {
+        const oldCapacity = currentFacility.bookingTimes[bookingTime]?.max ?? 0;
         if (
-          !currentFacility.bookingTimes[bookingTime] ||
-          bookingTimes[bookingTime].max !== currentFacility.bookingTimes[bookingTime].max
+          bookingTimes[bookingTime].max !== oldCapacity
         ) {
           if (bookingTimes[bookingTime].max < 0) {
             throw 'You can not set a negative booking time.';
           }
-
           // Doesn't exist / needs to be updated
           timesToUpdate.push({
             time: bookingTime,
             newCapacity: bookingTimes[bookingTime].max,
-            passDiff: bookingTimes[bookingTime].max - currentFacility.bookingTimes[bookingTime].max
+            passDiff: bookingTimes[bookingTime].max - oldCapacity
           });
         }
       }
@@ -233,10 +232,11 @@ async function processReservationObjects(resObjs, timesToUpdate) {
     let resObj = resObjs[i];
     for (let j = 0; j < timesToUpdate.length; j++) {
       const timeToUpdate = timesToUpdate[j];
+      const oldResAvailability = resObj.capacities[timeToUpdate.time]?.availablePasses ?? 0;
 
       let newBaseCapacity = timeToUpdate.newCapacity;
       let passDiff = timeToUpdate.passDiff;
-      let newResAvailability = resObj.capacities[timeToUpdate.time].availablePasses + passDiff;
+      let newResAvailability = oldResAvailability + passDiff;
 
       // If newResAvailability is negative, then we have overbooked passes.
       if (newResAvailability < 0) {
@@ -256,7 +256,9 @@ async function processReservationObjects(resObjs, timesToUpdate) {
         // If we are increasing capacity, we need to pull overbooked passes.
         let overbookedPasses = [];
         try {
-          overbookedPasses = await checkForOverbookedPasses(resObj.pk.split('::').pop(), resObj.sk, timeToUpdate.time);
+          if (resObj.capacities[timeToUpdate.time]) {
+            overbookedPasses = await checkForOverbookedPasses(resObj.pk.split('::').pop(), resObj.sk, timeToUpdate.time);
+          }
         } catch (error) {
           logger.error('Error occured while executing checkForOverbookedPasses()');
           throw error;
@@ -288,6 +290,12 @@ async function processReservationObjects(resObjs, timesToUpdate) {
 }
 
 async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, newResAvailability) {
+  // TODO: update this to include modifiers when ready
+  const mapType = AWS.DynamoDB.Converter.marshall({
+    capacityModifier: 0,
+    baseCapacity: newBaseCapacity,
+    availablePasses: newResAvailability
+  });
   const updateReservationsObject = {
     TableName: TABLE_NAME,
     Key: {
@@ -295,18 +303,15 @@ async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, n
       sk: { S: sk }
     },
     ExpressionAttributeValues: {
-      ':newBaseCapacity': { N: String(newBaseCapacity) },
-      ':newResAvailability': { N: String(newResAvailability) }
+      ':type': { M: mapType }
     },
     ExpressionAttributeNames: {
       '#type': type,
-      '#baseCapacity': 'baseCapacity',
-      '#availablePasses': 'availablePasses'
     },
     UpdateExpression:
-      'SET capacities.#type.#baseCapacity = :newBaseCapacity, capacities.#type.#availablePasses = :newResAvailability'
+      'SET capacities.#type = :type'
   };
-
+  logger.debug('updateReservationsObject:', updateReservationsObject);
   const res = await dynamodb.updateItem(updateReservationsObject).promise();
   logger.debug('Reservation object updated:' + res);
   return;
@@ -321,7 +326,7 @@ async function checkForOverbookedPasses(facilityName, shortPassDate, type) {
       ':facilityName': { S: facilityName },
       ':passType': { S: type },
       ':isOverbooked': { BOOL: true },
-      ':reservedStatus': { S: 'reserved'},
+      ':reservedStatus': { S: 'reserved' },
       ':activeStatus': { S: 'active' }
     },
     ExpressionAttributeNames: {
