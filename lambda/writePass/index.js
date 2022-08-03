@@ -3,9 +3,10 @@ const axios = require('axios');
 const { verifyJWT } = require('../captchaUtil');
 const { dynamodb, runQuery, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE, getFacility } = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
-const { decodeJWT, resolvePermissions } = require('../permissionUtil')
+const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
+const { createNewReservationsObj } = require('../writeReservation');
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
@@ -58,10 +59,10 @@ exports.handler = async (event, context) => {
 
     if (Object.keys(facilityData).length === 0) {
       throw 'Facility not found.';
-    };
+    }
 
     if (!permissionObject.isAdmin) {
-      // Do extra checks if user is not sysadmin. 
+      // Do extra checks if user is not sysadmin.
       if (!captchaJwt || !captchaJwt.length) {
         return sendResponse(400, {
           msg: 'Missing CAPTCHA verification.',
@@ -88,7 +89,7 @@ exports.handler = async (event, context) => {
       if (facilityData.type === 'Parking') {
         numberOfGuests = 1;
       }
-    };
+    }
 
     // numberOfGuests cannot be less than 1.
     if (numberOfGuests < 1) {
@@ -100,7 +101,8 @@ exports.handler = async (event, context) => {
 
     // Get current time vs booking time information
     // Log server DateTime
-    logger.debug('Server Time Zone:',
+    logger.debug(
+      'Server Time Zone:',
       Intl.DateTimeFormat().resolvedOptions().timeZone || 'undefined',
       `(${DateTime.now().toISO()})`
     );
@@ -131,7 +133,7 @@ exports.handler = async (event, context) => {
         msg: 'You cannot book for a date that far ahead.',
         title: 'Booking date in the future invalid'
       });
-    };
+    }
 
     // There should only be 1 facility.
     let openingHour = facilityData.bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
@@ -284,10 +286,19 @@ exports.handler = async (event, context) => {
       // TODO: We need to change park name in the PK to use orcs instead.
       const reservationsObjectPK = `reservations::${parkName}::${facilityName}`;
 
+      const bookingTimeTypes = Object.keys(facilityData.bookingTimes);
+      if (!bookingTimeTypes.includes(type)) {
+        // Type given does not exist in the facility.
+        logger.debug('Booking Time Type Error: type provided does not exist in facility');
+        logger.debug(type);
+        logger.error('Write Pass', bookingTimeTypes, type);
+        return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
+      }
+
       // We need to ensure that the reservations object exists.
       // Attempt to create reservations object. If it fails, so what...
 
-      await createNewReservationsObj(facilityData.bookingTimes, reservationsObjectPK, bookingPSTShortDate, type);
+      await createNewReservationsObj(facilityData.bookingTimes, reservationsObjectPK, bookingPSTShortDate);
 
       // Perform a transaction where we decrement the available passes and create the pass
       // If the conditions where the related facility object has a lock, we then fail the whole transaction.
@@ -348,16 +359,17 @@ exports.handler = async (event, context) => {
           let message = error.message;
           if (cancellationReasons[0] != 'None') {
             logger.error('Facility is currently locked');
-            message = "An error has occured, please try again."
+            message = 'An error has occured, please try again.';
             // TODO: we could implement a retry transaction here.
           }
           if (cancellationReasons[1] != 'None') {
             logger.error('Sold out of passes.');
-            message = "We have sold out of allotted passes for this time, please check back on the site from time to time as new passes may come available."
+            message =
+              'We have sold out of allotted passes for this time, please check back on the site from time to time as new passes may come available.';
           }
           if (cancellationReasons[2] != 'None') {
             logger.error('Error creating pass.');
-            message = "An error has occured, please try again."
+            message = 'An error has occured, please try again.';
           }
 
           return sendResponse(400, {
@@ -416,48 +428,4 @@ function to12hTimeString(hour) {
 function generate(count) {
   // TODO: Make this better
   return Math.random().toString().substr(count);
-}
-
-async function createNewReservationsObj(facilityBookingTimes, reservationsObjectPK, bookingPSTShortDate, type) {
-  const bookingTimeTypes = Object.keys(facilityBookingTimes);
-
-  // Type given does not exist in the facility.
-  if (!bookingTimeTypes.includes(type)) {
-    logger.debug('Booking Time Type Error: type provided does not exist in facility');
-    logger.debug(type);
-    logger.error('Write Pass', bookingTimeTypes, type);
-    return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
-  }
-
-  let rawReservationsObject = {
-    pk: reservationsObjectPK,
-    sk: bookingPSTShortDate,
-    capacities: {}
-  };
-
-  // We are initing capacities
-  for (let i = 0; i < bookingTimeTypes.length; i++) {
-    const property = bookingTimeTypes[i];
-    rawReservationsObject.capacities[property] = {
-      baseCapacity: facilityBookingTimes[property].max,
-      capacityModifier: 0,
-      availablePasses: facilityBookingTimes[property].max
-    };
-  }
-
-  // Attempt to create a new reservations object
-  const reservationsObject = {
-    TableName: TABLE_NAME,
-    Item: AWS.DynamoDB.Converter.marshall(rawReservationsObject),
-    ConditionExpression: 'attribute_not_exists(pk) AND attribute_not_exists(sk)'
-  };
-
-  try {
-    const res = await dynamodb.putItem(reservationsObject).promise();
-    logger.debug(res);
-  } catch (err) {
-    // If this fails, that means the object already exists.
-    // We can continue to our allocated increment logic.
-    logger.info('Reservation object already exists', rawReservationsObject);
-  }
 }
