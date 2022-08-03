@@ -1,10 +1,10 @@
 const AWS = require('aws-sdk');
-const { DateTime } = require('luxon');
 
-const { dynamodb, TABLE_NAME, TIMEZONE, runQuery } = require('../dynamoUtil');
+const { dynamodb, TABLE_NAME } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions, getParkAccess } = require('../permissionUtil');
 const { logger } = require('../logger');
+const { processReservationObjects, getFutureReservationObjects } = require('../reservationObjUtils');
 
 exports.handler = async (event, context) => {
   if (!event || !event.headers) {
@@ -498,24 +498,6 @@ async function unlockFacility(pk, sk) {
       title: 'Sorry, we are unable to fill your specific request.'
     });
   }
-}
-
-async function getOverbookedPassSet(passes, numberOfPassesOverbooked) {
-  let overbookObj = {
-    overbookedPasses: [],
-    remainder: 0
-  };
-  let cancelledGuestTally = 0;
-  for (let i = 0; i < passes.length; i++) {
-    const pass = passes[i];
-    cancelledGuestTally += pass.numberOfGuests;
-    overbookObj.overbookedPasses.push(pass);
-    if (numberOfPassesOverbooked <= cancelledGuestTally) {
-      break;
-    }
-  }
-  overbookObj.remainder = cancelledGuestTally - numberOfPassesOverbooked;
-  return overbookObj;
 }
 
 function deepEqual(object1, object2) {
