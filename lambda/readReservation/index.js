@@ -111,8 +111,11 @@ function formatPublicResults(reservations, facility, bookingWindow) {
   let publicObj = buildPublicTemplate(facility, bookingWindow);
   for (let reservation of reservations) {
     for (const [key, value] of Object.entries(reservation.capacities)) {
-      publicObj[reservation.sk][key].capacity = getCapacityLevel(value.baseCapacity, value.availablePasses, value.capacityModifier);
-      publicObj[reservation.sk][key].max = checkMaxPasses(facility, value.availablePasses);
+      const bookingSlot = {
+        capacity: getCapacityLevel(value.baseCapacity, value.availablePasses, value.capacityModifier),
+        max: checkMaxPasses(facility, value.availablePasses)
+      };
+      publicObj[reservation.sk][key] = bookingSlot;
     };
   };
   return publicObj;
