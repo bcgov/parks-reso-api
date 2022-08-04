@@ -133,15 +133,22 @@ async function updateFacility(obj) {
           });
         }
       }
-
+      // Needs to be removed (closing a timeslot)
+      let timesToRemove = [];
+      for (const currentTime in currentFacility.bookingTimes) {
+        if (!bookingTimes[currentTime]) {
+          timesToRemove.push({
+            time: currentTime
+          });
+        };
+      };
       // Gather all future reservation objects
       let futureResObjects = [];
-      if (timesToUpdate.length > 0) {
+      if (timesToUpdate.length > 0 || timesToRemove.length > 0) {
         futureResObjects = await getFutureReservationObjects(parkName, name);
       }
-
-      if (futureResObjects.length > 0) {
-        await processReservationObjects(futureResObjects, timesToUpdate);
+      if (futureResObjects.length > 0 || timesToRemove.length > 0) {
+        await processReservationObjects(futureResObjects, timesToUpdate, timesToRemove);
       }
     }
 
@@ -207,7 +214,6 @@ async function setFacilityLock(pk, sk) {
 async function getFutureReservationObjects(parkName, facilityName) {
   let futureResObjects = [];
   const todaysShortDate = DateTime.now().setZone(TIMEZONE).toISODate();
-
   const reservationsObjectQuery = {
     TableName: TABLE_NAME,
     ExpressionAttributeValues: {
@@ -227,9 +233,24 @@ async function getFutureReservationObjects(parkName, facilityName) {
   return futureResObjects;
 }
 
-async function processReservationObjects(resObjs, timesToUpdate) {
+async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) {
   for (let i = 0; i < resObjs.length; i++) {
     let resObj = resObjs[i];
+    for (let k = 0; k < timesToRemove.length; k++) {
+      const timeToRemove = timesToRemove[k];
+      try {
+       await updatePassObjectsAsOverbooked(
+          resObj.pk.split('::').pop(),
+          resObj.sk,
+          timeToRemove.time,
+          resObj.capacities[timeToRemove.time]?.baseCapacity + resObj.capacities[timeToRemove.time]?.capacityModifier
+        );
+        await deleteReservationsObjectType(resObj.pk, resObj.sk, timeToRemove.time)
+      } catch (error) {
+        logger.error('Error in deleteReservationsObjectType():', error);
+        throw error;
+      }
+    }
     for (let j = 0; j < timesToUpdate.length; j++) {
       const timeToUpdate = timesToUpdate[j];
       const oldResAvailability = resObj.capacities[timeToUpdate.time]?.availablePasses ?? 0;
@@ -287,6 +308,25 @@ async function processReservationObjects(resObjs, timesToUpdate) {
       }
     }
   }
+}
+
+async function deleteReservationsObjectType(pk, sk, type) {
+  const deleteTypeObject = {
+    TableName: TABLE_NAME,
+    Key: {
+      pk: { S: pk },
+      sk: { S: sk }
+    },
+    ExpressionAttributeNames: {
+      '#type': type,
+    },
+    UpdateExpression:
+      'REMOVE capacities.#type'
+  };
+  logger.debug('deleteReservationsObjectType:', deleteTypeObject);
+  const res = await dynamodb.updateItem(deleteTypeObject).promise();
+  logger.debug(`Reservation type deleted (${type}): `, res);
+  return;
 }
 
 async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, newResAvailability) {
