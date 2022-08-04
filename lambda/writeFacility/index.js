@@ -239,15 +239,27 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
     for (let k = 0; k < timesToRemove.length; k++) {
       const timeToRemove = timesToRemove[k];
       try {
-       await updatePassObjectsAsOverbooked(
+        // send all passes to overbooked
+        await updatePassObjectsAsOverbooked(
           resObj.pk.split('::').pop(),
           resObj.sk,
           timeToRemove.time,
           resObj.capacities[timeToRemove.time]?.baseCapacity + resObj.capacities[timeToRemove.time]?.capacityModifier
         );
-        await deleteReservationsObjectType(resObj.pk, resObj.sk, timeToRemove.time)
       } catch (error) {
-        logger.error('Error in deleteReservationsObjectType():', error);
+        logger.error('Error removing passes in updatePassObjectsOverbooked():', error);
+      }
+      try {
+        // update future removed booking times to 0 capacity, 0 availability
+        await updateReservationsObjectCapacity(
+          resObj.pk,
+          resObj.sk,
+          timeToRemove.time,
+          0,
+          0
+        );
+      } catch (error) {
+        logger.error('Error removing passes in updatereservationObjectCapacity():', error);
         throw error;
       }
     }
@@ -308,25 +320,6 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
       }
     }
   }
-}
-
-async function deleteReservationsObjectType(pk, sk, type) {
-  const deleteTypeObject = {
-    TableName: TABLE_NAME,
-    Key: {
-      pk: { S: pk },
-      sk: { S: sk }
-    },
-    ExpressionAttributeNames: {
-      '#type': type,
-    },
-    UpdateExpression:
-      'REMOVE capacities.#type'
-  };
-  logger.debug('deleteReservationsObjectType:', deleteTypeObject);
-  const res = await dynamodb.updateItem(deleteTypeObject).promise();
-  logger.debug(`Reservation type deleted (${type}): `, res);
-  return;
 }
 
 async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, newResAvailability) {
