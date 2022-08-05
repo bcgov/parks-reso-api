@@ -122,6 +122,17 @@ functions:
           cors: true
 
   ###########
+  # Modifiers
+  ###########
+  writeModifier:
+    handler: lambda/writeModifier/index.handler
+    events:
+      - http:
+          method: PUT
+          path: /modifier
+          cors: true
+
+  ###########
   # Pass
   ###########
   readPass:

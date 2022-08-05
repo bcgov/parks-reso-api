@@ -5,6 +5,7 @@ const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions, getParkAccess } = require('../permissionUtil');
 const { logger } = require('../logger');
 const { processReservationObjects, getFutureReservationObjects } = require('../reservationObjUtils');
+const { unlockFacility, setFacilityLock } = require('../facilityUtils');
 
 exports.handler = async (event, context) => {
   if (!event || !event.headers) {
@@ -119,17 +120,14 @@ async function updateFacility(obj) {
       let timesToUpdate = [];
       for (const bookingTime in bookingTimes) {
         const oldCapacity = currentFacility.bookingTimes[bookingTime]?.max ?? 0;
-        if (
-          bookingTimes[bookingTime].max !== oldCapacity
-        ) {
+        if (bookingTimes[bookingTime].max !== oldCapacity) {
           if (bookingTimes[bookingTime].max < 0) {
             throw 'You can not set a negative booking time.';
           }
           // Doesn't exist / needs to be updated
           timesToUpdate.push({
             time: bookingTime,
-            newCapacity: bookingTimes[bookingTime].max,
-            passDiff: bookingTimes[bookingTime].max - oldCapacity
+            capacityToSet: bookingTimes[bookingTime].max
           });
         }
       }
@@ -140,8 +138,8 @@ async function updateFacility(obj) {
           timesToRemove.push({
             time: currentTime
           });
-        };
-      };
+        }
+      }
       // Gather all future reservation objects
       let futureResObjects = [];
       if (timesToUpdate.length > 0 || timesToRemove.length > 0) {
@@ -180,59 +178,6 @@ async function updateFacility(obj) {
     logger.error(JSON.stringify(error));
     await unlockFacility(`facility::${parkName}`, sk);
     return sendResponse(400, error);
-  }
-}
-
-async function setFacilityLock(pk, sk) {
-  const facilityLockObject = {
-    TableName: TABLE_NAME,
-    Key: {
-      pk: { S: pk },
-      sk: { S: sk }
-    },
-    ExpressionAttributeValues: {
-      ':isUpdating': AWS.DynamoDB.Converter.input(true),
-      ':false': AWS.DynamoDB.Converter.input(false)
-    },
-    UpdateExpression: 'SET isUpdating = :isUpdating',
-    ConditionExpression: 'isUpdating = :false',
-    ReturnValues: 'ALL_NEW'
-  };
-  try {
-    const { Attributes } = await dynamodb.updateItem(facilityLockObject).promise();
-    return AWS.DynamoDB.Converter.unmarshall(Attributes);
-  } catch (error) {
-    logger.error('Error in setFacilityLock', facilityLockObject);
-    logger.error(error);
-    throw {
-      msg: 'This item is being updated by someone else. Please try again later.',
-      title: 'Sorry, we are unable to fill your specific request.'
-    };
-  }
-}
-
-async function unlockFacility(pk, sk) {
-  try {
-    const facilityLockObject = {
-      TableName: TABLE_NAME,
-      Key: {
-        pk: { S: pk },
-        sk: { S: sk }
-      },
-      ExpressionAttributeValues: {
-        ':isUpdating': AWS.DynamoDB.Converter.input(false)
-      },
-      UpdateExpression: 'SET isUpdating = :isUpdating',
-      ReturnValues: 'ALL_NEW'
-    };
-    await dynamodb.updateItem(facilityLockObject).promise();
-  } catch (error) {
-    logger.error(error);
-    // TODO: Retry this until we can unlock facility.
-    return sendResponse(400, {
-      msg: 'Failed to unlock facility. Please alert a developer as soon as possible.',
-      title: 'Sorry, we are unable to fill your specific request.'
-    });
   }
 }
 

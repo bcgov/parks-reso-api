@@ -43,27 +43,40 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
       }
       try {
         // update future removed booking times to 0 capacity, 0 availability
-        await updateReservationsObjectCapacity(
-          resObj.pk,
-          resObj.sk,
-          timeToRemove.time,
-          0,
-          0
-        );
+        await updateReservationsObjectCapacity(resObj.pk, resObj.sk, timeToRemove.time, 0, 0);
       } catch (error) {
         logger.error('Error removing passes in updatereservationObjectCapacity():', error);
         throw error;
       }
     }
     for (let j = 0; j < timesToUpdate.length; j++) {
-      const timeToUpdate = timesToUpdate[j];
-      const oldResAvailability = resObj.capacities[timeToUpdate.time]?.availablePasses ?? 0;
+      const timeToUpdate = timesToUpdate[i];
 
-      let newBaseCapacity = timeToUpdate.newCapacity;
-      let passDiff = timeToUpdate.passDiff;
-      let newResAvailability = oldResAvailability + passDiff;
+      if (timeToUpdate.capacityToSet == null && timeToUpdate.modifierToSet == null) {
+        logger.error('Neither a new base capacity or a new modifier was provided. Skipping.');
+        continue;
+      }
+
+      const oldResAvailability = resObj.capacities[timeToUpdate.time].availablePasses;
+
+      // Base capacity
+      const oldBaseCapacity = resObj.capacities[timeToUpdate.time].baseCapacity;
+      const newBaseCapacity = timeToUpdate.capacityToSet ?? oldBaseCapacity;
+
+      // Modiifier
+      const oldModifier = resObj.capacities[timeToUpdate.time].capacityModifier;
+      const newModifier = timeToUpdate.modifierToSet ?? oldModifier;
+
+      if (newBaseCapacity + newModifier < 0) {
+        logger.error('New total capacity cannot be negative');
+        continue;
+      }
+
+      //a1 = a0 + c1 - c0 + m1 - m0 + f(p)
+      let newResAvailability = oldResAvailability + newBaseCapacity - oldBaseCapacity + newModifier - oldModifier;
 
       // If newResAvailability is negative, then we have overbooked passes.
+      // This logic handles the `+ f(p)` portion of the formula
       if (newResAvailability < 0) {
         try {
           // If we detect there's going to be an overflow, grab all overflow passes.
@@ -82,7 +95,11 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
         let overbookedPasses = [];
         try {
           if (resObj.capacities[timeToUpdate.time]) {
-            overbookedPasses = await checkForOverbookedPasses(resObj.pk.split('::').pop(), resObj.sk, timeToUpdate.time);
+            overbookedPasses = await checkForOverbookedPasses(
+              resObj.pk.split('::').pop(),
+              resObj.sk,
+              timeToUpdate.time
+            );
           }
         } catch (error) {
           logger.error('Error occured while executing checkForOverbookedPasses()');
@@ -99,11 +116,12 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
         }
       }
       try {
-        await updateReservationsObjectCapacity(
+        return await updateReservationsObjectCapacity(
           resObj.pk,
           resObj.sk,
           timeToUpdate.time,
           newBaseCapacity,
+          newModifier,
           newResAvailability
         );
       } catch (error) {
@@ -114,12 +132,12 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
   }
 }
 
-async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, newResAvailability) {
+async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, newModifier, newResAvailability) {
   // TODO: update this to include modifiers when ready
   const mapType = AWS.DynamoDB.Converter.marshall({
-    capacityModifier: 0,
-    baseCapacity: newBaseCapacity,
-    availablePasses: newResAvailability
+    capacityModifier: Number(newModifier),
+    baseCapacity: Number(newBaseCapacity),
+    availablePasses: Number(newResAvailability)
   });
   const updateReservationsObject = {
     TableName: TABLE_NAME,
@@ -131,15 +149,15 @@ async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, n
       ':type': { M: mapType }
     },
     ExpressionAttributeNames: {
-      '#type': type,
+      '#type': type
     },
-    UpdateExpression:
-      'SET capacities.#type = :type'
+    UpdateExpression: 'SET capacities.#type = :type',
+    ReturnValues: 'ALL_NEW'
   };
   logger.debug('updateReservationsObject:', updateReservationsObject);
   const res = await dynamodb.updateItem(updateReservationsObject).promise();
   logger.debug('Reservation object updated:' + res);
-  return;
+  return res;
 }
 
 async function checkForOverbookedPasses(facilityName, shortPassDate, type) {
@@ -158,7 +176,8 @@ async function checkForOverbookedPasses(facilityName, shortPassDate, type) {
       '#theType': 'type'
     },
     KeyConditionExpression: 'shortPassDate =:shortPassDate AND facilityName =:facilityName',
-    FilterExpression: '#theType =:passType AND isOverbooked =:isOverbooked AND passStatus IN (:reservedStatus, :activeStatus)'
+    FilterExpression:
+      '#theType =:passType AND isOverbooked =:isOverbooked AND passStatus IN (:reservedStatus, :activeStatus)'
   };
   let passes = [];
   try {
@@ -173,13 +192,13 @@ async function checkForOverbookedPasses(facilityName, shortPassDate, type) {
   return passes;
 }
 
-async function reverseOverbookedPasses(passes, passDiff) {
+async function reverseOverbookedPasses(passes, newResAvailability) {
   // Figure out which passes we want to reverse
   let passTally = 0;
   for (let i = 0; i < passes.length; i++) {
     const pass = passes[i];
-    if (passTally + pass.numberOfGuests > passDiff) {
-      break;
+    if (passTally + pass.numberOfGuests > newResAvailability) {
+      continue;
     }
     passTally += pass.numberOfGuests;
 
@@ -278,14 +297,48 @@ async function getOverbookedPassSet(passes, numberOfPassesOverbooked) {
     cancelledGuestTally += pass.numberOfGuests;
     overbookObj.overbookedPasses.push(pass);
     if (numberOfPassesOverbooked <= cancelledGuestTally) {
-      break;
+      continue;
     }
   }
   overbookObj.remainder = cancelledGuestTally - numberOfPassesOverbooked;
   return overbookObj;
 }
 
+async function getReservationObject(parkName, facilityName, date) {
+  const todaysShortDate = DateTime.now().setZone(TIMEZONE).toISODate();
+  const bookingPSTDateTime = DateTime.fromISO(date)
+    .setZone(TIMEZONE)
+    .set({
+      hour: 12,
+      minutes: 0,
+      seconds: 0,
+      milliseconds: 0
+    })
+    .toISODate();
+
+  if (bookingPSTDateTime < todaysShortDate) {
+    throw 'You can only edit future modifiers.';
+  }
+
+  const reservationsObjectQuery = {
+    TableName: TABLE_NAME,
+    ExpressionAttributeValues: {
+      ':pk': { S: `reservations::${parkName}::${facilityName}` },
+      ':date': { S: bookingPSTDateTime }
+    },
+    KeyConditionExpression: 'pk = :pk AND sk = :date'
+  };
+  try {
+    return await runQuery(reservationsObjectQuery);
+  } catch (error) {
+    logger.error('Error in getFutureReservationObjects', reservationsObjectQuery);
+    logger.error(error);
+    throw { msg: 'Something went wrong.', title: 'Operation Failed' };
+  }
+}
+
 module.exports = {
+  getReservationObject,
   getFutureReservationObjects,
   processReservationObjects
-}
+};
