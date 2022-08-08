@@ -241,19 +241,18 @@ exports.handler = async (event, context) => {
       try {
         const existingPassCheckObject = {
           TableName: TABLE_NAME,
-          KeyConditionExpression: 'pk = :pk',
+          IndexName: 'shortPassDate-index',
+          KeyConditionExpression: 'shortPassDate = :shortPassDate AND facilityName = :facilityName',
           FilterExpression:
-            'facilityName = :facilityName AND email = :email AND #type = :type AND begins_with(#date, :date) AND (passStatus = :reserved OR passStatus = :active)',
+            'email = :email AND #type = :type AND passStatus IN (:reserved, :active)',
           ExpressionAttributeNames: {
             '#type': 'type',
-            '#date': 'date'
           },
           ExpressionAttributeValues: {
-            ':pk': { S: 'pass::' + parkName },
             ':facilityName': { S: facilityName },
             ':email': { S: email },
             ':type': { S: type },
-            ':date': { S: bookingPSTShortDate },
+            ':shortPassDate': { S: bookingPSTShortDate },
             ':reserved': { S: 'reserved' },
             ':active': { S: 'active' }
           }
