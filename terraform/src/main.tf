@@ -70,6 +70,8 @@ resource "aws_lambda_function" "writeParkLambda" {
   handler = "lambda/writePark/index.handler"
   runtime = "nodejs14.x"
   publish = "true"
+  memory_size = 512
+  timeout = 10
 
   environment {
     variables = {

@@ -56,6 +56,8 @@ resource "aws_lambda_function" "writeFacilityLambda" {
   handler = "lambda/writeFacility/index.handler"
   runtime = "nodejs14.x"
   publish = "true"
+  memory_size = 768
+  timeout = 10
 
   environment {
     variables = {
