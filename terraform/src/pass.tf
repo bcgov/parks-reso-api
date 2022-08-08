@@ -54,7 +54,8 @@ resource "aws_lambda_function" "writePassLambda" {
 
   handler = "lambda/writePass/index.handler"
   runtime = "nodejs14.x"
-  timeout = 10
+  memory_size = 768
+  timeout = 20
   publish = "true"
 
   environment {
