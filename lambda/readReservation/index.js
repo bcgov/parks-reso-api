@@ -85,7 +85,16 @@ exports.handler = async (event, context) => {
 
     if (date) {
       if (getFutureReservationObjects) {
-        queryObj.ExpressionAttributeValues[':date'] = { S: date };
+        const bookingPSTDateTime = DateTime.fromISO(date)
+          .setZone(TIMEZONE)
+          .set({
+            hour: 12,
+            minutes: 0,
+            seconds: 0,
+            milliseconds: 0
+          })
+          .toISODate();
+        queryObj.ExpressionAttributeValues[':date'] = { S: bookingPSTDateTime };
         queryObj.KeyConditionExpression += ' AND sk >= :date';
       } else {
         // We are searching for a specific date.
