@@ -174,6 +174,7 @@ resource "aws_api_gateway_deployment" "apideploy" {
     aws_api_gateway_integration.captchaVerifyIntegration,
     aws_api_gateway_integration.captchaAudioIntegration,
     aws_api_gateway_integration.readReservationIntegration
+    aws_api_gateway_integration.putModifierIntegration
   ]
 
   rest_api_id = aws_api_gateway_rest_api.apiLambda.id
