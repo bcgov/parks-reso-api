@@ -268,7 +268,9 @@ exports.handler = async (event, context) => {
           throw error;
         }
 
-        if (existingItems.Count > 0 && !permissionObject.isAdmin) {
+        if (existingItems.Count === 0) {
+          logger.debug('No existing pass found. Creating new pass...');
+        } else {
           return sendResponse(400, {
             title: 'This email account already has a reservation for this booking time.',
             msg: 'A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>'
