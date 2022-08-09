@@ -17,11 +17,12 @@ exports.handler = async (event, context) => {
   try {
     if (!event.queryStringParameters || !event.queryStringParameters.park || !event.queryStringParameters.facility) {
       return sendResponse(400, { msg: 'Invalid Request' }, context);
-    };
+    }
 
     const park = event.queryStringParameters.park;
     const facility = event.queryStringParameters.facility;
     const date = event.queryStringParameters.date || '';
+    const getFutureReservationObjects = event.queryStringParameters.getFutureReservationObjects || false;
     let facilityObj = {};
     let bookingWindow = [date];
 
@@ -32,42 +33,44 @@ exports.handler = async (event, context) => {
       // Auth'd users must provide a date.
       if (!date) {
         return sendResponse(400, { msg: 'Please provide a date.' });
-      };
+      }
       if (permissionObject.isAdmin) {
         logger.debug('**SYSADMIN**');
       } else {
         logger.debug('**AUTHENTICATED, NOT SYSADMIN**');
         let parkObj = await getPark(park.sk, true);
 
-        // Check roles. 
+        // Check roles.
         logger.debug('Roles:', permissionObject.roles);
         parkObj = await roleFilter(park, permissionObject.roles);
 
-        // If user does not have correct park role, then they are not authorized. 
+        // If user does not have correct park role, then they are not authorized.
         if (park.length < 1) {
           return sendResponse(403, { msg: 'Unauthorized' }, context);
-        };
-      };
+        }
+      }
     } else {
       // If public, we have to check park/facility visibility first.
       logger.debug('**NOT AUTHENTICATED, PUBLIC**');
       let parkObj = await getPark(park);
       if (!parkObj) {
         return sendResponse(404, { msg: 'Park not found' }, context);
-      };
+      }
       facilityObj = await getFacility(park, facility);
       if (!facilityObj) {
         return sendResponse(404, { msg: 'Facility not found' }, context);
-      };
+      }
 
       const window = getBookingWindow(facilityObj);
 
       if (!date) {
         bookingWindow = window;
       } else if (!window.includes(date)) {
-        return sendResponse(400, { msg: `Provided date must be between today's date and ${facilityObj.bookingDaysAhead} days in the future` });
-      };
-    };
+        return sendResponse(400, {
+          msg: `Provided date must be between today's date and ${facilityObj.bookingDaysAhead} days in the future`
+        });
+      }
+    }
 
     // Build the reservation query object.
     logger.debug('Grab reservations for facility:', facility);
@@ -81,29 +84,43 @@ exports.handler = async (event, context) => {
     };
 
     if (date) {
-      // We are searching for a specific date.
-      queryObj.ExpressionAttributeValues[':date'] = { S: date };
-      queryObj.KeyConditionExpression += ' AND sk = :date';
+      if (getFutureReservationObjects) {
+        const bookingPSTDateTime = DateTime.fromISO(date)
+          .setZone(TIMEZONE)
+          .set({
+            hour: 12,
+            minutes: 0,
+            seconds: 0,
+            milliseconds: 0
+          })
+          .toISODate();
+        queryObj.ExpressionAttributeValues[':date'] = { S: bookingPSTDateTime };
+        queryObj.KeyConditionExpression += ' AND sk >= :date';
+      } else {
+        // We are searching for a specific date.
+        queryObj.ExpressionAttributeValues[':date'] = { S: date };
+        queryObj.KeyConditionExpression += ' AND sk = :date';
+      }
     } else {
       // We must be public, and we want to pull the whole date window.
       queryObj.ExpressionAttributeValues[':startDate'] = { S: bookingWindow[0] };
       queryObj.ExpressionAttributeValues[':endDate'] = { S: bookingWindow[bookingWindow.length - 1] };
       queryObj.KeyConditionExpression += ' AND sk BETWEEN :startDate AND :endDate';
-    };
+    }
 
     let reservations = await runQuery(queryObj);
 
     // Format/filter public results.
     if (!permissionObject.isAuthenticated) {
       reservations = formatPublicResults(reservations, facilityObj, bookingWindow);
-    };
+    }
 
-    logger.debug('GET reservations:', reservations)
+    logger.debug('GET reservations:', reservations);
     return sendResponse(200, reservations);
   } catch (err) {
     logger.error('ERROR:', err);
     return sendResponse(400, { msg: err }, context);
-  };
+  }
 };
 
 // Filter fields from public results.
@@ -116,10 +133,10 @@ function formatPublicResults(reservations, facility, bookingWindow) {
         max: checkMaxPasses(facility, value.availablePasses)
       };
       publicObj[reservation.sk][key] = bookingSlot;
-    };
-  };
+    }
+  }
   return publicObj;
-};
+}
 
 // Build empty public template to be populated with real reservation data if it exists.
 function buildPublicTemplate(facility, bookingWindow) {
@@ -132,10 +149,10 @@ function buildPublicTemplate(facility, bookingWindow) {
         max: checkMaxPasses(facility)
       };
       template[date] = dateEntry;
-    };
-  };
+    }
+  }
   return template;
-};
+}
 
 // Get array of shortDates between today and max future look ahead date.
 function getBookingWindow(facilityObj) {
@@ -144,9 +161,9 @@ function getBookingWindow(facilityObj) {
   let dates = [];
   for (let i = 0; i <= lookAheadDays; i++) {
     dates.push(today.plus({ days: i }).toISODate());
-  };
+  }
   return dates;
-};
+}
 
 // Get capacity level (high, med, low, none) of a facility.
 function getCapacityLevel(base, available, modifier) {
@@ -161,10 +178,10 @@ function getCapacityLevel(base, available, modifier) {
     return 'Low';
   } else {
     return 'Full';
-  };
-};
+  }
+}
 
-function checkMaxPasses(facility, availablePasses = null){
+function checkMaxPasses(facility, availablePasses = null) {
   let max = 1;
   switch (facility.type) {
     case 'Parking':
@@ -173,9 +190,9 @@ function checkMaxPasses(facility, availablePasses = null){
     case 'Trail':
       max = TRAIL_MAX_PER_PASS;
       break;
-  };
-  if (availablePasses > max){
+  }
+  if (availablePasses > max) {
     return max;
-  };
+  }
   return availablePasses ?? max;
-};
+}
