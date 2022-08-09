@@ -35,28 +35,47 @@ exports.handler = async (event, context) => {
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
+  let obj = null;
+
   try {
     logger.debug(event.body);
-    const obj = JSON.parse(event.body);
+    obj = JSON.parse(event.body);
+  } catch (e) {
+    logger.error('e', e);
+    return sendResponse(400, e, context);
+  }
 
-    try {
-      await getParkAccess(obj.parkName, permissionObject);
-    } catch (error) {
-      logger.error('ERR:', error);
-      return sendResponse(403, { msg: error.msg });
-    }
-    const res = await updateModifier(obj);
+  const { date, bookingTimes, parkName, facility } = obj;
+
+  try {
+    await getParkAccess(parkName, permissionObject);
+  } catch (error) {
+    logger.error('ERR:', error);
+    return sendResponse(403, { msg: error.msg });
+  }
+
+  try {
+    // Set facility lock and get facility
+    // This also locks reservation objects for that facility to be messed with.
+    // This can be assumed because any other possible way to edit reservation objects are protected by the same facility lock
+    const currentFacility = await setFacilityLock(`facility::${parkName}`, facility);
+
+    // Apply the update to the locked facility
+    const res = await updateModifier(date, bookingTimes, parkName, facility, currentFacility.bookingTimes);
+
+    // Unlock before returning.
+    await unlockFacility(`facility::${parkName}`, facility);
+
     return sendResponse(200, res);
   } catch (err) {
     logger.error('err', err);
-    await unlockFacility(`facility::${obj.parkName}`, obj.facility);
+    // Attempt to unlock the facility if we broke after it locked.
+    await unlockFacility(`facility::${parkName}`, facility);
     return sendResponse(400, err, context);
   }
 };
 
-async function updateModifier(obj) {
-  const { date, bookingTimes, parkName, facility } = obj;
-
+async function updateModifier(date, bookingTimes, parkName, facility, facilityBookingTimes) {
   const bookingPSTDateTime = DateTime.fromISO(date)
     .setZone(TIMEZONE)
     .set({
@@ -69,14 +88,9 @@ async function updateModifier(obj) {
 
   const reservationsObjectPK = `reservations::${parkName}::${facility}`;
 
-  // Set facility lock and get facility
-  // This also locks reservation objects for that facility to be messed with.
-  // This can be assumed because any other possible way to edit reservation objects are protected by the same facility lock
-  const currentFacility = await setFacilityLock(`facility::${parkName}`, facility);
-
   // Apply modifier - ReservationObjUtil will handle available pass logic.
   //// Ensure the res obj exists
-  await createNewReservationsObj(currentFacility.bookingTimes, reservationsObjectPK, bookingPSTDateTime);
+  await createNewReservationsObj(facilityBookingTimes, reservationsObjectPK, bookingPSTDateTime);
   //// Get modifier via date
   const reservationObj = await getReservationObject(parkName, facility, date);
 
@@ -85,7 +99,7 @@ async function updateModifier(obj) {
   let timesToUpdate = [];
   for (const time in bookingTimes) {
     // If no time slot exists, we skip
-    if (time in currentFacility.bookingTimes) {
+    if (time in facilityBookingTimes) {
       timesToUpdate.push({
         time: time,
         modifierToSet: Number(bookingTimes[time])
@@ -98,9 +112,6 @@ async function updateModifier(obj) {
   if (timesToUpdate.length > 0) {
     res = await processReservationObjects(reservationObj, timesToUpdate, []);
   }
-
-  // Unlock facility
-  await unlockFacility(`facility::${parkName}`, facility);
 
   return res;
 }
