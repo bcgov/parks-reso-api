@@ -304,17 +304,8 @@ async function getOverbookedPassSet(passes, numberOfPassesOverbooked) {
   return overbookObj;
 }
 
-async function getReservationObject(parkName, facilityName, date) {
+async function getReservationObject(parkName, facilityName, bookingPSTDateTime) {
   const todaysShortDate = DateTime.now().setZone(TIMEZONE).toISODate();
-  const bookingPSTDateTime = DateTime.fromISO(date)
-    .setZone(TIMEZONE)
-    .set({
-      hour: 12,
-      minutes: 0,
-      seconds: 0,
-      milliseconds: 0
-    })
-    .toISODate();
 
   if (bookingPSTDateTime < todaysShortDate) {
     throw 'You can only edit future modifiers.';

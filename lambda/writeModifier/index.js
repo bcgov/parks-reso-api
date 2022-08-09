@@ -76,21 +76,11 @@ exports.handler = async (event, context) => {
 };
 
 async function updateModifier(date, bookingTimes, parkName, facility, facilityBookingTimes) {
-  const bookingPSTDateTime = DateTime.fromISO(date)
-    .setZone(TIMEZONE)
-    .set({
-      hour: 12,
-      minutes: 0,
-      seconds: 0,
-      milliseconds: 0
-    })
-    .toISODate();
-
   const reservationsObjectPK = `reservations::${parkName}::${facility}`;
 
   // Apply modifier - ReservationObjUtil will handle available pass logic.
   //// Ensure the res obj exists
-  await createNewReservationsObj(facilityBookingTimes, reservationsObjectPK, bookingPSTDateTime);
+  await createNewReservationsObj(facilityBookingTimes, reservationsObjectPK, date);
   //// Get modifier via date
   const reservationObj = await getReservationObject(parkName, facility, date);
 
