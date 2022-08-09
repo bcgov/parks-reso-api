@@ -1,0 +1,649 @@
+{
+	"info": {
+		"_postman_id": "b3d690ff-4dd1-4793-92a0-8cb1d6319bf0",
+		"name": "BCParks Day Use Pass API",
+		"description": "API endpoints for the BCParks Day Use Pass System.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "14509064"
+	},
+	"item": [
+		{
+			"name": "Passes",
+			"item": [
+				{
+					"name": "Get Pass",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}pass?park=Joffre Lakes Provincial Park&passId=07377107&email=email",
+							"host": [
+								"{{base_url}}pass"
+							],
+							"query": [
+								{
+									"key": "park",
+									"value": "Joffre Lakes Provincial Park",
+									"description": "Park name"
+								},
+								{
+									"key": "passId",
+									"value": "07377107",
+									"description": "Pass reservation number"
+								},
+								{
+									"key": "email",
+									"value": "email",
+									"description": "Pass owner's email address"
+								}
+							]
+						},
+						"description": "Sends a reservation cancellation email to the provided address if the reservation exists. The owner of the email address has 15 minutes to go into their email and confirm their cancellation."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Pass (Auth)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}pass?park=Joffre Lakes Provincial Park&facilityName=Joffre Lakes&passType=DAY",
+							"host": [
+								"{{base_url}}pass"
+							],
+							"query": [
+								{
+									"key": "park",
+									"value": "Joffre Lakes Provincial Park",
+									"description": "Name of park"
+								},
+								{
+									"key": "facilityName",
+									"value": "Joffre Lakes",
+									"description": "Name of facility"
+								},
+								{
+									"key": "passType",
+									"value": "DAY",
+									"description": "Pass type (AM, PM, DAY)"
+								},
+								{
+									"key": "date",
+									"value": "2022-07-26",
+									"description": "(optional) Date in YYYY-MM-DD format. ",
+									"disabled": true
+								},
+								{
+									"key": "passes",
+									"value": "true",
+									"description": "(optional) get all passes for provided park.",
+									"disabled": true
+								},
+								{
+									"key": "reservationNumber",
+									"value": "485646064",
+									"description": "(optional) Pass reservation number (unique ID). For getting a single pass. Must provide `park` and `facilityName`.",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "active",
+									"description": "(optional) Filter pass status (reserved, active, expired, cancelled)",
+									"disabled": true
+								},
+								{
+									"key": "firstName",
+									"value": "joe",
+									"description": "(optional) Filter pass first name",
+									"disabled": true
+								},
+								{
+									"key": "lastName",
+									"value": "mama",
+									"description": "(optional) Filter pass last name",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Pass",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"numberOfGuests\": 1,\r\n    \"lastName\": \"lastName\",\r\n    \"facilityName\": \"Cheakamus\",\r\n    \"email\": \"email\",\r\n    \"firstName\": \"firstName\",\r\n    \"date\": \"2022-07-28T11:00:00.003-07:00\",\r\n    \"type\": \"PM\",\r\n    \"parkName\": \"Garibaldi Provincial Park\",\r\n    \"phoneNumber\": 1234567890,\r\n    \"facilityType\": \"Trail\",\r\n    \"license\": \"abc123\",\r\n    \"maplink\": \"www.google.ca/maps\",\r\n    \"captchaJwt\": \"{{captcha_jwt}}\"\r\n}\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}pass",
+							"host": [
+								"{{base_url}}pass"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Pass (Auth)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"numberOfGuests\": 8,\r\n    \"lastName\": \"lastName\",\r\n    \"facilityName\": \"Joffre Lakes\",\r\n    \"email\": \"email\",\r\n    \"firstName\": \"firstName\",\r\n    \"date\": \"2022-08-14T11:00:00.003-07:00\",\r\n    \"type\": \"DAY\",\r\n    \"parkName\": \"Joffre Lakes Provincial Park\"\r\n}\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}pass",
+							"host": [
+								"{{base_url}}pass"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Pass",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/api/pass?passId=10727135&park=Garibaldi Provincial Park&code=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJiY3BhcmtzLWxhbWJkYSIsInN1YiI6InJlYWRQYXNzIiwicGFzc0lkIjoiMzY3NTY5IiwicGFya05hbWUiOiJSYXRodHJldm9yIiwiaWF0IjoxNjIzMzU1NTQxLCJleHAiOjE2MjMzNTY0NDF9.5dWfAK1xc-W0R74T425yaVe9QCDrVdYE_2aONYfRPWE",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"pass"
+							],
+							"query": [
+								{
+									"key": "passId",
+									"value": "10727135",
+									"description": "Pass reservation number (unique ID)"
+								},
+								{
+									"key": "park",
+									"value": "Garibaldi Provincial Park",
+									"description": "Park name"
+								},
+								{
+									"key": "code",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJiY3BhcmtzLWxhbWJkYSIsInN1YiI6InJlYWRQYXNzIiwicGFzc0lkIjoiMzY3NTY5IiwicGFya05hbWUiOiJSYXRodHJldm9yIiwiaWF0IjoxNjIzMzU1NTQxLCJleHAiOjE2MjMzNTY0NDF9.5dWfAK1xc-W0R74T425yaVe9QCDrVdYE_2aONYfRPWE",
+									"description": "15 minute expiry jwt received from email."
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Pass (Auth)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/api/pass?passId=680217705&park=Joffre Lakes Provincial Park",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"pass"
+							],
+							"query": [
+								{
+									"key": "passId",
+									"value": "680217705",
+									"description": "Pass reservation number (unique ID)"
+								},
+								{
+									"key": "park",
+									"value": "Joffre Lakes Provincial Park",
+									"description": "Park name"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Passes : GET / POST / DELETE"
+		},
+		{
+			"name": "Parks",
+			"item": [
+				{
+					"name": "Get Parks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}park",
+							"host": [
+								"{{base_url}}park"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Park (Auth)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"park\": {\r\n        \"name\": \"park1\",\r\n        \"orcs\": \"0000\",\r\n        \"bcParksLink\": \"www.google.ca\",\r\n        \"mapLink\": \"https://wwwd.bcparks.ca/explore/parkpgs/mt_seymour/parking-map.pdf\",\r\n        \"status\": \"open\",\r\n        \"capacity\": 150\r\n    },\r\n    \"description\": \"<p>This is a park description.</p>\",\r\n    \"visible\": true,\r\n    \"facilities\": []\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}park",
+							"host": [
+								"{{base_url}}park"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Edit Park (Auth)",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"pk\": \"park\",\r\n    \"sk\": \"0000\",\r\n    \"park\": {\r\n        \"name\": \"park1\",\r\n        \"orcs\": \"0000\",\r\n        \"bcParksLink\": \"www.google.ca\",\r\n        \"mapLink\": \"https://wwwd.bcparks.ca/explore/parkpgs/mt_seymour/parking-map.pdf\",\r\n        \"status\": \"open\",\r\n        \"capacity\": 150\r\n    },\r\n    \"description\": \"<p>This is a park description.</p>\",\r\n    \"visible\": true,\r\n    \"facilities\": []\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}park",
+							"host": [
+								"{{base_url}}park"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Parks: GET / POST / PUT"
+		},
+		{
+			"name": "Facilities",
+			"item": [
+				{
+					"name": "Get Park Facilities",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}facility?facilities=true&park=Garibaldi Provincial Park",
+							"host": [
+								"{{base_url}}facility"
+							],
+							"query": [
+								{
+									"key": "facilities",
+									"value": "true",
+									"description": "Get multiple facilities"
+								},
+								{
+									"key": "park",
+									"value": "Garibaldi Provincial Park",
+									"description": "Park Name"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Facility",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}facility?park=Garibaldi Provincial Park&facilityName=Cheakamus",
+							"host": [
+								"{{base_url}}facility"
+							],
+							"query": [
+								{
+									"key": "park",
+									"value": "Garibaldi Provincial Park",
+									"description": "Park Name"
+								},
+								{
+									"key": "facilityName",
+									"value": "Cheakamus",
+									"description": "Facility Name"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Facility (Auth)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"facility1\",\r\n    \"status\": {\r\n        \"state\": \"open\",\r\n        \"stateReason\": null\r\n    },\r\n    \"type\": \"Parking\",\r\n    \"visible\": true,\r\n    \"bookingTimes\": {\r\n        \"AM\": {\r\n            \"max\": 20\r\n        },\r\n        \"PM\": {\r\n            \"max\": 30\r\n        }\r\n    },\r\n    \"parkName\": \"Joffre Lakes Provincial Park\",\r\n    \"bookingOpeningHour\": null,\r\n    \"bookingDaysAhead\": null\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}facility",
+							"host": [
+								"{{base_url}}facility"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Edit Facility (Auth)",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"pk\": \"facility::Joffre Lakes Provincial Park\",\r\n    \"sk\": \"facility1\",\r\n    \"name\": \"facility1\",\r\n    \"status\": {\r\n        \"state\": \"open\",\r\n        \"stateReason\": null\r\n    },\r\n    \"type\": \"Parking\",\r\n    \"visible\": true,\r\n    \"bookingTimes\": {\r\n        \"AM\": {\r\n            \"max\": 20\r\n        },\r\n        \"PM\": {\r\n            \"max\": 32\r\n        }\r\n    },\r\n    \"parkName\": \"Joffre Lakes Provincial Park\",\r\n    \"bookingOpeningHour\": null,\r\n    \"bookingDaysAhead\": null,\r\n    \"mode\": \"editFacililty\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}facility",
+							"host": [
+								"{{base_url}}facility"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Facilities: GET / POST / PUT"
+		},
+		{
+			"name": "Reservations",
+			"item": [
+				{
+					"name": "Get Reservations (No Auth)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}reservation?park=Joffre Lakes Provincial Park&facility=Joffre Lakes",
+							"host": [
+								"{{base_url}}reservation"
+							],
+							"query": [
+								{
+									"key": "park",
+									"value": "Joffre Lakes Provincial Park",
+									"description": "Park name"
+								},
+								{
+									"key": "facility",
+									"value": "Joffre Lakes",
+									"description": "Facility name"
+								},
+								{
+									"key": "date",
+									"value": "2022-08-12",
+									"description": "(optional) Date (YYYY-MM-DD)",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Reservations: GET"
+		},
+		{
+			"name": "Metrics",
+			"item": [
+				{
+					"name": "Get Metrics (Auth)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}metric?type=passTotals",
+							"host": [
+								"{{base_url}}metric"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "passTotals",
+									"description": "Type of metric to pull"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Metrics: GET"
+		},
+		{
+			"name": "Config",
+			"item": [
+				{
+					"name": "Get Config",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}config",
+							"host": [
+								"{{base_url}}config"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Config: GET"
+		},
+		{
+			"name": "Modifiers",
+			"item": [
+				{
+					"name": "Edit Modifier (Auth)",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"date\": \"2022-08-08T19:00:00.000Z\",\r\n    \"bookingTimes\": {\r\n        \"PM\": \"2\"\r\n    },\r\n    \"parkName\": \"Garibaldi Provincial Park\",\r\n    \"facility\": \"Cheakamus\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}modifier",
+							"host": [
+								"{{base_url}}modifier"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "oauth2",
+		"oauth2": [
+			{
+				"key": "tokenName",
+				"value": "{{token_name}}",
+				"type": "string"
+			},
+			{
+				"key": "clientId",
+				"value": "{{client_id}}",
+				"type": "string"
+			},
+			{
+				"key": "redirect_uri",
+				"value": "{{callback_url}}",
+				"type": "string"
+			},
+			{
+				"key": "accessTokenUrl",
+				"value": "{{access_token_url}}",
+				"type": "string"
+			},
+			{
+				"key": "authUrl",
+				"value": "{{auth_url}}",
+				"type": "string"
+			},
+			{
+				"key": "challengeAlgorithm",
+				"value": "S256",
+				"type": "string"
+			},
+			{
+				"key": "grant_type",
+				"value": "authorization_code",
+				"type": "string"
+			},
+			{
+				"key": "addTokenTo",
+				"value": "header",
+				"type": "string"
+			},
+			{
+				"key": "client_authentication",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
