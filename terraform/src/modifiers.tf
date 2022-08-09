@@ -43,6 +43,16 @@ resource "aws_api_gateway_method" "putModifierMethod" {
   authorization = "NONE"
 }
 
+resource "aws_api_gateway_integration" "putModifierIntegration" {
+  rest_api_id = aws_api_gateway_rest_api.apiLambda.id
+  resource_id = aws_api_gateway_resource.modifierResource.id
+  http_method = aws_api_gateway_method.putModifierMethod.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.writeModifierLambda.invoke_arn
+}
+
 resource "aws_lambda_permission" "putModifierPermission" {
   statement_id  = "AllowParksDayUseModifierAPIInvokePut"
   action        = "lambda:InvokeFunction"
