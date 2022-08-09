@@ -173,7 +173,7 @@ resource "aws_api_gateway_deployment" "apideploy" {
     aws_api_gateway_integration.generateCaptchaIntegration,
     aws_api_gateway_integration.captchaVerifyIntegration,
     aws_api_gateway_integration.captchaAudioIntegration,
-    aws_api_gateway_integration.readReservationIntegration
+    aws_api_gateway_integration.readReservationIntegration,
     aws_api_gateway_integration.putModifierIntegration
   ]
 
