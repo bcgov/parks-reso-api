@@ -26,6 +26,7 @@ async function getFutureReservationObjects(parkName, facilityName) {
 }
 
 async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) {
+  let resArray = [];
   for (let i = 0; i < resObjs.length; i++) {
     let resObj = resObjs[i];
     for (let k = 0; k < timesToRemove.length; k++) {
@@ -50,7 +51,7 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
       }
     }
     for (let j = 0; j < timesToUpdate.length; j++) {
-      const timeToUpdate = timesToUpdate[i];
+      const timeToUpdate = timesToUpdate[j];
 
       if (timeToUpdate.capacityToSet == null && timeToUpdate.modifierToSet == null) {
         logger.error('Neither a new base capacity or a new modifier was provided. Skipping.');
@@ -116,13 +117,15 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
         }
       }
       try {
-        return await updateReservationsObjectCapacity(
-          resObj.pk,
-          resObj.sk,
-          timeToUpdate.time,
-          newBaseCapacity,
-          newModifier,
-          newResAvailability
+        resArray.push(
+          await updateReservationsObjectCapacity(
+            resObj.pk,
+            resObj.sk,
+            timeToUpdate.time,
+            newBaseCapacity,
+            newModifier,
+            newResAvailability
+          )
         );
       } catch (error) {
         logger.error('Error occured while executing updateReservationsObjectCapacity()', error);
@@ -130,6 +133,7 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
       }
     }
   }
+  return resArray;
 }
 
 async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, newModifier, newResAvailability) {
