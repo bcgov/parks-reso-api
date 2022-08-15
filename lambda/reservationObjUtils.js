@@ -296,14 +296,13 @@ async function getOverbookedPassSet(passes, numberOfPassesOverbooked) {
     remainder: 0
   };
   let cancelledGuestTally = 0;
-  for (let i = 0; i < passes.length; i++) {
+  let i = 0;
+  do {
     const pass = passes[i];
     cancelledGuestTally += pass.numberOfGuests;
     overbookObj.overbookedPasses.push(pass);
-    if (numberOfPassesOverbooked <= cancelledGuestTally) {
-      continue;
-    }
-  }
+    i += 1;
+  } while (i < passes.length && cancelledGuestTally < numberOfPassesOverbooked);
   overbookObj.remainder = cancelledGuestTally - numberOfPassesOverbooked;
   return overbookObj;
 }
