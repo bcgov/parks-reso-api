@@ -44,7 +44,7 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
       }
       try {
         // update future removed booking times to 0 capacity, 0 availability
-        await updateReservationsObjectCapacity(resObj.pk, resObj.sk, timeToRemove.time, 0, 0);
+        await updateReservationsObjectCapacity(resObj.pk, resObj.sk, timeToRemove.time, 0, 0, 0);
       } catch (error) {
         logger.error('Error removing passes in updatereservationObjectCapacity():', error);
         throw error;
