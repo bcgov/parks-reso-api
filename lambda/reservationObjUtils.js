@@ -58,23 +58,34 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
         continue;
       }
 
-      const oldResAvailability = resObj.capacities[timeToUpdate.time].availablePasses;
+      let oldResAvailability, oldBaseCapacity, newBaseCapacity, oldModifier, newModifier, newResAvailability;
+      try {
+        if (resObj.capacities[timeToUpdate.time]) {
+          // time slot exists in res obj
+          oldResAvailability = resObj.capacities[timeToUpdate.time].availablePasses;
+          oldBaseCapacity = resObj.capacities[timeToUpdate.time].baseCapacity;
+          oldModifier = resObj.capacities[timeToUpdate.time].capacityModifier;
+        } else {
+          // new time slot
+          oldResAvailability = 0;
+          oldBaseCapacity = 0;
+          oldModifier = 0;
+        }
 
-      // Base capacity
-      const oldBaseCapacity = resObj.capacities[timeToUpdate.time].baseCapacity;
-      const newBaseCapacity = timeToUpdate.capacityToSet ?? oldBaseCapacity;
+        newBaseCapacity = timeToUpdate.capacityToSet ?? oldBaseCapacity;
+        newModifier = timeToUpdate.modifierToSet ?? oldModifier;
 
-      // Modiifier
-      const oldModifier = resObj.capacities[timeToUpdate.time].capacityModifier;
-      const newModifier = timeToUpdate.modifierToSet ?? oldModifier;
+        if (newBaseCapacity + newModifier < 0) {
+          logger.error('New total capacity cannot be negative');
+          continue;
+        }
 
-      if (newBaseCapacity + newModifier < 0) {
-        logger.error('New total capacity cannot be negative');
-        continue;
+        //a1 = a0 + c1 - c0 + m1 - m0 + f(p)
+        newResAvailability = oldResAvailability + newBaseCapacity - oldBaseCapacity + newModifier - oldModifier;
+      } catch (error) {
+        logger.error('Error calculating newResAvailability', error);
+        throw error;
       }
-
-      //a1 = a0 + c1 - c0 + m1 - m0 + f(p)
-      let newResAvailability = oldResAvailability + newBaseCapacity - oldBaseCapacity + newModifier - oldModifier;
 
       // If newResAvailability is negative, then we have overbooked passes.
       // This logic handles the `+ f(p)` portion of the formula
