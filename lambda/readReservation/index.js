@@ -1,14 +1,9 @@
 const { runQuery, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE, getPark, getFacility } = require('../dynamoUtil');
+const { formatPublicReservationObject } = require('../writeReservation')
 const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions, roleFilter } = require('../permissionUtil');
 const { logger } = require('../logger');
 const { DateTime } = require('luxon');
-
-// TODO: provide these as vars in Parameter Store
-const LOW_CAPACITY_THRESHOLD = process.env.LOW_CAPACITY_THRESHOLD || 0.25;
-const MODERATE_CAPACITY_THRESHOLD = process.env.MODERATE_CAPACITY_THRESHOLD || 0.75;
-const PARKING_MAX_PER_PASS = 1;
-const TRAIL_MAX_PER_PASS = 4;
 
 exports.handler = async (event, context) => {
   logger.debug('Read Reservation', event);
@@ -112,7 +107,7 @@ exports.handler = async (event, context) => {
 
     // Format/filter public results.
     if (!permissionObject.isAuthenticated) {
-      reservations = formatPublicResults(reservations, facilityObj, bookingWindow);
+      reservations = formatPublicReservationObject(reservations, facilityObj, bookingWindow);
     }
 
     logger.debug('GET reservations:', reservations);
@@ -122,37 +117,6 @@ exports.handler = async (event, context) => {
     return sendResponse(400, { msg: err }, context);
   }
 };
-
-// Filter fields from public results.
-function formatPublicResults(reservations, facility, bookingWindow) {
-  let publicObj = buildPublicTemplate(facility, bookingWindow);
-  for (let reservation of reservations) {
-    for (const [key, value] of Object.entries(reservation.capacities)) {
-      const bookingSlot = {
-        capacity: getCapacityLevel(value.baseCapacity, value.availablePasses, value.capacityModifier),
-        max: checkMaxPasses(facility, value.availablePasses)
-      };
-      publicObj[reservation.sk][key] = bookingSlot;
-    }
-  }
-  return publicObj;
-}
-
-// Build empty public template to be populated with real reservation data if it exists.
-function buildPublicTemplate(facility, bookingWindow) {
-  let template = {};
-  for (let date of bookingWindow) {
-    let dateEntry = {};
-    for (const key of Object.keys(facility.bookingTimes)) {
-      dateEntry[key] = {
-        capacity: 'High',
-        max: checkMaxPasses(facility)
-      };
-      template[date] = dateEntry;
-    }
-  }
-  return template;
-}
 
 // Get array of shortDates between today and max future look ahead date.
 function getBookingWindow(facilityObj) {
@@ -165,34 +129,3 @@ function getBookingWindow(facilityObj) {
   return dates;
 }
 
-// Get capacity level (high, med, low, none) of a facility.
-function getCapacityLevel(base, available, modifier) {
-  const capacity = base + modifier;
-  const booked = capacity - available;
-  const percentage = booked / capacity;
-  if (percentage < LOW_CAPACITY_THRESHOLD) {
-    return 'High';
-  } else if (percentage < MODERATE_CAPACITY_THRESHOLD) {
-    return 'Moderate';
-  } else if (percentage < 1) {
-    return 'Low';
-  } else {
-    return 'Full';
-  }
-}
-
-function checkMaxPasses(facility, availablePasses = null) {
-  let max = 1;
-  switch (facility.type) {
-    case 'Parking':
-      max = PARKING_MAX_PER_PASS;
-      break;
-    case 'Trail':
-      max = TRAIL_MAX_PER_PASS;
-      break;
-  }
-  if (availablePasses > max) {
-    return max;
-  }
-  return availablePasses ?? max;
-}

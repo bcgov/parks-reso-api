@@ -1,11 +1,10 @@
 const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions, getParkAccess } = require('../permissionUtil');
-const { TIMEZONE } = require('../dynamoUtil');
 const { logger } = require('../logger');
 const { setFacilityLock, unlockFacility } = require('../facilityUtils');
 const { createNewReservationsObj } = require('../writeReservation');
 const { processReservationObjects, getReservationObject } = require('../reservationObjUtils');
-const { DateTime } = require('luxon');
+const AWS = require('aws-sdk');
 
 // Example Payload:
 // {
@@ -61,7 +60,7 @@ exports.handler = async (event, context) => {
     const currentFacility = await setFacilityLock(`facility::${parkName}`, facility);
 
     // Apply the update to the locked facility
-    const res = await updateModifier(date, bookingTimes, parkName, facility, currentFacility.bookingTimes);
+    const res = await updateModifier(date, bookingTimes, parkName, currentFacility);
 
     // Unlock before returning.
     await unlockFacility(`facility::${parkName}`, facility);
@@ -75,33 +74,41 @@ exports.handler = async (event, context) => {
   }
 };
 
-async function updateModifier(date, bookingTimes, parkName, facility, facilityBookingTimes) {
-  const reservationsObjectPK = `reservations::${parkName}::${facility}`;
-
-  // Apply modifier - ReservationObjUtil will handle available pass logic.
-  //// Ensure the res obj exists
-  await createNewReservationsObj(facilityBookingTimes, reservationsObjectPK, date);
-  //// Get modifier via date
-  const reservationObj = await getReservationObject(parkName, facility, date);
-
-  // Make sure all modifiers are actually booking types we have active in the facility
-  //// Build timesToUpdate
-  let timesToUpdate = [];
-  for (const time in bookingTimes) {
-    // If no time slot exists, we skip
-    if (time in facilityBookingTimes) {
-      timesToUpdate.push({
-        time: time,
-        modifierToSet: Number(bookingTimes[time])
-      });
+async function updateModifier(date, modTimes, parkName, currentFacility) {
+  try {
+    if (!currentFacility || !currentFacility.name || !currentFacility.bookingTimes) {
+      throw 'Could not GET current facility';
     }
-  }
 
-  //// Update res objects
-  let res;
-  if (timesToUpdate.length > 0) {
-    res = await processReservationObjects(reservationObj, timesToUpdate, []);
-  }
+    const reservationsObjectPK = `reservations::${parkName}::${currentFacility.name}`;
+    
+    // Apply modifier - ReservationObjUtil will handle available pass logic.
+    //// Ensure the res obj exists
+    await createNewReservationsObj(currentFacility, reservationsObjectPK, date);
+    //// Get modifier via date
+    const reservationObj = await getReservationObject(parkName, currentFacility.name, date);
+    // Make sure all modifiers are actually booking types we have active in the facility
+    //// Build timesToUpdate
+    let timesToUpdate = [];
+    for (const time in modTimes) {
+      // If no time slot exists, we skip
+      if (time in currentFacility.bookingTimes) {
+        timesToUpdate.push({
+          time: time,
+          modifierToSet: Number(modTimes[time])
+        });
+      }
+    }
+    //// Update res objects
+    let res;
+    if (timesToUpdate.length > 0) {
+      res = await processReservationObjects(reservationObj, timesToUpdate, []);
+    }
+    return res;
 
-  return res;
+  } catch (error) {
+    logger.error("Error updating modifier");
+    throw error;
+  }
+    
 }

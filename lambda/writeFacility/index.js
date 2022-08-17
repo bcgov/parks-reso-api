@@ -1,9 +1,11 @@
 const AWS = require('aws-sdk');
 
-const { dynamodb, TABLE_NAME } = require('../dynamoUtil');
+const { dynamodb, TABLE_NAME, TIMEZONE } = require('../dynamoUtil');
+const { DateTime } = require('luxon');
 const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions, getParkAccess } = require('../permissionUtil');
 const { logger } = require('../logger');
+const { createNewReservationsObj } = require('../writeReservation');
 const { processReservationObjects, getFutureReservationObjects } = require('../reservationObjUtils');
 const { unlockFacility, setFacilityLock } = require('../facilityUtils');
 
@@ -115,7 +117,7 @@ async function updateFacility(obj) {
     const currentFacility = await setFacilityLock(`facility::${parkName}`, sk);
 
     // Check if we are updating booking times
-    if (!deepEqual(bookingTimes, currentFacility.bookingTimes)) {
+    if (!deepEqual(obj, currentFacility)) {
       // We need to ensure that our future reservation objects are up to date
       let timesToUpdate = [];
       for (const bookingTime in bookingTimes) {
@@ -140,13 +142,19 @@ async function updateFacility(obj) {
           });
         }
       }
+      // Status is changing.
+      let newStatus;
+      if (status.state !== currentFacility.status.state) {
+        newStatus = status.state;
+      }
+
       // Gather all future reservation objects
       let futureResObjects = [];
-      if (timesToUpdate.length > 0 || timesToRemove.length > 0) {
+      if (timesToUpdate.length > 0 || timesToRemove.length > 0 || newStatus) {
         futureResObjects = await getFutureReservationObjects(parkName, name);
       }
-      if (futureResObjects.length > 0 || timesToRemove.length > 0) {
-        await processReservationObjects(futureResObjects, timesToUpdate, timesToRemove);
+      if (futureResObjects.length > 0) {
+        await processReservationObjects(futureResObjects, timesToUpdate, timesToRemove, newStatus);
       }
     }
 
@@ -173,6 +181,14 @@ async function updateFacility(obj) {
       TableName: TABLE_NAME
     };
     const { Attributes } = await dynamodb.updateItem(updateParams).promise();
+
+    // Attempt to create a new reservation object for 'today' if it doesn't exist.
+    // We want a record of every facility update when the updated data affects the reservation obj. 
+    // If it already exists, this will intentionally fail.
+    const reservationsObjectPK = `reservations::${parkName}::${name}`;
+    const todayShortDate = DateTime.now().setZone(TIMEZONE).toISODate();
+    await createNewReservationsObj(obj, reservationsObjectPK, todayShortDate);
+
     return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(Attributes));
   } catch (error) {
     logger.error(JSON.stringify(error));

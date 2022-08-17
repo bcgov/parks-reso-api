@@ -298,8 +298,7 @@ exports.handler = async (event, context) => {
 
       // We need to ensure that the reservations object exists.
       // Attempt to create reservations object. If it fails, so what...
-
-      await createNewReservationsObj(facilityData.bookingTimes, reservationsObjectPK, bookingPSTShortDate);
+      await createNewReservationsObj(facilityData, reservationsObjectPK, bookingPSTShortDate);
 
       // Perform a transaction where we decrement the available passes and create the pass
       // If the conditions where the related facility object has a lock, we then fail the whole transaction.
