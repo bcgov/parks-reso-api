@@ -4,11 +4,11 @@ const { logger } = require('../logger');
 const { setFacilityLock, unlockFacility } = require('../facilityUtils');
 const { createNewReservationsObj } = require('../writeReservation');
 const { processReservationObjects, getReservationObject } = require('../reservationObjUtils');
-const AWS = require('aws-sdk');
+const { DateTime } = require('luxon');
 
 // Example Payload:
 // {
-//     date: 2022-08-04T19:00:00.000Z,
+//     date: 2022-08-04,
 //     bookingTimes: {
 //         AM: 20,
 //         PM: -20,
@@ -45,6 +45,17 @@ exports.handler = async (event, context) => {
   }
 
   const { date, bookingTimes, parkName, facility } = obj;
+
+  // date must be a valid shortDate:
+  try {
+    checkDate = DateTime.fromFormat(date, 'yyyy-mm-dd');
+    if (checkDate.invalid){
+      throw 'Provided date must be valid shortDate';
+    }
+  } catch (error) {
+    logger.error('ERR:', error);
+    return sendResponse(400, {msg: error});
+  }
 
   try {
     await getParkAccess(parkName, permissionObject);
