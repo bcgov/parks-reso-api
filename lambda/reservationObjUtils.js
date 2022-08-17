@@ -25,7 +25,7 @@ async function getFutureReservationObjects(parkName, facilityName) {
   return futureResObjects;
 }
 
-async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) {
+async function processReservationObjects(resObjs, timesToUpdate, timesToRemove, status = null) {
   let resArray = [];
   for (let i = 0; i < resObjs.length; i++) {
     let resObj = resObjs[i];
@@ -44,7 +44,10 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
       }
       try {
         // update future removed booking times to 0 capacity, 0 availability
-        await updateReservationsObjectCapacity(resObj.pk, resObj.sk, timeToRemove.time, 0, 0, 0);
+        resArray.push({
+          msg: 'Timeslot removed.',
+          data: await updateReservationsObjectCapacity(resObj.pk, resObj.sk, timeToRemove.time, 0, 0, 0)
+        });
       } catch (error) {
         logger.error('Error removing passes in updatereservationObjectCapacity():', error);
         throw error;
@@ -128,8 +131,9 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
         }
       }
       try {
-        resArray.push(
-          await updateReservationsObjectCapacity(
+        resArray.push({
+          msg: 'Timeslot updated.',
+          data: await updateReservationsObjectCapacity(
             resObj.pk,
             resObj.sk,
             timeToUpdate.time,
@@ -137,18 +141,53 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove) 
             newModifier,
             newResAvailability
           )
-        );
+        });
       } catch (error) {
         logger.error('Error occured while executing updateReservationsObjectCapacity()', error);
         throw error;
       }
     }
+    // update reservation object with changed metadata fields
+    if (status) {
+      try {
+        resArray.push({
+          msg: 'Metadata updated',
+          data: await updateReservationsObjectMeta(resObj.pk, resObj.sk, status)
+        });
+      } catch (error) {
+        logger.error('Error occured while executing updateReservationsObjectStatus()', error);
+        throw error;
+      }
+    }
   }
+  logger.debug('resArray:', resArray);
   return resArray;
 }
 
+// Can be populated with more metadata fields in the future if necessary
+async function updateReservationsObjectMeta(pk, sk, status) {
+  const updateReservationsObject = {
+    TableName: TABLE_NAME,
+    Key: {
+      pk: { S: pk },
+      sk: { S: sk }
+    },
+    ExpressionAttributeValues: {
+      ':status': { S: status }
+    },
+    ExpressionAttributeNames: {
+      '#status': 'status'
+    },
+    UpdateExpression: 'SET #status = :status',
+    ReturnValues: 'ALL_NEW'
+  };
+  logger.debug('updateReservationsObject:', updateReservationsObject);
+  const res = await dynamodb.updateItem(updateReservationsObject).promise();
+  logger.debug('Reservation object updated:' + res);
+  return res.Attributes;
+}
+
 async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, newModifier, newResAvailability) {
-  // TODO: update this to include modifiers when ready
   const mapType = AWS.DynamoDB.Converter.marshall({
     capacityModifier: Number(newModifier),
     baseCapacity: Number(newBaseCapacity),
@@ -172,7 +211,7 @@ async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, n
   logger.debug('updateReservationsObject:', updateReservationsObject);
   const res = await dynamodb.updateItem(updateReservationsObject).promise();
   logger.debug('Reservation object updated:' + res);
-  return res;
+  return res.Attributes;
 }
 
 async function checkForOverbookedPasses(facilityName, shortPassDate, type) {

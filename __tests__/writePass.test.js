@@ -363,7 +363,7 @@ async function databaseOperation(version, mode) {
                 max: 25
               }
             },
-            status: 'open',
+            status: {stateReason: '', state: 'open'},
             visible: true
           }
         })
@@ -387,7 +387,7 @@ async function databaseOperation(version, mode) {
                 max: 25
               }
             },
-            status: 'open',
+            status: {stateReason: '', state: 'open'},
             visible: true
           }
         })
