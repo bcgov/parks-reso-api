@@ -115,6 +115,23 @@ exports.handler = async (event, context) => {
       milliseconds: 0
     });
 
+    const bookingPSTShortDate = bookingPSTDateTime.toISODate();
+
+    // luxon days are 1-indexed, starting on Monday. 
+    const bookingPSTDayOfWeek = bookingPSTDateTime.weekday;
+    
+    // check if passes are required on the booking weekday
+    if (facilityData.bookingDays[bookingPSTDayOfWeek] === false) {
+      // passes are not required, unless it is a holiday listed within the facility.
+      // check if it is a holiday
+      if (facilityData.bookableHolidays.toJSON().indexOf(bookingPSTShortDate) === -1) {
+        return sendResponse(400, {
+          msg: 'Passes are not required at this facility on the requested date.',
+          title: 'Booking not required.'
+        });
+      }
+    }
+
     // check if booking date in the past
     const currentPSTDateStart = currentPSTDateTime.startOf('day');
     if (currentPSTDateStart.toISO() > bookingPSTDateTime.toISO()) {
@@ -164,8 +181,6 @@ exports.handler = async (event, context) => {
         status = 'active';
       }
     }
-
-    const bookingPSTShortDate = bookingPSTDateTime.toISODate();
 
     passObject.Item = {};
     passObject.Item['pk'] = { S: 'pass::' + parkName };

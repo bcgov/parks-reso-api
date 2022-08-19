@@ -47,7 +47,7 @@ describe('Pass Fails', () => {
       headers: {
         Authorization: 'None'
       },
-       body: JSON.stringify({
+      body: JSON.stringify({
         parkName: 'Test Park 1',
         firstName: '',
         lastName: '',
@@ -363,13 +363,24 @@ async function databaseOperation(version, mode) {
                 max: 25
               }
             },
-            status: {stateReason: '', state: 'open'},
+            bookingDays: {
+              "1": true,
+              "2": true,
+              "3": true,
+              "4": true,
+              "5": true,
+              "6": true,
+              "7": true
+            },
+            bookingDaysRichText: '',
+            bookableHolidays: [],
+            status: { stateReason: '', state: 'open' },
             visible: true
           }
         })
         .promise();
 
-        await ddb
+      await ddb
         .put({
           TableName: TABLE_NAME,
           Item: {
@@ -387,7 +398,18 @@ async function databaseOperation(version, mode) {
                 max: 25
               }
             },
-            status: {stateReason: '', state: 'open'},
+            bookingDays: {
+              "1": true,
+              "2": true,
+              "3": true,
+              "4": true,
+              "5": true,
+              "6": true,
+              "7": true
+            },
+            bookingDaysRichText: '',
+            bookableHolidays: [],
+            status: { stateReason: '', state: 'open' },
             visible: true
           }
         })
