@@ -64,13 +64,13 @@ async function updateAllFacilities() {
 
 function defaultBookingDays() {
   return {
-    "1": true,
-    "2": true,
-    "3": true,
-    "4": true,
-    "5": true,
-    "6": true,
-    "7": true
+    "Sunday": true,
+    "Monday": true,
+    "Tuesday": true,
+    "Wednesday": true,
+    "Thursday": true,
+    "Friday": true,
+    "Saturday": true
   };
 }
 

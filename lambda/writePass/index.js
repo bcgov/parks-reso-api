@@ -117,8 +117,7 @@ exports.handler = async (event, context) => {
 
     const bookingPSTShortDate = bookingPSTDateTime.toISODate();
 
-    // luxon days are 1-indexed, starting on Monday. 
-    const bookingPSTDayOfWeek = bookingPSTDateTime.weekday;
+    const bookingPSTDayOfWeek = bookingPSTDateTime.weekdayLong;
     
     // check if passes are required on the booking weekday
     if (facilityData.bookingDays[bookingPSTDayOfWeek] === false) {
