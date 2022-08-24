@@ -124,7 +124,7 @@ exports.handler = async (event, context) => {
     if (facilityData.bookingDays[bookingPSTDayOfWeek] === false) {
       // passes are not required, unless it is a holiday listed within the facility.
       // check if it is a holiday
-      if (facilityData.bookableHolidays.toJSON().indexOf(bookingPSTShortDate) === -1) {
+      if (facilityData.bookableHolidays.indexOf(bookingPSTShortDate) === -1) {
         return sendResponse(400, {
           msg: 'Passes are not required at this facility on the requested date.',
           title: 'Booking not required.'
