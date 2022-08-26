@@ -54,7 +54,7 @@ exports.handler = async (event, context) => {
 };
 
 async function createFacility(obj) {
-  let { parkName, bookingTimes, name, status, type, visible, bookingOpeningHour, bookingDaysAhead, ...otherProps } =
+  let { parkName, bookingTimes, name, status, type, visible, bookingOpeningHour, bookingDaysAhead, bookingDays, bookingDaysRichText, bookableHolidays, ...otherProps } =
     obj;
 
   const bookingOpeningHourAttrValue = {};
@@ -84,7 +84,10 @@ async function createFacility(obj) {
       visible: { BOOL: visible },
       isUpdating: { BOOL: false },
       bookingOpeningHour: bookingOpeningHourAttrValue,
-      bookingDaysAhead: bookingDaysAheadAttrValue
+      bookingDaysAhead: bookingDaysAheadAttrValue,
+      bookingDays: { M: AWS.DynamoDB.Converter.marshall(bookingDays) },
+      bookingDaysRichText: { S: bookingDaysRichText },
+      bookableHolidays: AWS.DynamoDB.Converter.input(bookableHolidays)
     }
   };
 
@@ -95,7 +98,7 @@ async function createFacility(obj) {
 }
 
 async function updateFacility(obj) {
-  let { sk, parkName, bookingTimes, name, status, type, visible, bookingOpeningHour, bookingDaysAhead, ...otherProps } =
+  let { sk, parkName, bookingTimes, name, status, type, visible, bookingOpeningHour, bookingDaysAhead, bookingDays, bookingDaysRichText, bookableHolidays, ...otherProps } =
     obj;
 
   const bookingOpeningHourAttrValue = {};
@@ -169,14 +172,17 @@ async function updateFacility(obj) {
         ':bookingTimes': { M: AWS.DynamoDB.Converter.marshall(bookingTimes) },
         ':bookingOpeningHour': bookingOpeningHourAttrValue,
         ':bookingDaysAhead': bookingDaysAheadAttrValue,
-        ':isUpdating': { BOOL: false }
+        ':isUpdating': { BOOL: false },
+        ':bookingDays': { M: AWS.DynamoDB.Converter.marshall(bookingDays) },
+        ":bookingDaysRichText": { S: bookingDaysRichText },
+        ":bookableHolidays": AWS.DynamoDB.Converter.input(bookableHolidays)
       },
       ExpressionAttributeNames: {
         '#facilityStatus': 'status',
         '#visibility': 'visible'
       },
       UpdateExpression:
-        'SET #facilityStatus =:statusValue, bookingTimes =:bookingTimes, #visibility =:visibility, bookingOpeningHour = :bookingOpeningHour, bookingDaysAhead = :bookingDaysAhead, isUpdating = :isUpdating',
+        'SET #facilityStatus =:statusValue, bookingTimes =:bookingTimes, #visibility =:visibility, bookingOpeningHour = :bookingOpeningHour, bookingDaysAhead = :bookingDaysAhead, isUpdating = :isUpdating, bookingDays = :bookingDays, bookingDaysRichText = :bookingDaysRichText, bookableHolidays = :bookableHolidays',
       ReturnValues: 'ALL_NEW',
       TableName: TABLE_NAME
     };
