@@ -33,21 +33,21 @@ exports.handler = async (event, context) => {
         logger.debug('**SYSADMIN**');
       } else {
         logger.debug('**AUTHENTICATED, NOT SYSADMIN**');
-        let parkObj = await getPark(park.sk, true);
+        let parkObj = await getPark(park, true);
 
         // Check roles.
         logger.debug('Roles:', permissionObject.roles);
-        parkObj = await roleFilter(park, permissionObject.roles);
+        parkObj = await roleFilter([parkObj], permissionObject.roles);
 
         // If user does not have correct park role, then they are not authorized.
-        if (park.length < 1) {
+        if (parkObj.length < 1) {
           return sendResponse(403, { msg: 'Unauthorized' }, context);
         }
       }
     } else {
       // If public, we have to check park/facility visibility first.
       logger.debug('**NOT AUTHENTICATED, PUBLIC**');
-      let parkObj = await getPark(park);
+      let parkObj = await getPark(park, true);
       if (!parkObj) {
         return sendResponse(404, { msg: 'Park not found' }, context);
       }
