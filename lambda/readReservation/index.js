@@ -47,7 +47,7 @@ exports.handler = async (event, context) => {
     } else {
       // If public, we have to check park/facility visibility first.
       logger.debug('**NOT AUTHENTICATED, PUBLIC**');
-      let parkObj = await getPark(park, true);
+      let parkObj = await getPark(park);
       if (!parkObj) {
         return sendResponse(404, { msg: 'Park not found' }, context);
       }
