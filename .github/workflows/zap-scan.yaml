@@ -1,6 +1,9 @@
 name: ZAP Scanner
 on:
-  workflow_dispatch:
+  workflow_run:
+    workflows: ["Deploy Dev"]
+    types:
+      - completed
 
 jobs:
   zap_scan:
