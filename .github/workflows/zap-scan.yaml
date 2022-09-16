@@ -13,7 +13,7 @@ jobs:
           ref: main
 
       - name: ZAP Scan
-        uses: zaproxy/action-full-scan@v0.4.0
+        uses: zaproxy/action-api-scan@v0.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           format: soap
