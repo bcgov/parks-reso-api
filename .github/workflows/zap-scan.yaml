@@ -1,0 +1,22 @@
+name: ZAP Scanner
+on:
+  workflow_dispatch:
+
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+    name: Scan the application
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: main
+
+      - name: ZAP Scan
+        uses: zaproxy/action-api-scan@v0.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          format: soap
+          docker_name: 'owasp/zap2docker-stable'
+          issue_title: 'ZAP Scan Report'
+          target: '${{ secrets.DEV_API_ROUTE }}'
