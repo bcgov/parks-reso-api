@@ -167,7 +167,15 @@ functions:
           method: GET
           path: /export-pass
           cors: true
-
+  exportAllPassInvokable:
+    handler: lambda/export/exportAllPass/invokable/index.handler
+  exportAllPassGet:
+    handler: lambda/exportAllPass/GET/index.handler
+    events:
+      - http:
+          method: GET
+          path: /export-all-pass
+          cors: true
   ###########
   # Metric
   ###########
