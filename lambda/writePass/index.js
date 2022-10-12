@@ -198,8 +198,28 @@ exports.handler = async (event, context) => {
     passObject.Item['passStatus'] = { S: status };
     passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
     passObject.Item['facilityType'] = { S: facilityData.type };
-    passObject.Item['creationDate'] = { S: currentPSTDateTime.toUTC().toISO() };
     passObject.Item['isOverbooked'] = { BOOL: false };
+    // Audit
+    passObject.Item['creationDate'] = { S: currentPSTDateTime.toUTC().toISO() };
+    passObject.Item['dateUpdated'] = { S: currentPSTDateTime.toUTC().toISO() };
+    passObject.Item['audit'] = {
+      "L": [
+        {
+          "M": {
+            "by": {
+              "S": "system"
+            },
+            "passStatus": {
+              "S": status
+            }
+            ,
+            "dateUpdated": {
+              "S": currentPSTDateTime.toUTC().toISO()
+            }
+          }
+        }
+      ]
+    }
 
     const cancellationLink =
       process.env.PUBLIC_FRONTEND +
@@ -410,6 +430,10 @@ exports.handler = async (event, context) => {
           }
         });
         logger.debug('GCNotify email sent.');
+
+        // Prune audit
+        delete passObject.Item['audit'];
+
         return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
       } catch (err) {
         logger.error('GCNotify error:', err);
