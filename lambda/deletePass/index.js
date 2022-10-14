@@ -15,6 +15,10 @@ exports.handler = async (event, context) => {
     if (!event.queryStringParameters) {
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
+
+    const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
+    const currentTimeISO = currentPSTDateTime.toUTC().toISO();
+
     if (event.queryStringParameters.code) {
       logger.debug('Get the specific pass, this person is NOT authenticated but has a code');
 
@@ -53,12 +57,32 @@ exports.handler = async (event, context) => {
           sk: { S: decodedToken.passId }
         },
         ExpressionAttributeValues: {
-          ':cancelled': { S: 'cancelled' }
+          ':cancelled': { S: 'cancelled' },
+          ':dateUpdated': { S: currentTimeISO },
+          ':empty_list': { "L": [] },  // For pass objects which do not have an audit property.
+          ':audit_val': {
+            "L": [
+              {
+                "M": {
+                  "by": {
+                    "S": "public"
+                  },
+                  "passStatus": {
+                    "S": 'cancelled'
+                  }
+                  ,
+                  "dateUpdated": {
+                    "S": currentTimeISO
+                  }
+                }
+              }
+            ]
+          }
         },
         // If the pass is already cancelled, error so that we don't decrement the available
         // count multiple times.
         ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk) AND (NOT passStatus = :cancelled)',
-        UpdateExpression: 'SET passStatus = :cancelled',
+        UpdateExpression: 'SET passStatus = :cancelled, audit = list_append(if_not_exists(audit, :empty_list), :audit_val), dateUpdated = :dateUpdated',
         TableName: TABLE_NAME
       };
       transactionObj.TransactItems.push({
@@ -93,8 +117,12 @@ exports.handler = async (event, context) => {
       const res = await dynamodb.transactWriteItems(transactionObj).promise();
       logger.debug('res:', res);
 
+      // Prune audit
+      delete passNoAuth.audit;
+
       return sendResponse(200, { msg: 'Cancelled', pass: passNoAuth }, context);
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
+      // ADMIN
       const token = await decodeJWT(event);
       const permissionObject = resolvePermissions(token);
       if (permissionObject.isAdmin !== true) {
@@ -129,12 +157,32 @@ exports.handler = async (event, context) => {
             sk: { S: event.queryStringParameters.passId }
           },
           ExpressionAttributeValues: {
-            ':cancelled': { S: 'cancelled' }
+            ':cancelled': { S: 'cancelled' },
+            ':dateUpdated': { S: currentTimeISO },
+            ':empty_list': { "L": [] },  // For pass objects which do not have an audit property.
+            ':audit_val': {
+              "L": [
+                {
+                  "M": {
+                    "by": {
+                      "S": "admin"
+                    },
+                    "passStatus": {
+                      "S": 'cancelled'
+                    }
+                    ,
+                    "dateUpdated": {
+                      "S": currentTimeISO
+                    }
+                  }
+                }
+              ]
+            }
           },
           // If the pass is already cancelled, error so that we don't decrement the available
           // count multiple times.
           ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk) AND (NOT passStatus = :cancelled)',
-          UpdateExpression: 'SET passStatus = :cancelled',
+          UpdateExpression: 'SET passStatus = :cancelled, audit = list_append(if_not_exists(audit, :empty_list), :audit_val), dateUpdated = :dateUpdated',
           TableName: TABLE_NAME
         };
         transactionObj.TransactItems.push({

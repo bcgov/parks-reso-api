@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
 const { logger } = require('./logger');
+const { DateTime } = require('luxon');
 
 const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 const options = {
@@ -30,6 +31,9 @@ exports.dynamodb = new AWS.DynamoDB();
 
 
 async function setStatus(passes, status) {
+  const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
+  const currentTimeISO = currentPSTDateTime.toUTC().toISO();
+
   for (let i = 0; i < passes.length; i++) {
     let updateParams = {
       Key: {
@@ -37,9 +41,29 @@ async function setStatus(passes, status) {
         sk: { S: passes[i].sk }
       },
       ExpressionAttributeValues: {
-        ':statusValue': { S: status }
+        ':statusValue': { S: status },
+        ':empty_list': { "L": [] },  // For pass objects which do not have an audit property.
+        ':dateUpdated': { S: currentTimeISO },
+        ':audit_val': {
+          "L": [
+            {
+              "M": {
+                "by": {
+                  "S": "system"
+                },
+                "passStatus": {
+                  "S": status
+                }
+                ,
+                "dateUpdated": {
+                  "S": currentTimeISO
+                }
+              }
+            }
+          ]
+        }
       },
-      UpdateExpression: 'SET passStatus = :statusValue',
+      UpdateExpression: 'SET passStatus = :statusValue, audit = list_append(if_not_exists(audit, :empty_list), :audit_val), dateUpdated = :dateUpdated',
       ReturnValues: 'ALL_NEW',
       TableName: TABLE_NAME
     };
