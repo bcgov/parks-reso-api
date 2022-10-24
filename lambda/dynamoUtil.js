@@ -51,7 +51,7 @@ async function setStatus(passes, status) {
 
 // simple way to return a single Item by primary key.
 async function getOne(pk, sk) {
-  logger.debug(`getItem: { pk: ${pk}, sk: ${sk} }`);
+  logger.info(`getItem: { pk: ${pk}, sk: ${sk} }`);
   const params = {
     TableName: TABLE_NAME,
     Key: AWS.DynamoDB.Converter.marshall({pk, sk})
@@ -64,7 +64,7 @@ async function getOne(pk, sk) {
 // (1MB) unless they are explicitly specified to retrieve more.
 // TODO: Ensure the returned object has the same structure whether results are paginated or not. 
 async function runQuery(query, paginated = false) {
-  logger.debug('query:', query);
+  logger.info('query:', query);
   let data = [];
   let pageData = [];
   let page = 0;
@@ -81,11 +81,11 @@ async function runQuery(query, paginated = false) {
     if (page < 2) {
       logger.debug(`Page ${page} data:`, data);
     } else {
-      logger.debug(`Page ${page} contains ${pageData.Items.length} additional query results...`);
+      logger.info(`Page ${page} contains ${pageData.Items.length} additional query results...`);
     };
   } while (pageData?.LastEvaluatedKey && !paginated);
 
-  logger.debug(`Query result pages: ${page}, total returned items: ${data.length}`);
+  logger.info(`Query result pages: ${page}, total returned items: ${data.length}`);
   if (paginated) {
     return {
       LastEvaluatedKey: pageData.LastEvaluatedKey,
@@ -100,7 +100,7 @@ async function runQuery(query, paginated = false) {
 // (1MB) unless they are explicitly specified to retrieve more.
 // TODO: Ensure the returned object has the same structure whether results are paginated or not. 
 async function runScan(query, paginated = false) {
-  logger.debug('query:', query);
+  logger.info('query:', query);
   let data = [];
   let pageData = [];
   let page = 0;
@@ -117,11 +117,11 @@ async function runScan(query, paginated = false) {
     if (page < 2) {
       logger.debug(`Page ${page} data:`, data);
     } else {
-      logger.debug(`Page ${page} contains ${pageData.Items.length} additional scan results...`);
+      logger.info(`Page ${page} contains ${pageData.Items.length} additional scan results...`);
     };
   } while (pageData?.LastEvaluatedKey && !paginated);
 
-  logger.debug(`Scan result pages: ${page}, total returned items: ${data.length}`);
+  logger.info(`Scan result pages: ${page}, total returned items: ${data.length}`);
   if (paginated) {
     return {
       LastEvaluatedKey: pageData.LastEvaluatedKey,
