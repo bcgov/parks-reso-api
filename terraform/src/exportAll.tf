@@ -59,7 +59,7 @@ resource "aws_lambda_function" "exportAllPassLambda" {
     }
   }
 
-  role = aws_iam_role.exportRole.arn
+  role = aws_iam_role.exportRoleInvokable.arn
 }
 
 resource "aws_lambda_alias" "exportAllPassLambdaLatest" {

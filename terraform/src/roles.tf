@@ -61,7 +61,71 @@ resource "aws_iam_role" "exportRole" {
         }
         Resource = [
           "${aws_dynamodb_table.park_dup_table.arn}",
-          "${aws_lambda_function.exportAllInvokableLambda.arn}",
+          "${aws_lambda_function.exportInvokableLambda.arn}",
+          "${aws_s3_bucket.bcgov-parks-ar-assets.arn}/*"
+        ]
+        Sid = ""
+      }
+    ]
+  })
+
+  managed_policy_arns = [
+     "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  ]
+}
+
+resource "aws_iam_role" "exportRoleInvokable" {
+  name = "lambdaExportRoleInvokable"
+
+  assume_role_policy = jsonencode({
+    Version: "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "sts:AssumeRole",
+          "dynamodb:Query",
+          "dynamodb:PutItem",
+          "lambda:InvokeAsync",
+          "lambda:InvokeFunction",
+          "s3:GetObject"
+        ]
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Resource = [
+          "${aws_dynamodb_table.park_dup_table.arn}",resource "aws_iam_role" "exportRole" {
+  name = "lambdaExportRole"
+
+  assume_role_policy = jsonencode({
+    Version: "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "sts:AssumeRole",
+          "dynamodb:Query",
+          "dynamodb:PutItem",
+          "lambda:InvokeAsync",
+          "lambda:InvokeFunction",
+          "s3:GetObject"
+        ]
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Resource = [
+          "${aws_dynamodb_table.park_dup_table.arn}",
+          "${aws_s3_bucket.bcgov-parks-ar-assets.arn}/*"
+        ]
+        Sid = ""
+      }
+    ]
+  })
+
+  managed_policy_arns = [
+     "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  ]
+}
           "${aws_s3_bucket.bcgov-parks-ar-assets.arn}/*"
         ]
         Sid = ""
