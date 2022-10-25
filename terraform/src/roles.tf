@@ -61,6 +61,7 @@ resource "aws_iam_role" "exportRole" {
         }
         Resource = [
           "${aws_dynamodb_table.park_dup_table.arn}",
+          "${aws_lambda_function.exportInvokableLambda.arn}",
           "${aws_s3_bucket.bcgov-parks-ar-assets.arn}/*"
         ]
         Sid = ""
@@ -94,7 +95,6 @@ resource "aws_iam_role" "exportRoleInvokable" {
         }
         Resource = [
           "${aws_dynamodb_table.park_dup_table.arn}",
-          "${aws_lambda_function.exportInvokableLambda.arn}",
           "${aws_s3_bucket.bcgov-parks-ar-assets.arn}/*"
         ]
         Sid = ""
