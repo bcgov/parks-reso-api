@@ -52,16 +52,13 @@ resource "aws_iam_role" "exportRole" {
           "sts:AssumeRole",
           "dynamodb:Query",
           "dynamodb:PutItem",
-          "lambda:InvokeAsync",
-          "lambda:InvokeFunction",
           "s3:GetObject"
         ]
         Principal = {
           Service = "lambda.amazonaws.com"
         }
         Resource = [
-          "${aws_dynamodb_table.park_dup_table.arn}",
-          "${aws_lambda_function.exportAllInvokableLambda.arn}"
+          "${aws_dynamodb_table.park_dup_table.arn}"
         ]
         Sid = ""
       }
@@ -93,7 +90,8 @@ resource "aws_iam_role" "exportRoleInvokable" {
           Service = "lambda.amazonaws.com"
         }
         Resource = [
-          "${aws_dynamodb_table.park_dup_table.arn}"
+          "${aws_dynamodb_table.park_dup_table.arn}",
+          "${aws_lambda_function.exportAllInvokableLambda.arn}"
         ]
         Sid = ""
       }
