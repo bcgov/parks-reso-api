@@ -73,11 +73,7 @@ resource "aws_iam_role" "exportRoleInvokable" {
       {
         Effect = "Allow",
         Action = [
-          "sts:AssumeRole",
-          "dynamodb:Query",
-          "dynamodb:PutItem",
-          "lambda:InvokeAsync",
-          "lambda:InvokeFunction"
+          "sts:AssumeRole"
         ]
         Principal = {
           Service = "lambda.amazonaws.com"
@@ -90,6 +86,42 @@ resource "aws_iam_role" "exportRoleInvokable" {
   managed_policy_arns = [
      "arn:aws:iam::aws:policy/AmazonS3FullAccess"
   ]
+}
+
+resource "aws_iam_role_policy" "exportInvokeRolePolicy" {
+  name        = "exportInvokeRolePolicy-${random_string.postfix.result}"
+  role        = aws_iam_role.exportInvokeRole.id
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Stmt1464440182000",
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:Scan",
+                "dynamodb:Query",
+                "dynamodb:PutItem",
+                "s3:PutObject"
+            ],
+            "Resource": [
+                "${aws_dynamodb_table.park_dup_table.arn}"
+                "${aws_s3_bucket.bcgov-parks-dup-data.arn}/*"
+            ]
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_s3_bucket" "bcgov-parks-dup-data" {
+  bucket = "${data.aws_ssm_parameter.s3-bucket-data.value}-${var.target_env}"
+  acl    = "private"
+
+  tags = {
+    Name = data.aws_ssm_parameter.s3_bucket_data_name.value
+  }
 }
 
 resource "aws_iam_role" "metricRole" {
