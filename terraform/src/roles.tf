@@ -49,10 +49,7 @@ resource "aws_iam_role" "exportRole" {
       {
         Effect = "Allow",
         Action = [
-          "sts:AssumeRole",
-          "dynamodb:Query",
-          "dynamodb:PutItem",
-          "s3:GetObject"
+          "sts:AssumeRole"
         ]
         Principal = {
           Service = "lambda.amazonaws.com"
