@@ -37,7 +37,7 @@ resource "aws_lambda_function" "exportAllPassLambda" {
   filename         = "artifacts/exportAllPassGet.zip"
   source_code_hash = filebase64sha256("artifacts/exportAllPassGet.zip")
 
-  handler = "lambda/exportAllPass/index.handler"
+  handler = "lambda/exportAllPass/GET/index.handler"
   runtime = "nodejs14.x"
   timeout = 30
   publish = "true"
