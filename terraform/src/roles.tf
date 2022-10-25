@@ -49,11 +49,21 @@ resource "aws_iam_role" "exportRole" {
       {
         Effect = "Allow",
         Action = [
-          "sts:AssumeRole"
+          "sts:AssumeRole",
+          "dynamodb:Query",
+          "dynamodb:PutItem",
+          "lambda:InvokeAsync",
+          "lambda:InvokeFunction",
+          "s3:GetObject"
         ]
         Principal = {
           Service = "lambda.amazonaws.com"
         }
+        Resource = [
+          "${aws_dynamodb_table.park_dup_table.arn}",
+          "${aws_lambda_function.exportAllPassLambda.arn}",
+          "${aws_s3_bucket.bcgov-parks-ar-assets.arn}/*"
+        ]
         Sid = ""
       }
     ]
