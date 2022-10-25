@@ -57,9 +57,6 @@ resource "aws_iam_role" "exportRole" {
         Principal = {
           Service = "lambda.amazonaws.com"
         }
-        Resource = [
-          "${aws_dynamodb_table.park_dup_table.arn}"
-        ]
         Sid = ""
       }
     ]
