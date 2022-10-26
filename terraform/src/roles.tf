@@ -89,8 +89,8 @@ resource "aws_iam_role" "exportRoleInvokable" {
 }
 
 resource "aws_iam_role_policy" "exportInvokeRolePolicy" {
-  name        = "exportInvokeRolePolicy-${random_string.postfix.result}"
-  role        = aws_iam_role.exportInvokeRole.id
+  name        = "exportInvokeRolePolicy"
+  role        = aws_iam_role.exportRole.id
 
   policy = <<EOF
 {
