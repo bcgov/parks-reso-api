@@ -90,7 +90,7 @@ resource "aws_iam_role" "exportRoleInvokable" {
 
 resource "aws_iam_role_policy" "exportInvokeRolePolicy" {
   name        = "exportInvokeRolePolicy"
-  role        = aws_iam_role.exportRole.id
+  role        = aws_iam_role.exportRoleInvokable.id
 
   policy = <<EOF
 {

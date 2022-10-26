@@ -31,6 +31,7 @@ resource "aws_lambda_alias" "export_invokable_latest" {
   function_version = aws_lambda_function.exportAllInvokableLambda.version
 }
 
+# ============= EXPORT ALL GET =============
 resource "aws_lambda_function" "exportAllPassLambda" {
   function_name = "exportAllPass"
 
