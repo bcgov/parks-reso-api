@@ -106,7 +106,7 @@ resource "aws_iam_role_policy" "exportInvokeRolePolicy" {
                 "s3:PutObject"
             ],
             "Resource": [
-                "${aws_dynamodb_table.park_dup_table.arn}"
+                "${aws_dynamodb_table.park_dup_table.arn}",
                 "${aws_s3_bucket.bcgov-parks-dup-data.arn}/*"
             ]
         }
