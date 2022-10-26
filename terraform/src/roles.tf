@@ -102,15 +102,10 @@ resource "aws_iam_role_policy" "exportInvokeRolePolicy" {
             "Action": [
                 "dynamodb:Scan",
                 "dynamodb:Query",
-                "dynamodb:PutItem",
-                "lambda:InvokeAsync",
-                "lambda:InvokeFunction",
-                "s3:PutObject"
+                "dynamodb:PutItem"
             ],
             "Resource": [
-                "${aws_dynamodb_table.park_dup_table.arn}",
-                "${aws_lambda_function.exportAllInvokableLambda.arn}",
-                "${aws_s3_bucket.bcgov-parks-dup-data.arn}/*"
+                "${aws_dynamodb_table.park_dup_table.arn}"
             ]
         }
     ]
@@ -309,9 +304,16 @@ resource "aws_iam_role_policy" "exportAllPassRolePolicy" {
             "dynamodb:CreateTable",
             "dynamodb:Delete*",
             "dynamodb:Update*",
-            "dynamodb:PutItem"
+            "dynamodb:PutItem",
+            "lambda:InvokeAsync",
+            "lambda:InvokeFunction",
+            "s3:PutObject"
           ],
-          "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
+          "Resource": [
+            "${aws_dynamodb_table.park_dup_table.arn}",
+            "${aws_lambda_function.exportAllInvokableLambda.arn}",
+            "${aws_s3_bucket.bcgov-parks-dup-data.arn}/*"
+          ]
       },
       {
           "Effect": "Allow",
