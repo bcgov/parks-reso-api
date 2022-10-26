@@ -284,7 +284,7 @@ resource "aws_iam_role_policy" "park_reso_dynamodb_export" {
 }
 
 resource "aws_iam_role_policy" "exportAllPassRolePolicy" {
-  name = "park_reso_dynamodb_export"
+  name = "park_reso_dynamodb_export_invokable"
   role = aws_iam_role.exportRoleInvokable.id
 
   policy = <<-EOF
