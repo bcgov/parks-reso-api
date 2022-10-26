@@ -17,5 +17,5 @@ variable "captcha_sign_expiry" {
 }
 
 data "aws_ssm_parameter" "s3_bucket_data_name" {
-  name = "/parks-ar-api/s3-bucket-data"
+  name = "/parks-reso-api/s3-bucket-data"
 }
