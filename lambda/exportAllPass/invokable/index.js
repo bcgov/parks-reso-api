@@ -57,7 +57,7 @@ exports.handler = async (event, context) => {
       try {
         // Upload file
         res = await s3.putObject(params).promise();
-        await updateJobWithState(jobid, s3key, 7, "Export ready.", 100);
+        await updateJobWithState(jobid, s3Key, 7, "Export ready.", 100);
 
       } catch (err) {
         await updateJobWithState(jobid, null, 1, "Job Failed", -1);
