@@ -116,11 +116,11 @@ EOF
 }
 
 resource "aws_s3_bucket" "bcgov-parks-dup-data" {
-  bucket = "${data.aws_ssm_parameter.s3-bucket-data.value}-${var.target_env}"
+  bucket = "${data.aws_ssm_parameter.s3_bucket_data.value}-${var.target_env}"
   acl    = "private"
 
   tags = {
-    Name = data.aws_ssm_parameter.s3_bucket_data_name.value
+    Name = data.aws_ssm_parameter.s3_bucket_data.value
   }
 }
 

@@ -15,7 +15,3 @@ variable "captcha_sign_expiry" {
   default = "5"
   description = "CAPTCHA JWT signature expiry duration in minutes"
 }
-
-data "aws_ssm_parameter" "s3_bucket_data_name" {
-  name = "/parks-reso-api/s3-bucket-data"
-}
