@@ -103,7 +103,7 @@ resource "aws_iam_role_policy" "exportInvokeRolePolicy" {
                 "dynamodb:Scan",
                 "dynamodb:Query",
                 "dynamodb:PutItem",
-                lambda:InvokeAsync",
+                "lambda:InvokeAsync",
                 "lambda:InvokeFunction",
                 "s3:PutObject"
             ],
