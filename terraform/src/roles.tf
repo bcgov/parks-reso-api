@@ -265,9 +265,15 @@ resource "aws_iam_role_policy" "park_reso_dynamodb_export" {
             "dynamodb:CreateTable",
             "dynamodb:Delete*",
             "dynamodb:Update*",
+            "lambda:InvokeAsync",
+            "lambda:InvokeFunction",
             "dynamodb:PutItem"
           ],
-          "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
+          "Resource": [
+            "${aws_dynamodb_table.park_dup_table.arn}",
+            "${aws_lambda_function.exportAllInvokableLambda.arn}",
+            "${aws_s3_bucket.bcgov-parks-dup-data.arn}/*"
+          ]
       },
       {
           "Effect": "Allow",
