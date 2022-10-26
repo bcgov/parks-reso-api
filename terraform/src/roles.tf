@@ -316,7 +316,9 @@ resource "aws_iam_role_policy" "exportAllPassRolePolicy" {
             "s3:PutObject"
           ],
           "Resource": [
-            "*"
+            "${aws_dynamodb_table.park_dup_table.arn}",
+            "${aws_lambda_function.exportAllInvokableLambda.arn}",
+            "${aws_s3_bucket.bcgov-parks-dup-data.arn}/*"
           ]
       },
       {
