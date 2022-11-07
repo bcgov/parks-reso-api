@@ -1,8 +1,7 @@
 const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
 
-const IS_OFFLINE =
-  process.env.IS_OFFLINE && process.env.IS_OFFLINE === "true" ? true : false;
+const IS_OFFLINE = process.env.IS_OFFLINE && process.env.IS_OFFLINE === "true" ? true : false;
 
 const options = {};
 const dboptions = {};

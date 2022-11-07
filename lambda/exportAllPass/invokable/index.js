@@ -32,7 +32,7 @@ exports.handler = async (event, context) => {
       queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' };
       queryObj.FilterExpression = 'contains (pk, :pk)';
 
-      await updateJobWithState(jobid, 1, "Fetching all passes.", 10);
+      await updateJobWithState(jobid, null, 1, "Fetching all passes.", 10);
 
       let scanResults = [];
       let passData;
@@ -41,11 +41,11 @@ exports.handler = async (event, context) => {
           passData.data.forEach((item) => scanResults.push(item));
           queryObj.ExclusiveStartKey = passData.LastEvaluatedKey;
       } while (typeof passData.LastEvaluatedKey !== "undefined");
-      await updateJobWithState(jobid, 2, "Converting to CSV", 50);
+      await updateJobWithState(jobid, null, 2, "Converting to CSV", 50);
 
       const csvData = csvjson.toCSV(scanResults);
       logger.info(scanResults.length + " records found");
-      await updateJobWithState(jobid, 3, "Uploading file", 75);
+      await updateJobWithState(jobid, null, 3, "Uploading file", 75);
 
       const params = {
         Bucket: process.env.S3_BUCKET_DATA,
@@ -57,10 +57,10 @@ exports.handler = async (event, context) => {
       try {
         // Upload file
         res = await s3.putObject(params).promise();
-        await updateJobWithState(jobid, 7, "Export ready.", 100);
+        await updateJobWithState(jobid, s3Key, 7, "Export ready.", 100);
 
       } catch (err) {
-        await updateJobWithState(jobid, 1, "Job Failed", -1);
+        await updateJobWithState(jobid, null, 1, "Job Failed", -1);
         logger.error(err);
       }
 
@@ -121,5 +121,4 @@ async function updateJobWithState(jobid, s3Key, state, messageOverride = null, p
     jobObj.dateGenerated = new Date().toISOString();
     await updateJobEntry(jobObj, TABLE_NAME);
   }
-  CURRENT_PROGRESS_PERCENT = jobObj.progressPercentage;
 }

@@ -90,7 +90,7 @@ resource "aws_iam_role" "exportRoleInvokable" {
 
 resource "aws_iam_role_policy" "exportInvokeRolePolicy" {
   name        = "exportInvokeRolePolicy"
-  role        = aws_iam_role.exportRoleInvokable.id
+  role        = aws_iam_role.exportRole.id
 
   policy = <<EOF
 {
@@ -102,12 +102,10 @@ resource "aws_iam_role_policy" "exportInvokeRolePolicy" {
             "Action": [
                 "dynamodb:Scan",
                 "dynamodb:Query",
-                "dynamodb:PutItem",
-                "s3:PutObject"
+                "dynamodb:PutItem"
             ],
             "Resource": [
-                "${aws_dynamodb_table.park_dup_table.arn}",
-                "${aws_s3_bucket.bcgov-parks-dup-data.arn}/*"
+                "${aws_dynamodb_table.park_dup_table.arn}"
             ]
         }
     ]
@@ -267,9 +265,15 @@ resource "aws_iam_role_policy" "park_reso_dynamodb_export" {
             "dynamodb:CreateTable",
             "dynamodb:Delete*",
             "dynamodb:Update*",
+            "lambda:InvokeAsync",
+            "lambda:InvokeFunction",
             "dynamodb:PutItem"
           ],
-          "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
+          "Resource": [
+            "${aws_dynamodb_table.park_dup_table.arn}",
+            "${aws_lambda_function.exportAllInvokableLambda.arn}",
+            "${aws_s3_bucket.bcgov-parks-dup-data.arn}/*"
+          ]
       },
       {
           "Effect": "Allow",
@@ -286,7 +290,7 @@ resource "aws_iam_role_policy" "park_reso_dynamodb_export" {
 }
 
 resource "aws_iam_role_policy" "exportAllPassRolePolicy" {
-  name = "park_reso_dynamodb_export"
+  name = "park_reso_dynamodb_export_invokable"
   role = aws_iam_role.exportRoleInvokable.id
 
   policy = <<-EOF
@@ -306,9 +310,16 @@ resource "aws_iam_role_policy" "exportAllPassRolePolicy" {
             "dynamodb:CreateTable",
             "dynamodb:Delete*",
             "dynamodb:Update*",
-            "dynamodb:PutItem"
+            "dynamodb:PutItem",
+            "lambda:InvokeAsync",
+            "lambda:InvokeFunction",
+            "s3:PutObject"
           ],
-          "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
+          "Resource": [
+            "${aws_dynamodb_table.park_dup_table.arn}",
+            "${aws_lambda_function.exportAllInvokableLambda.arn}",
+            "${aws_s3_bucket.bcgov-parks-dup-data.arn}/*"
+          ]
       },
       {
           "Effect": "Allow",
