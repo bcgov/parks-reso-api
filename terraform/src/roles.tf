@@ -353,7 +353,7 @@ resource "aws_iam_role_policy" "park_reso_dynamodb_metric" {
               "dynamodb:Query",
               "dynamodb:Scan"
           ],
-          "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
+          "Resource": "${aws_dynamodb_table.park_dup_table.arn}/index/*"
         }
     ]
   }
