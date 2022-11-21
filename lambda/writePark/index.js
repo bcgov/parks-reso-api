@@ -29,7 +29,7 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'PUT') {
       // Ensure PO's can update this particular park.
       if (!permissionObject.isAdmin) {
-        await getParkAccess(obj.park.orcs, permissionObject);
+        await getParkAccess(obj.sk, permissionObject);
       }
       return await updateItem(obj);
     } else {
