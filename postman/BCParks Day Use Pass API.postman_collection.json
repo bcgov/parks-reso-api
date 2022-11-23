@@ -399,7 +399,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\": \"facility1\",\r\n    \"status\": {\r\n        \"state\": \"open\",\r\n        \"stateReason\": null\r\n    },\r\n    \"type\": \"Parking\",\r\n    \"visible\": true,\r\n    \"bookingTimes\": {\r\n        \"AM\": {\r\n            \"max\": 20\r\n        },\r\n        \"PM\": {\r\n            \"max\": 30\r\n        }\r\n    },\r\n    \"parkName\": \"Joffre Lakes Provincial Park\",\r\n    \"bookingOpeningHour\": null,\r\n    \"bookingDaysAhead\": null\r\n}",
+							"raw": "{\r\n    \"name\": \"facility1\",\r\n    \"status\": {\r\n        \"state\": \"open\",\r\n        \"stateReason\": null\r\n    },\r\n    \"type\": \"Parking\",\r\n    \"visible\": true,\r\n    \"bookingTimes\": {\r\n        \"AM\": {\r\n            \"max\": 20\r\n        },\r\n        \"PM\": {\r\n            \"max\": 30\r\n        }\r\n    },\r\n    \"parkName\": \"Joffre Lakes Provincial Park\",\r\n    \"bookingOpeningHour\": null,\r\n    \"bookingDaysAhead\": null,\r\n    \"winterWarning\": null\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -422,7 +422,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"pk\": \"facility::Joffre Lakes Provincial Park\",\r\n    \"sk\": \"facility1\",\r\n    \"name\": \"facility1\",\r\n    \"status\": {\r\n        \"state\": \"open\",\r\n        \"stateReason\": null\r\n    },\r\n    \"type\": \"Parking\",\r\n    \"visible\": true,\r\n    \"bookingTimes\": {\r\n        \"AM\": {\r\n            \"max\": 20\r\n        },\r\n        \"PM\": {\r\n            \"max\": 32\r\n        }\r\n    },\r\n    \"parkName\": \"Joffre Lakes Provincial Park\",\r\n    \"bookingOpeningHour\": null,\r\n    \"bookingDaysAhead\": null,\r\n    \"mode\": \"editFacililty\"\r\n}",
+							"raw": "{\r\n    \"pk\": \"facility::Joffre Lakes Provincial Park\",\r\n    \"sk\": \"facility1\",\r\n    \"name\": \"facility1\",\r\n    \"status\": {\r\n        \"state\": \"open\",\r\n        \"stateReason\": null\r\n    },\r\n    \"type\": \"Parking\",\r\n    \"visible\": true,\r\n    \"bookingTimes\": {\r\n        \"AM\": {\r\n            \"max\": 20\r\n        },\r\n        \"PM\": {\r\n            \"max\": 32\r\n        }\r\n    },\r\n    \"parkName\": \"Joffre Lakes Provincial Park\",\r\n    \"bookingOpeningHour\": null,\r\n    \"bookingDaysAhead\": null,\r\n    \"winterWarning\": null,\r\n    \"mode\": \"editFacililty\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
