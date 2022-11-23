@@ -3,6 +3,7 @@ const { logger } = require('./logger');
 const { DateTime } = require('luxon');
 
 const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
+const EXTRAS_TABLE_NAME = process.env.EXTRAS_TABLE_NAME || 'migrations';
 const options = {
   region: 'ca-central-1'
 };
@@ -277,6 +278,7 @@ module.exports = {
   PASS_TYPE_EXPIRY_HOURS,
   TIMEZONE,
   TABLE_NAME,
+  EXTRAS_TABLE_NAME,
   dynamodb,
   setStatus,
   runQuery,
