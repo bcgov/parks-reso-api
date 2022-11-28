@@ -7,5 +7,5 @@ spec:
     status: completed
     last-updated: '2022-11-28T21:06:15.672Z'
   - name: STRA
-    status: STRA_STATUS_HERE
-    last-updated: '2021-06-01T21:23:30.511Z'
+    status: completed
+    last-updated: '2022-11-28T21:06:20.591Z'
