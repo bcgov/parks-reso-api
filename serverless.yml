@@ -18,6 +18,8 @@ plugins:
   - serverless-dynamodb-local
   - serverless-offline
   - serverless-plugin-include-dependencies
+  - serverless-dotenv-plugin
+
 functions:
   ###########
   # captcha
@@ -204,6 +206,9 @@ functions:
     package:
       patterns:
         - lambda/warmUp/worker.js
+  # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-sendReminder
+  sendReminder:
+    handler: lambda/sendReminder/index.handler
 
 custom:
   dynamodb:
@@ -287,4 +292,3 @@ resources:
             ProvisionedThroughput:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
-

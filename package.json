@@ -24,6 +24,7 @@
     "mockdate": "^3.0.5",
     "read-excel-file": "^5.3.4",
     "serverless": "^3.18.1",
+    "serverless-dotenv-plugin": "^4.0.2",
     "serverless-dynamodb-local": "^0.2.40",
     "serverless-offline": "^11.4.0",
     "serverless-plugin-include-dependencies": "^5.0.0"

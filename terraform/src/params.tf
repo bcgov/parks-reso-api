@@ -2,6 +2,26 @@ data "aws_ssm_parameter" "db_name" {
   name = "/parks-reso-api/db-name"
 }
 
+data "aws_ssm_parameter" "extras_table_name" {
+  name = "/parks-reso-api/extras-table-name"
+}
+
+data "aws_ssm_parameter" "pass_shortdate_index" {
+  name = "/parks-reso-api/pass-shortdate-index"
+}
+
+data "aws_ssm_parameter" "rc_alert_webhook_url" {
+  name = "/parks-reso-api/rc-alert-webhook-url"
+}
+
+data "aws_ssm_parameter" "rc_alert_webhook_token" {
+  name = "/parks-reso-api/rc-alert-webhook-token"
+}
+
+data "aws_ssm_parameter" "gc_notify_api_bulk_path" {
+  name = "/parks-reso-api/gc-notify-api-bulk-path"
+}
+
 data "aws_ssm_parameter" "gc_notify_api_path" {
   name = "/parks-reso-api/gc-notify-api-path"
 }
@@ -16,6 +36,14 @@ data "aws_ssm_parameter" "gc_notify_parking_receipt_template_id" {
 
 data "aws_ssm_parameter" "gc_notify_trail_receipt_template_id" {
   name = "/parks-reso-api/gc-notify-trail-receipt-template-id"
+}
+
+data "aws_ssm_parameter" "gc_notify_reminder_template_id" {
+  name = "/parks-reso-api/gc-notify-reminder-template-id"
+}
+
+data "aws_ssm_parameter" "gc_notify_is_sending_reminders" {
+  name = "/parks-reso-api/gc-notify-is-sending-reminders"
 }
 
 data "aws_ssm_parameter" "gc_notify_cancel_template_id" {
