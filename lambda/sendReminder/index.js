@@ -107,24 +107,19 @@ exports.handler = async (event, context) => {
             bulkJobSuccesses++;
           }
         } catch (err) {
-          jobError = 'The service was unsuccessful in leveraging GC Notify to send a bulk email.';
+          jobError = `The service was unsuccessful in leveraging GC Notify to send a bulk email: ${err}`;
           resData = String(err);
           logger.error(jobError, err)
           bulkJobFailures++;
         }
-
         try {
           // Post a summary of job success/failure to db.
           let jobObj = await postBulkReminderSummary(resData, jobError, chunk);
           if (jobError) {
             // Post alert to RocketChat channel if job fails.
-            request = {
-              postTitle: '@all **Day Use Pass - Bulk Email Service**',
-              postText: `A bulk email reminder job has failed: ${jobError} Details can be found under the job key listed below.`,
-              author_name: 'Day Use Pass',
-              author_icon: 'https://bcparks.ca/_shared/images/logos/logo-bcparks-v-200.png',
-              color: '#2D834F',
-              fields: [
+            sendRocketChatAlert(
+              `A bulk email reminder job has failed: ${jobError}`,
+              [
                 {
                   title: 'Job key:',
                   value: `pk: ${jobObj?.pk}\nsk: ${jobObj?.sk}`,
@@ -136,8 +131,7 @@ exports.handler = async (event, context) => {
                   short: true
                 }
               ]
-            }
-            await rcPost(process.env.RC_ALERT_WEBHOOK_URL, process.env.RC_ALERT_WEBHOOK_TOKEN, request);
+            );
           }
         } catch (err) {
           logger.error('Failed to document the bulk email job:', err);
@@ -150,6 +144,16 @@ exports.handler = async (event, context) => {
     logger.debug(`${totalJobs} job(s) run (${bulkJobSuccesses} succeeded, ${bulkJobFailures} failed).`)
   } catch (err) {
     // Something unknown went wrong.
+    sendRocketChatAlert(
+      `A bulk email reminder job has failed: An unknown error occurred.`,
+      [
+        {
+          title: 'Error:',
+          value: `${err}`,
+          short: false
+        }
+      ]
+    );
     return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
   }
 }
@@ -174,13 +178,13 @@ function buildCancellationLink(pass) {
 async function postBulkReminderSummary(data, jobError, passArray) {
   let passes = [];
   let postItem;
-  if (passArray && jobError) {
-    // We want a list of passes.
-    for (let i = 1; i < passArray.length; i++) {
-      passes.push(passArray[i][5]);
-    }
-  }
   try {
+    if (passArray && jobError) {
+      // We want a list of passes.
+      for (let i = 1; i < passArray.length; i++) {
+        passes.push(passArray[i][5]);
+      }
+    }
     postItem = {
       pk: 'sendReminderSummary',
       sk: DateTime.utc().toISO(),
@@ -197,7 +201,35 @@ async function postBulkReminderSummary(data, jobError, passArray) {
     logger.debug('Posted bulkReminderSummary to database:', postItem);
     return postItem;
   } catch (err) {
+    sendRocketChatAlert(
+      `A bulk email reminder job has failed: The system was unable to save a record of the bulk email job to DynamoDB.`,
+      [
+        {
+          title: 'Error:',
+          value: `${err}`,
+          short: true
+        },
+        {
+          title: 'Number of users affected:',
+          value: `${passArray?.length - 1}`,
+          short: true
+        }
+      ]
+    );
     logger.error('Failed to save bulkReminderSummary to database:', err);
     return postItem;
   }
+}
+
+function sendRocketChatAlert(text, fields) {
+  // Post alert to RocketChat channel if job fails.
+  request = {
+    postTitle: '@all **Day Use Pass - Bulk Email Service**',
+    postText: text,
+    author_name: 'Day Use Pass',
+    author_icon: 'https://bcparks.ca/_shared/images/logos/logo-bcparks-v-200.png',
+    color: '#2D834F',
+    fields: fields
+  }
+  rcPost(process.env.RC_ALERT_WEBHOOK_URL, process.env.RC_ALERT_WEBHOOK_TOKEN, request);
 }
