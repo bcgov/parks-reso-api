@@ -185,6 +185,27 @@ EOF
 
 }
 
+resource "aws_iam_role" "metaWriteRole" {
+  name = "lambdaMetaWriteRole"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+
+}
+
 resource "aws_iam_role" "deleteRole" {
   name = "lambdaDeleteRole"
 
@@ -405,6 +426,62 @@ resource "aws_iam_role_policy" "dynamoDBWriteRole" {
             "dynamodb:ConditionCheckItem"
         ],
         "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+            "dynamodb:Query"
+        ],
+        "Resource": "${aws_dynamodb_table.park_dup_table.arn}/index/*"
+      }
+    ]
+  }
+  EOF
+}
+
+resource "aws_iam_role_policy" "dynamoDBMetaWriteRole" {
+  name = "park_reso_dynamodb_meta"
+  role = aws_iam_role.metaWriteRole.id
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+            "dynamodb:BatchGet*",
+            "dynamodb:DescribeStream",
+            "dynamodb:DescribeTable",
+            "dynamodb:Get*",
+            "dynamodb:Query",
+            "dynamodb:Scan",
+            "dynamodb:BatchWrite*",
+            "dynamodb:CreateTable",
+            "dynamodb:Delete*",
+            "dynamodb:Update*",
+            "dynamodb:PutItem",
+            "dynamodb:ConditionCheckItem"
+        ],
+        "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+            "dynamodb:BatchGet*",
+            "dynamodb:DescribeStream",
+            "dynamodb:DescribeTable",
+            "dynamodb:Get*",
+            "dynamodb:Query",
+            "dynamodb:Scan",
+            "dynamodb:BatchWrite*",
+            "dynamodb:CreateTable",
+            "dynamodb:Delete*",
+            "dynamodb:Update*",
+            "dynamodb:PutItem",
+            "dynamodb:ConditionCheckItem"
+        ],
+        "Resource": "${aws_dynamodb_table.park_dup_meta_table.arn}"
       },
       {
         "Effect": "Allow",
