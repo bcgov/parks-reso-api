@@ -2,8 +2,8 @@ data "aws_ssm_parameter" "db_name" {
   name = "/parks-reso-api/db-name"
 }
 
-data "aws_ssm_parameter" "extras_table_name" {
-  name = "/parks-reso-api/extras-table-name"
+data "aws_ssm_parameter" "meta_db_name" {
+  name = "/parks-reso-api/meta-db-name"
 }
 
 data "aws_ssm_parameter" "pass_shortdate_index" {

@@ -78,6 +78,31 @@ resource "aws_dynamodb_table" "park_dup_table" {
   }
 }
 
+resource "aws_dynamodb_table" "park_dup_meta_table" {
+  name           = data.aws_ssm_parameter.meta_db_name.value
+  hash_key       = "pk"
+  range_key      = "sk"
+  billing_mode   = "PAY_PER_REQUEST"
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  tags = {
+    Name = "Database"
+  }
+
+  attribute {
+    name = "pk"
+    type = "S"
+  }
+
+  attribute {
+    name = "sk"
+    type = "S"
+  }
+}
+
 resource "aws_backup_vault" "parksreso_backup_vault" {
   name        = "backup_vault_for_parksreso"
 }

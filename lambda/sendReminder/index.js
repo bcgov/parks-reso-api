@@ -1,5 +1,5 @@
 const AWS = require('aws-sdk');
-const { runQuery, TABLE_NAME, EXTRAS_TABLE_NAME, TIMEZONE, dynamodb } = require('../dynamoUtil');
+const { runQuery, TABLE_NAME, META_TABLE_NAME, TIMEZONE, dynamodb } = require('../dynamoUtil');
 const { gcnSend } = require('../gcNotifyUtils');
 const { rcPost } = require('../rocketChatUtils');
 const { sendResponse } = require('../responseUtil');
@@ -193,7 +193,7 @@ async function postBulkReminderSummary(data, jobError, passArray) {
       passes: passes,
     };
     let postObj = {
-      TableName: EXTRAS_TABLE_NAME,
+      TableName: META_TABLE_NAME,
       Item: AWS.DynamoDB.Converter.marshall(postItem),
       ConditionExpression: 'attribute_not_exists(pk) AND attribute_not_exists(sk)',
     };

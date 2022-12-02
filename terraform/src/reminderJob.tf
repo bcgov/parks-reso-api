@@ -12,7 +12,7 @@ resource "aws_lambda_function" "send_reminder" {
   environment {
     variables = {
       TABLE_NAME                      = data.aws_ssm_parameter.db_name.value,
-      EXTRAS_TABLE_NAME               = data.aws_ssm_parameter.extras_table_name.value,
+      META_TABLE_NAME                 = data.aws_ssm_parameter.meta_db_name.value,
       PUBLIC_FRONTEND                 = data.aws_ssm_parameter.public_url.value,
       PASS_CANCELLATION_ROUTE         = data.aws_ssm_parameter.pass_cancellation_route.value,
       PASS_SHORTDATE_INDEX            = data.aws_ssm_parameter.pass_shortdate_index.value, 
@@ -24,7 +24,7 @@ resource "aws_lambda_function" "send_reminder" {
       RC_ALERT_WEBHOOK_TOKEN          = data.aws_ssm_parameter.rc_alert_webhook_token.value,
     }
   }
-  role = aws_iam_role.readRole.arn
+  role = aws_iam_role.metaWriteRole.arn
 }
 
 resource "aws_lambda_alias" "send_reminder_latest" {
