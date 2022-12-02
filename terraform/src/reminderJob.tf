@@ -24,7 +24,7 @@ resource "aws_lambda_function" "send_reminder" {
       RC_ALERT_WEBHOOK_TOKEN          = data.aws_ssm_parameter.rc_alert_webhook_token.value,
     }
   }
-  role = aws_iam_role.readRole.arn
+  role = aws_iam_role.writeRole.arn
 }
 
 resource "aws_lambda_alias" "send_reminder_latest" {
