@@ -17,6 +17,7 @@ exports.handler = async (event, context) => {
 
   try {
     if (!event.queryStringParameters) {
+      logger.info("Invalid Request");
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
     if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
@@ -24,6 +25,7 @@ exports.handler = async (event, context) => {
       const token = await decodeJWT(event);
       const permissionObject = resolvePermissions(token);
       if (permissionObject.isAdmin !== true) {
+        logger.info("Unauthorized");
         return sendResponse(403, { msg: 'Unauthorized' });
       }
       // Get all the passes for a specific facility
@@ -84,16 +86,22 @@ exports.handler = async (event, context) => {
       }
 
       logger.debug('queryObj:', queryObj);
+      logger.info("Running Query");
 
       let scanResults = [];
       let passData;
       do {
         passData = await runQuery(queryObj, true);
-        passData.data.forEach((item) => scanResults.push(item));
+        passData.data.forEach((item) => {
+          // Delete audit trail (BRS-916)
+          delete item.audit;
+          scanResults.push(item)
+        });
         queryObj.ExclusiveStartKey = passData.LastEvaluatedKey;
       } while (typeof passData.LastEvaluatedKey !== "undefined");
 
       // Convert into CSV and deploy.
+      logger.info("Converting CSV");
       const csvData = csvjson.toCSV(scanResults);
 
       // Write to S3.
@@ -108,9 +116,11 @@ exports.handler = async (event, context) => {
       let res = null;
       try {
         // Upload file
+        logger.info("Uploading to S3");
         res = await s3.putObject(params).promise();
 
         // Generate URL.
+        logger.info("Generating Signed URL");
         const URL = await s3.getSignedUrl('getObject', {
           Bucket: process.env.S3_BUCKET_DATA,
           Expires: expiryTime,

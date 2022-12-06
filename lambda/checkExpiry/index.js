@@ -1,5 +1,3 @@
-const { compareAsc, addHours, endOfYesterday, startOfDay } = require('date-fns');
-const { utcToZonedTime } = require('date-fns-tz');
 const { DateTime } = require('luxon');
 const { getPassesByStatus,
   setStatus,
@@ -23,6 +21,7 @@ exports.handler = async (event, context) => {
 
     let passesToChange = [];
     const passes = await getPassesByStatus(ACTIVE_STATUS);
+    logger.info("Active Passes", passes.length);
     logger.debug("Active Passes:", passes);
 
     for (pass of passes) {
@@ -42,15 +41,19 @@ exports.handler = async (event, context) => {
       }
     }
 
+    logger.info("Passes To Change:", passesToChange.length)
+
     // Set passes => expired
     if (passesToChange.length !== 0) {
       await setStatus(passesToChange, EXPIRED_STATUS);
     }
 
+    logger.info("Passes Changed.")
+
     return sendResponse(200, {}, context);
   } catch (err) {
     logger.error(err);
-
+    // TODO: Notification to RC.
     return sendResponse(500, {}, context);
   }
 };

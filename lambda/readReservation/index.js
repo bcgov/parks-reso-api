@@ -27,12 +27,13 @@ exports.handler = async (event, context) => {
     if (permissionObject.isAuthenticated) {
       // Auth'd users must provide a date.
       if (!date) {
+        logger.info("Please provide a date");
         return sendResponse(400, { msg: 'Please provide a date.' });
       }
       if (permissionObject.isAdmin) {
-        logger.debug('**SYSADMIN**');
+        logger.info('**SYSADMIN**');
       } else {
-        logger.debug('**AUTHENTICATED, NOT SYSADMIN**');
+        logger.info('**AUTHENTICATED, NOT SYSADMIN**');
         let parkObj = await getPark(park, true);
 
         // Check roles.
@@ -46,13 +47,15 @@ exports.handler = async (event, context) => {
       }
     } else {
       // If public, we have to check park/facility visibility first.
-      logger.debug('**NOT AUTHENTICATED, PUBLIC**');
+      logger.info('**NOT AUTHENTICATED, PUBLIC**');
       let parkObj = await getPark(park);
       if (!parkObj) {
+        logger.info("Park not found");
         return sendResponse(404, { msg: 'Park not found' }, context);
       }
       facilityObj = await getFacility(park, facility);
       if (!facilityObj) {
+        logger.info("Facility not found");
         return sendResponse(404, { msg: 'Facility not found' }, context);
       }
 
@@ -61,6 +64,7 @@ exports.handler = async (event, context) => {
       if (!date) {
         bookingWindow = window;
       } else if (!window.includes(date)) {
+        logger.info(`Provided date must be between today's date and ${facilityObj.bookingDaysAhead} days in the future`);
         return sendResponse(400, {
           msg: `Provided date must be between today's date and ${facilityObj.bookingDaysAhead} days in the future`
         });
@@ -110,6 +114,7 @@ exports.handler = async (event, context) => {
       reservations = formatPublicReservationObject(reservations, facilityObj, bookingWindow);
     }
 
+    logger.info('GET reservations:', reservations.length);
     logger.debug('GET reservations:', reservations);
     return sendResponse(200, reservations);
   } catch (err) {

@@ -14,6 +14,7 @@ exports.createNewReservationsObj = async function createNewReservationsObj(
   bookingPSTShortDate
 ) {
   if (!facility.bookingTimes || !facility.status.state){
+    logger.debug("Invalid facility object", facility);
     throw 'Invalid facility object';
   }
 
@@ -50,7 +51,8 @@ exports.createNewReservationsObj = async function createNewReservationsObj(
   } catch (err) {
     // If this fails, that means the object already exists.
     // We can continue to our allocated increment logic.
-    logger.info('Reservation object already exists', rawReservationsObject);
+    logger.info('Reservation object already exists');
+    logger.debug(rawReservationsObject);
   }
   return res;
 };

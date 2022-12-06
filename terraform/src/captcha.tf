@@ -20,7 +20,8 @@ resource "aws_lambda_function" "generateCaptchaLambda" {
 
   environment {
     variables = {
-      PRIVATE_KEY = local.privateKey
+      PRIVATE_KEY = local.privateKey,
+      LOG_LEVEL   = "info"
     }
   }
 
@@ -74,7 +75,8 @@ resource "aws_lambda_function" "verifyCaptchaLambda" {
     variables = {
       PRIVATE_KEY         = local.privateKey,
       JWT_SECRET          = local.jwtSecret.jwtSecret,
-      CAPTCHA_SIGN_EXPIRY = var.captcha_sign_expiry
+      CAPTCHA_SIGN_EXPIRY = var.captcha_sign_expiry,
+      LOG_LEVEL           = "info"
     }
   }
 
@@ -126,7 +128,8 @@ resource "aws_lambda_function" "generateCaptchaAudioLambda" {
 
   environment {
     variables = {
-      PRIVATE_KEY = local.privateKey
+      PRIVATE_KEY = local.privateKey,
+      LOG_LEVEL   = "info"
     }
   }
 

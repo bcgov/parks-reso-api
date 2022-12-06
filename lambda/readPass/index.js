@@ -26,6 +26,7 @@ exports.handler = async (event, context) => {
     if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
 
       if (permissionObject.isAuthenticated !== true) {
+        logger.info('Unauthorized');
         return sendResponse(403, { msg: 'Unauthorized' });
       }
 
@@ -125,12 +126,14 @@ exports.handler = async (event, context) => {
       }
       queryObj = paginationHandler(queryObj, event);
 
+      logger.info('Running query');
       logger.debug('queryObj:', queryObj);
       const passData = await runQuery(queryObj, true);
       return sendResponse(200, passData, context);
     } else if (event.queryStringParameters.passes && event.queryStringParameters.park) {
-      logger.debug('Grab passes for this park');
+      logger.info('Grab passes for this park');
       if (permissionObject.isAdmin !== true) {
+        logger.info('Unauthorized');
         return sendResponse(403, { msg: 'Unauthorized' });
       }
       // Grab passes for this park.
@@ -139,13 +142,14 @@ exports.handler = async (event, context) => {
       queryObj.KeyConditionExpression = 'pk =:pk';
       queryObj = paginationHandler(queryObj, event);
       const passData = await runQuery(queryObj, true);
+      logger.info('Returning Results:', passData.length);
       return sendResponse(200, passData, context);
     } else if (
       event.queryStringParameters.passId &&
       event.queryStringParameters.email &&
       event.queryStringParameters.park
     ) {
-      logger.debug('Get the specific pass, this person is NOT authenticated');
+      logger.info('Get the specific pass, this person is NOT authenticated');
       // Get the specific pass, this person is NOT authenticated
       queryObj.ExpressionAttributeValues = {};
       queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
@@ -156,6 +160,7 @@ exports.handler = async (event, context) => {
       logger.debug('queryObj', queryObj);
       queryObj = paginationHandler(queryObj, event);
       const passData = await runQuery(queryObj, true);
+      logger.info('passData', passData.length);
       logger.debug('passData', passData);
 
       if (passData && passData.data && passData.data.length !== 0) {
@@ -172,6 +177,7 @@ exports.handler = async (event, context) => {
           type: passData.data[0].type,
           parkName: passData.data[0].pk.split('::')[1]
         };
+        logger.info("Signing JWT");
         const token = jwt.sign(claims, process.env.JWT_SECRET, { expiresIn: '15m' });
 
         const cancellationLink =
@@ -202,6 +208,7 @@ exports.handler = async (event, context) => {
 
         // Send email
         // Public page after 200OK should show 'check your email'
+        logger.info("Posting to GC Notify");
         try {
           await axios({
             method: 'post',
@@ -216,7 +223,7 @@ exports.handler = async (event, context) => {
               personalisation: personalisation
             }
           });
-
+          logger.info("GC Notify posted successfully.");
           return sendResponse(200, personalisation);
         } catch (err) {
           logger.error(err);
@@ -225,10 +232,12 @@ exports.handler = async (event, context) => {
           return sendResponse(200, errRes);
         }
       } else {
+        logger.info("Invalid Request, pass does not exist.");
         return sendResponse(400, { msg: 'Invalid Request, pass does not exist' }, context);
       }
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
       if (permissionObject.isAdmin !== true) {
+        logger.info("Unauthorized");
         return sendResponse(403, { msg: 'Unauthorized!' });
       } else {
         // Get the specific pass
@@ -240,7 +249,7 @@ exports.handler = async (event, context) => {
         return sendResponse(200, passData, context);
       }
     } else {
-      logger.debug('Invalid Request');
+      logger.info('Invalid Request');
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
   } catch (err) {

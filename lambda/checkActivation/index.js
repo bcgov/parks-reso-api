@@ -38,7 +38,7 @@ exports.handler = async (event, context) => {
     logger.debug("Getting passes by status:", RESERVED_STATUS, filter);
 
     const passes = await getPassesByStatus(RESERVED_STATUS, filter);
-    logger.debug("Reserved Passes:", passes.length);
+    logger.info("Reserved Passes:", passes.length);
 
     // Query the passStatus-index for passStatus = 'reserved'
     // NB: Filter on date <= endOfToday for fixing previous bad data.
@@ -61,7 +61,9 @@ exports.handler = async (event, context) => {
 
     // Get all facilities for opening hour lookups.
     let facilities = [];
+    logger.info("Getting parks");
     const parks = await getParks();
+    logger.info("Getting facilities");
     for (let i = 0; i < parks.length; i++) {
       const results = await getFacilities(parks[i].sk);
       facilities = facilities.concat(results);
@@ -69,6 +71,7 @@ exports.handler = async (event, context) => {
 
     // For each pass determine if we're in the AM/DAY for that pass or the PM.  Push into active
     // accordingly, or set it to expired if it's anything < today
+    logger.info("Processing Passes:", passes.length);
     for (let i = 0; i < passes.length; i++) {
       let pass = passes[i];
 
@@ -109,11 +112,13 @@ exports.handler = async (event, context) => {
         passesToExpiredStatus.push(pass);
       }
     }
-    logger.debug("Passes => active:", passesToActiveStatus.length);
-    logger.debug("Passes => expired:", passesToExpiredStatus.length);
+    logger.info("Passes => active:", passesToActiveStatus.length);
+    logger.info("Passes => expired:", passesToExpiredStatus.length);
 
     await setStatus(passesToActiveStatus, ACTIVE_STATUS);
     await setStatus(passesToExpiredStatus, EXPIRED_STATUS);
+
+    logger.info("Passes updated successfully");
 
     return sendResponse(200, {}, context);
   } catch (err) {

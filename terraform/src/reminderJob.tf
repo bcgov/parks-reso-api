@@ -11,20 +11,21 @@ resource "aws_lambda_function" "send_reminder" {
 
   environment {
     variables = {
-      TABLE_NAME                      = data.aws_ssm_parameter.db_name.value,
-      EXTRAS_TABLE_NAME               = data.aws_ssm_parameter.extras_table_name.value,
-      PUBLIC_FRONTEND                 = data.aws_ssm_parameter.public_url.value,
-      PASS_CANCELLATION_ROUTE         = data.aws_ssm_parameter.pass_cancellation_route.value,
-      PASS_SHORTDATE_INDEX            = data.aws_ssm_parameter.pass_shortdate_index.value, 
-      GC_NOTIFY_API_BULK_PATH         = data.aws_ssm_parameter.gc_notify_api_bulk_path.value, 
-      GC_NOTIFY_API_KEY               = data.aws_ssm_parameter.gc_notify_api_key.value, 
-      GC_NOTIFY_REMINDER_TEMPLATE_ID  = data.aws_ssm_parameter.gc_notify_reminder_template_id.value, 
-      GC_NOTIFY_IS_SENDING_REMINDERS  = data.aws_ssm_parameter.gc_notify_is_sending_reminders.value,
-      RC_ALERT_WEBHOOK_URL            = data.aws_ssm_parameter.rc_alert_webhook_url.value,
-      RC_ALERT_WEBHOOK_TOKEN          = data.aws_ssm_parameter.rc_alert_webhook_token.value,
+      TABLE_NAME                     = data.aws_ssm_parameter.db_name.value,
+      META_TABLE_NAME                = data.aws_ssm_parameter.meta_db_name.value,
+      PUBLIC_FRONTEND                = data.aws_ssm_parameter.public_url.value,
+      PASS_CANCELLATION_ROUTE        = data.aws_ssm_parameter.pass_cancellation_route.value,
+      PASS_SHORTDATE_INDEX           = data.aws_ssm_parameter.pass_shortdate_index.value, 
+      GC_NOTIFY_API_BULK_PATH        = data.aws_ssm_parameter.gc_notify_api_bulk_path.value, 
+      GC_NOTIFY_API_KEY              = data.aws_ssm_parameter.gc_notify_api_key.value, 
+      GC_NOTIFY_REMINDER_TEMPLATE_ID = data.aws_ssm_parameter.gc_notify_reminder_template_id.value, 
+      GC_NOTIFY_IS_SENDING_REMINDERS = data.aws_ssm_parameter.gc_notify_is_sending_reminders.value,
+      RC_ALERT_WEBHOOK_URL           = data.aws_ssm_parameter.rc_alert_webhook_url.value,
+      RC_ALERT_WEBHOOK_TOKEN         = data.aws_ssm_parameter.rc_alert_webhook_token.value,
+      LOG_LEVEL                      = "info"
     }
   }
-  role = aws_iam_role.readRole.arn
+  role = aws_iam_role.metaWriteRole.arn
 }
 
 resource "aws_lambda_alias" "send_reminder_latest" {

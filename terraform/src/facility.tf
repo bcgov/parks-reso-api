@@ -14,9 +14,10 @@ resource "aws_lambda_function" "readFacilityLambda" {
 
   environment {
     variables = {
-      TABLE_NAME = data.aws_ssm_parameter.db_name.value,
-      SSO_ISSUER = data.aws_ssm_parameter.sso_issuer.value,
+      TABLE_NAME  = data.aws_ssm_parameter.db_name.value,
+      SSO_ISSUER  = data.aws_ssm_parameter.sso_issuer.value,
       SSO_JWKSURI = data.aws_ssm_parameter.sso_jwksuri.value,
+      LOG_LEVEL   = "info"
     }
   }
 
@@ -61,9 +62,10 @@ resource "aws_lambda_function" "writeFacilityLambda" {
 
   environment {
     variables = {
-      TABLE_NAME = data.aws_ssm_parameter.db_name.value
-      SSO_ISSUER = data.aws_ssm_parameter.sso_issuer.value,
+      TABLE_NAME  = data.aws_ssm_parameter.db_name.value
+      SSO_ISSUER  = data.aws_ssm_parameter.sso_issuer.value,
       SSO_JWKSURI = data.aws_ssm_parameter.sso_jwksuri.value,
+      LOG_LEVEL   = "info"
     }
   }
 
