@@ -13,12 +13,14 @@ const DEFAULT_AM_OPENING_HOUR = 7;
 const DEFAULT_PM_OPENING_HOUR = 12;
 
 exports.handler = async (event, context) => {
+  logger.debug("WritePass:", event);
   let passObject = {
     TableName: TABLE_NAME,
     ConditionExpression: 'attribute_not_exists(sk)'
   };
 
   if (!event) {
+    logger.info("There was an error in your submission:");
     return sendResponse(
       400,
       {
@@ -55,6 +57,8 @@ exports.handler = async (event, context) => {
       ...otherProps
     } = newObject;
 
+    logger.info("GetFacility");
+    logger.debug(permissionObject.roles);
     const facilityData = await getFacility(parkName, facilityName, permissionObject.isAdmin);
 
     if (Object.keys(facilityData).length === 0) {
@@ -64,6 +68,7 @@ exports.handler = async (event, context) => {
     if (!permissionObject.isAdmin) {
       // Do extra checks if user is not sysadmin.
       if (!captchaJwt || !captchaJwt.length) {
+        logger.info("Missing CAPTCHA verification");
         return sendResponse(400, {
           msg: 'Missing CAPTCHA verification.',
           title: 'Missing CAPTCHA verification'
@@ -72,6 +77,7 @@ exports.handler = async (event, context) => {
 
       const verification = verifyJWT(captchaJwt);
       if (!verification.valid) {
+        logger.info("CAPTCHA verification failed");
         return sendResponse(400, {
           msg: 'CAPTCHA verification failed.',
           title: 'CAPTCHA verification failed'
@@ -80,6 +86,7 @@ exports.handler = async (event, context) => {
 
       // Enforce maximum limit per pass
       if (facilityData.type === 'Trail' && numberOfGuests > 4) {
+        logger.info("Too many guests");
         return sendResponse(400, {
           msg: 'You cannot have more than 4 guests on a trail.',
           title: 'Too many guests'
@@ -93,6 +100,7 @@ exports.handler = async (event, context) => {
 
     // numberOfGuests cannot be less than 1.
     if (numberOfGuests < 1) {
+      logger.info("Invalid number of guests:", numberOfGuests);
       return sendResponse(400, {
         msg: 'Passes must have at least 1 guest.',
         title: 'Invalid number of guests'
@@ -124,6 +132,7 @@ exports.handler = async (event, context) => {
       // passes are not required, unless it is a holiday listed within the facility.
       // check if it is a holiday
       if (facilityData.bookableHolidays.indexOf(bookingPSTShortDate) === -1) {
+        logger.info("Booking not required");
         return sendResponse(400, {
           msg: 'Passes are not required at this facility on the requested date.',
           title: 'Booking not required.'
@@ -134,6 +143,7 @@ exports.handler = async (event, context) => {
     // check if booking date in the past
     const currentPSTDateStart = currentPSTDateTime.startOf('day');
     if (currentPSTDateStart.toISO() > bookingPSTDateTime.toISO()) {
+      logger.info("Booking date in the past");
       return sendResponse(400, {
         msg: 'You cannot book for a date in the past.',
         title: 'Booking date in the past'
@@ -145,6 +155,7 @@ exports.handler = async (event, context) => {
       facilityData.bookingDaysAhead === null ? DEFAULT_BOOKING_DAYS_AHEAD : facilityData.bookingDaysAhead;
     const futurePSTDateTimeMax = currentPSTDateTime.plus({ days: bookingDaysAhead });
     if (bookingPSTDateTime.startOf('day') > futurePSTDateTimeMax.startOf('day') && !permissionObject.isAdmin) {
+      logger.info("Booking date in the future invalid");
       return sendResponse(400, {
         msg: 'You cannot book for a date that far ahead.',
         title: 'Booking date in the future invalid'
@@ -163,12 +174,16 @@ exports.handler = async (event, context) => {
       const currentPSTHour = currentPSTDateTime.get('hour');
       if (type === 'AM' && currentPSTHour >= DEFAULT_PM_OPENING_HOUR) {
         // it is beyond AM closing time
+        const openTime = to12hTimeString(openingHour);
+        const closeTime = to12hTimeString(closingHour);
+        logger.info("late to book an AM pass on this day");
+        logger.debug(type, currentPSTHour, openTime, closeTime);
         return sendResponse(400, {
           msg:
             'It is too late to book an AM pass on this day (AM time slot is from ' +
-            to12hTimeString(openingHour) +
+            openTime +
             ' to ' +
-            to12hTimeString(closingHour) +
+            closeTime +
             ').',
           title: 'AM time slot has expired'
         });
@@ -250,6 +265,7 @@ exports.handler = async (event, context) => {
     parkObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
     parkObj.ExpressionAttributeValues[':sk'] = { S: parkName };
     parkObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
+    logger.info("Running query");
     const parkData = await runQuery(parkObj);
     logger.debug('ParkData:', parkData);
 
@@ -295,6 +311,7 @@ exports.handler = async (event, context) => {
         };
         let existingItems;
         try {
+          logger.info("Running existingPassCheckObject");
           existingItems = await dynamodb.query(existingPassCheckObject).promise();
         } catch (error) {
           logger.error('Error while running query for existingPassCheckObject');
@@ -305,6 +322,7 @@ exports.handler = async (event, context) => {
         if (existingItems.Count === 0) {
           logger.debug('No existing pass found. Creating new pass...');
         } else {
+          logger.info("email account already has a reservation");
           return sendResponse(400, {
             title: 'This email account already has a reservation for this booking time.',
             msg: 'A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>'
@@ -324,8 +342,7 @@ exports.handler = async (event, context) => {
       const bookingTimeTypes = Object.keys(facilityData.bookingTimes);
       if (!bookingTimeTypes.includes(type)) {
         // Type given does not exist in the facility.
-        logger.debug('Booking Time Type Error: type provided does not exist in facility');
-        logger.debug(type);
+        logger.info('Booking Time Type Error: type provided does not exist in facility');
         logger.error('Write Pass', bookingTimeTypes, type);
         return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
       }
@@ -382,6 +399,7 @@ exports.handler = async (event, context) => {
       logger.debug('Transact obj:', transactionObj);
       logger.debug('Putting item:', passObject);
       try {
+        logger.info('Writing Transact obj:');
         const res = await dynamodb.transactWriteItems(transactionObj).promise();
         logger.debug('Res:', res);
       } catch (error) {
@@ -405,7 +423,7 @@ exports.handler = async (event, context) => {
             logger.error('Error creating pass.');
             message = 'An error has occured, please try again.';
           }
-
+          logger.info('unable to fill your specific request');
           return sendResponse(400, {
             msg: message,
             title: 'Sorry, we are unable to fill your specific request.'
@@ -416,6 +434,7 @@ exports.handler = async (event, context) => {
       }
 
       try {
+        logger.info('Posting to GC Notify');
         await axios({
           method: 'post',
           url: process.env.GC_NOTIFY_API_PATH,
@@ -429,7 +448,7 @@ exports.handler = async (event, context) => {
             personalisation: personalisation
           }
         });
-        logger.debug('GCNotify email sent.');
+        logger.info('GCNotify email sent.');
 
         // Prune audit
         delete passObject.Item['audit'];
@@ -442,10 +461,12 @@ exports.handler = async (event, context) => {
         return sendResponse(200, errRes);
       }
     } else {
+      logger.info('Something went wrong');
       // Not allowed for whatever reason.
       return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
     }
   } catch (err) {
+    logger.info('Operation Failed');
     logger.error('err', err);
     return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
   }

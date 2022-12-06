@@ -18,11 +18,12 @@ exports.handler = async (event, context) => {
 
   try {
     if (!event.queryStringParameters) {
+      logger.info('Invalid Request');
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
 
     if (event.queryStringParameters.facilities && event.queryStringParameters.park) {
-      logger.debug('Grab facilities for this park');
+      logger.info('Grab facilities for this park');
       // Grab facilities for this park.
       queryObj.ExpressionAttributeValues = {};
       queryObj.ExpressionAttributeValues[':pk'] = { S: 'facility::' + event.queryStringParameters.park };
@@ -30,9 +31,10 @@ exports.handler = async (event, context) => {
 
       if (permissionObject.isAdmin) {
         // Get get everything
-        logger.debug("**Sysadmin**")
+        logger.info("**Sysadmin**")
       } else if (permissionObject.isAuthenticated) {
-        logger.debug("**Some other authenticated person with parking-pass roles**")
+        logger.info("**Some other authenticated person with parking-pass roles**")
+        logger.debug(permissionObject.roles);
         try {
           await getParkAccess(event.queryStringParameters.park, permissionObject);
         } catch (error) {
@@ -44,8 +46,10 @@ exports.handler = async (event, context) => {
       if (await parkVisible(event.queryStringParameters.park, permissionObject.isAuthenticated)) {
         queryObj = visibleFilter(queryObj, permissionObject.isAuthenticated);
         const facilityData = await runQuery(queryObj);
+        logger.info('Returning results', facilityData.length);
         return sendResponse(200, facilityData, context);
       } else {
+        logger.info('Invalid Request');
         return sendResponse(400, { msg: 'Invalid Request' }, context);
       }
     } else if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
@@ -58,9 +62,10 @@ exports.handler = async (event, context) => {
 
       if (permissionObject.isAdmin) {
         // Get get everything
-        logger.debug("**Sysadmin**")
+        logger.info("**Sysadmin**")
       } else if (permissionObject.isAuthenticated) {
-        logger.debug("**Some other authenticated person with parking-pass roles**")
+        logger.info("**Some other authenticated person with parking-pass roles**")
+        logger.debug(permissionObject.roles);
         try {
           await getParkAccess(event.queryStringParameters.park, permissionObject);
         } catch (error) {
@@ -72,12 +77,14 @@ exports.handler = async (event, context) => {
       if (await parkVisible(event.queryStringParameters.park, permissionObject.isAuthenticated)) {
         queryObj = visibleFilter(queryObj, permissionObject.isAuthenticated);
         const facilityData = await runQuery(queryObj);
+        logger.info('Returning results', facilityData.length);
         return sendResponse(200, facilityData, context);
       } else {
+        logger.info('Invalid Request');
         return sendResponse(400, { msg: 'Invalid Request' }, context);
       }
     } else {
-      logger.debug('Invalid Request');
+      logger.info('Invalid Request');
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
   } catch (err) {

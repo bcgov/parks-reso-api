@@ -11,10 +11,12 @@ const { unlockFacility, setFacilityLock } = require('../facilityUtils');
 
 exports.handler = async (event, context) => {
   if (!event || !event.headers) {
+    logger.info("Unauthorized");
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
   if (!(event.httpMethod === 'POST' || event.httpMethod === 'PUT')) {
+    logger.info("Not Implemented");
     return sendResponse(405, { msg: 'Not Implemented' }, context);
   }
 
@@ -22,6 +24,8 @@ exports.handler = async (event, context) => {
   const permissionObject = resolvePermissions(token);
 
   if (permissionObject.isAuthenticated !== true) {
+    logger.info("Unauthorized");
+    logger.debug("permissionObject:", permissionObject);
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
@@ -93,6 +97,7 @@ async function createFacility(obj) {
 
   logger.debug('putting item:', facilityObj);
   const res = await dynamodb.putItem(facilityObj).promise();
+  logger.info('res:', res.length);
   logger.debug('res:', res);
   return sendResponse(200, res);
 }

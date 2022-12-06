@@ -39,6 +39,7 @@ exports.handler = async (event, context) => {
     const token = await decodeJWT(event);
     const permissionObject = resolvePermissions(token);
     if (permissionObject.isAdmin !== true) {
+      logger.info("Unauthorized");
       return sendResponse(403, { msg: 'Unauthorized' });
     }
 

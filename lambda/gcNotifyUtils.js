@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { logger } = require('./logger');
 
 /**
  * An Axios 'post' call to GC Notify used to deliver single or bulk emails.
@@ -16,6 +17,7 @@ const axios = require('axios');
 async function gcnSend(url, apiKey, data) {
   let response;
   try {
+    logger.info("Posting to GC Notify");
     const res = await axios({
       method: 'post',
       url: url,
@@ -30,7 +32,9 @@ async function gcnSend(url, apiKey, data) {
       data: res,
       errors: null
     }
+    logger.info("Posted.");
   } catch (err) {
+    logger.debug(err);
     response = {
       statusCode: err?.response?.status || 400,
       data: err,

@@ -11,7 +11,8 @@ resource "aws_lambda_function" "check_expiry" {
 
   environment {
     variables = {
-      TABLE_NAME = data.aws_ssm_parameter.db_name.value
+      TABLE_NAME = data.aws_ssm_parameter.db_name.value,
+      LOG_LEVEL  = "info"
     }
   }
   role = aws_iam_role.readRole.arn

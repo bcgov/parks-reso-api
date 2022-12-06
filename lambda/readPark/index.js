@@ -29,14 +29,17 @@ exports.handler = async (event, context) => {
       queryObj.ExpressionAttributeValues[':sk'] = { S: event.queryStringParameters.park };
       queryObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
     } else {
+      logger.info('Invalid Request');
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
 
     // Public
     if (!permissionObject.isAuthenticated) {
-      logger.debug("**NOT AUTHENTICATED, PUBLIC**")
+      logger.info("**NOT AUTHENTICATED, PUBLIC**")
+      logger.debug(permissionObject.roles);
       queryObj = await visibleFilter(queryObj, permissionObject.isAdmin);
       const parksData = await runQuery(queryObj);
+      logger.info('Returning results:', parksData.length);
       return sendResponse(200, parksData, context);
     }
 
@@ -44,14 +47,15 @@ exports.handler = async (event, context) => {
 
     if (permissionObject.isAdmin) {
       // Sysadmin, they get it all
-      logger.debug("**Sysadmin**")
+      logger.info("**Sysadmin**")
     } else {
       // Some other authenticated role
-      logger.debug("**Some other authenticated person with parking-pass roles**")
+      logger.info("**Some other authenticated person with parking-pass roles**")
+      logger.debug(permissionObject.roles)
       parksData = await roleFilter(parksData, permissionObject.roles);
       logger.debug(JSON.stringify(parksData));
     }
-    logger.info("ReadPark: Returning data");
+    logger.info("Returning results:", parksData.length);
     return sendResponse(200, parksData, context);
   } catch (err) {
     logger.error(err);

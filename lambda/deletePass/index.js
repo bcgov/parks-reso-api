@@ -13,6 +13,7 @@ exports.handler = async (event, context) => {
 
   try {
     if (!event.queryStringParameters) {
+      logger.info('Invalid Request');
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
 
@@ -20,12 +21,13 @@ exports.handler = async (event, context) => {
     const currentTimeISO = currentPSTDateTime.toUTC().toISO();
 
     if (event.queryStringParameters.code) {
-      logger.debug('Get the specific pass, this person is NOT authenticated but has a code');
+      logger.info('Get the specific pass, this person is NOT authenticated but has a code');
 
       let decodedToken = jwt.verify(event.queryStringParameters.code, process.env.JWT_SECRET);
       logger.debug(decodedToken);
 
       if (decodedToken === null) {
+        logger.info('Invalid request: decoded token === null');
         return sendResponse(400, { msg: 'Invalid request' });
       }
       // We need to lookup the pass to provide user feedback
@@ -114,11 +116,15 @@ exports.handler = async (event, context) => {
         logger.debug('updateReservationsObjQuery:', updateReservationsObjQuery);
       }
 
+      logger.info('Transaction Object length:', transactionObj.length);
+
       const res = await dynamodb.transactWriteItems(transactionObj).promise();
       logger.debug('res:', res);
 
       // Prune audit
       delete passNoAuth.audit;
+
+      logger.info("Delete Pass Complete.");
 
       return sendResponse(200, { msg: 'Cancelled', pass: passNoAuth }, context);
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
@@ -126,6 +132,7 @@ exports.handler = async (event, context) => {
       const token = await decodeJWT(event);
       const permissionObject = resolvePermissions(token);
       if (permissionObject.isAdmin !== true) {
+        logger.info("Unauthorized");
         return sendResponse(403, { msg: 'Unauthorized!' });
       } else {
         // We need to lookup the pass to get the date & facility
@@ -217,13 +224,16 @@ exports.handler = async (event, context) => {
           logger.debug('updateReservationsObjQuery:', updateReservationsObjQuery);
         }
 
+        logger.info("Transaction Object Length:", transactionObj.length);
+
         const res = await dynamodb.transactWriteItems(transactionObj).promise();
         logger.debug('res:', res);
 
+        logger.info("transactWriteItems Complete:");
         return sendResponse(200, { msg: 'Cancelled', pass: pass }, context);
       }
     } else {
-      logger.debug('Invalid Request');
+      logger.info('Invalid Request');
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
   } catch (err) {
