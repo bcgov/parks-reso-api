@@ -14,12 +14,14 @@ exports.handler = async (event, context) => {
 
   try {
     if (!event.queryStringParameters) {
+      logger.info("Invalid Request");
       return sendResponse(400, { msg: 'Invalid Request' }, context);
     }
 
     const token = await decodeJWT(event);
     const permissionObject = resolvePermissions(token);
     if (permissionObject.isAdmin !== true) {
+      logger.info("Unauthorized");
       return sendResponse(403, { msg: 'Unauthorized' });
     }
 
@@ -27,16 +29,16 @@ exports.handler = async (event, context) => {
       // Get all the passes for a specific facility
 
       const cancelled = await getPassesByStatus('cancelled');
-      logger.debug("cancelled:", cancelled.length)
+      logger.info("cancelled:", cancelled.length)
 
       const active = await getPassesByStatus('active');
-      logger.debug("active:", active.length)
+      logger.info("active:", active.length)
 
       const reserved = await getPassesByStatus('reserved');
-      logger.debug("reserved:", reserved.length)
+      logger.info("reserved:", reserved.length)
 
       const expired = await getPassesByStatus('expired');
-      logger.debug("expired:", expired.length)
+      logger.info("expired:", expired.length)
 
       return sendResponse(200, {
         cancelled: cancelled.length,

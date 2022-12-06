@@ -19,7 +19,8 @@ resource "aws_lambda_function" "exportAllInvokableLambda" {
       SSO_ISSUER                   = data.aws_ssm_parameter.sso_issuer.value,
       SSO_JWKSURI                  = data.aws_ssm_parameter.sso_jwksuri.value,
       S3_BUCKET_DATA               = data.aws_ssm_parameter.s3_bucket_data.value,
-      DISABLE_PROGRESS_UPDATES     = false
+      DISABLE_PROGRESS_UPDATES     = false,
+      LOG_LEVEL                    = "info"
     }
   }
   role = aws_iam_role.exportRole.arn
@@ -57,7 +58,8 @@ resource "aws_lambda_function" "exportAllPassLambda" {
       S3_BUCKET_DATA               = data.aws_ssm_parameter.s3_bucket_data.value,
       SSO_ISSUER                   = data.aws_ssm_parameter.sso_issuer.value,
       SSO_JWKSURI                  = data.aws_ssm_parameter.sso_jwksuri.value,
-      EXPORT_FUNCTION_NAME         = aws_lambda_function.exportAllInvokableLambda.function_name
+      EXPORT_FUNCTION_NAME         = aws_lambda_function.exportAllInvokableLambda.function_name,
+      LOG_LEVEL                    = "info"
     }
   }
 

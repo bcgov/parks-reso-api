@@ -7,10 +7,12 @@ const { logger } = require('../logger');
 
 exports.handler = async (event, context) => {
   if (!event || !event.headers) {
+    logger.info('Unauthorized');
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
   if (!new Set(['POST', 'PUT']).has(event.httpMethod)) {
+    logger.info('Not Implemented');
     return sendResponse(405, { msg: 'Not Implemented' }, context);
   }
 
@@ -18,6 +20,7 @@ exports.handler = async (event, context) => {
   const permissionObject = resolvePermissions(token);
 
   if (permissionObject.isAuthenticated !== true) {
+    logger.info('Unauthorized');
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
@@ -37,6 +40,7 @@ exports.handler = async (event, context) => {
       if (permissionObject.isAdmin) {
         return await createItem(obj);
       } else {
+        logger.info('Unauthorized');
         throw "Unauthorized Access.";
       }
     }
@@ -78,6 +82,7 @@ async function createItem(obj, context) {
 
   logger.debug('putting item:', parkObject);
   const res = await dynamodb.putItem(parkObject).promise();
+  logger.info('Results:', res.length);
   logger.debug('res:', res);
   return sendResponse(200, res, context);
 }
@@ -178,6 +183,7 @@ async function updateItem(obj, context) {
 
   logger.debug('Updating item:', updateParams);
   const res = await dynamodb.updateItem(updateParams).promise();
+  logger.info('Results:', res.length);
   logger.debug('res:', res);
   return sendResponse(200, res, context);
 }

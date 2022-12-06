@@ -15,7 +15,7 @@ const MAX_BULK_SIZE = 50000;
 const PASS_SHORTDATE_INDEX = process.env.PASS_SHORTDATE_INDEX || 'shortPassDate-index';
 
 exports.handler = async (event, context) => {
-  console.log('Send Reminder Emails', event);
+  logger.debug('Send Reminder Emails', event);
 
   // environment variables are cast as strings
   if (process.env.GC_NOTIFY_IS_SENDING_REMINDERS !== 'true') {
@@ -48,9 +48,9 @@ exports.handler = async (event, context) => {
     };
     const passData = await runQuery(queryObj);
     if (passData) {
-      logger.debug(passData.length + ' pass(es) fetched.');
+      logger.info(passData.length + ' pass(es) fetched.');
     } else {
-      logger.debug('No passes found.');
+      logger.info('No passes found.');
     }
 
     // Construct array of data to pass to GCNotify.
@@ -96,6 +96,7 @@ exports.handler = async (event, context) => {
             template_id: process.env.GC_NOTIFY_REMINDER_TEMPLATE_ID,
             rows: chunk
           };
+          logger.info("Sending to GC Notify");
           const res = await gcnSend(process.env.GC_NOTIFY_API_BULK_PATH, process.env.GC_NOTIFY_API_KEY, gcnSendObj);
           if (res.errors) {
             resData = res?.data?.response?.data;
@@ -138,10 +139,10 @@ exports.handler = async (event, context) => {
         }
       }
     } else {
-      logger.debug('No passes found for reminder service.')
+      logger.info('No passes found for reminder service.')
     }
     const totalJobs = bulkJobSuccesses + bulkJobFailures;
-    logger.debug(`${totalJobs} job(s) run (${bulkJobSuccesses} succeeded, ${bulkJobFailures} failed).`)
+    logger.info(`${totalJobs} job(s) run (${bulkJobSuccesses} succeeded, ${bulkJobFailures} failed).`)
   } catch (err) {
     // Something unknown went wrong.
     sendRocketChatAlert(

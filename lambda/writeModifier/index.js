@@ -20,10 +20,12 @@ const { DateTime } = require('luxon');
 // }
 exports.handler = async (event, context) => {
   if (!event || !event.headers) {
+    logger.info('Unauthorized');
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
   if (event.httpMethod !== 'PUT') {
+    logger.info('Not Implemented');
     return sendResponse(405, { msg: 'Not Implemented' }, context);
   }
 
@@ -31,6 +33,7 @@ exports.handler = async (event, context) => {
   const permissionObject = resolvePermissions(token);
 
   if (permissionObject.isAuthenticated !== true) {
+    logger.info('Unauthorized');
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
@@ -50,6 +53,7 @@ exports.handler = async (event, context) => {
   try {
     checkDate = DateTime.fromFormat(date, 'yyyy-mm-dd');
     if (checkDate.invalid){
+      logger.info('Provided date must be valid shortDate');
       throw 'Provided date must be valid shortDate';
     }
   } catch (error) {
@@ -68,10 +72,12 @@ exports.handler = async (event, context) => {
     // Set facility lock and get facility
     // This also locks reservation objects for that facility to be messed with.
     // This can be assumed because any other possible way to edit reservation objects are protected by the same facility lock
+    logger.info('Locking facility');
     const currentFacility = await setFacilityLock(`facility::${parkName}`, facility);
 
     // Apply the update to the locked facility
     const res = await updateModifier(date, bookingTimes, parkName, currentFacility);
+    logger.info('Unlocking facility');
 
     // Unlock before returning.
     await unlockFacility(`facility::${parkName}`, facility);
