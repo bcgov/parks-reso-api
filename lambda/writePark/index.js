@@ -51,7 +51,7 @@ exports.handler = async (event, context) => {
 };
 
 async function createItem(obj, context) {
-  const { park, facilities, visible, description, ...otherProps } = obj;
+  const { park, facilities, visible, winterWarning = false, description, ...otherProps } = obj;
 
   let parkObject = {
     TableName: TABLE_NAME,
@@ -73,6 +73,7 @@ async function createItem(obj, context) {
     parkObject.Item['capacity'] = AWS.DynamoDB.Converter.input(park.capacity);
   }
   parkObject.Item['status'] = { S: park.status };
+  parkObject.Item['winterWarning'] = { BOOL: winterWarning };
   parkObject.Item['visible'] = { BOOL: visible };
   if (park.mapLink) {
     parkObject.Item['mapLink'] = AWS.DynamoDB.Converter.input(park.mapLink);
@@ -88,7 +89,7 @@ async function createItem(obj, context) {
 }
 
 async function updateItem(obj, context) {
-  const { park, sk, facilities, visible, description, ...otherProps } = obj;
+  const { park, sk, facilities, visible, description, winterWarning, ...otherProps } = obj;
 
   let updateParams = {
     Key: {
@@ -118,6 +119,14 @@ async function updateItem(obj, context) {
     ...('visible' in obj && { ':visible': AWS.DynamoDB.Converter.input(obj.visible) })
   };
 
+  updateParams.UpdateExpression =
+    'winterWarning' in obj
+      ? updateParams.UpdateExpression + ' winterWarning =:winterWarning,'
+      : updateParams.UpdateExpression;
+  updateParams.ExpressionAttributeValues = {
+    ...updateParams.ExpressionAttributeValues,
+    ...('winterWarning' in obj && { ':winterWarning': AWS.DynamoDB.Converter.input(obj.winterWarning) })
+  };
   // Reserved Words
   if (obj?.park?.name) {
     updateParams.UpdateExpression = updateParams.UpdateExpression + ' #up_name =:name,';
