@@ -89,7 +89,11 @@ exports.handler = async (event, context) => {
       let passData;
       do {
         passData = await runQuery(queryObj, true);
-        passData.data.forEach((item) => scanResults.push(item));
+        passData.data.forEach((item) => {
+          // Delete audit trail (BRS-916)
+          delete item.audit;
+          scanResults.push(item)
+        });
         queryObj.ExclusiveStartKey = passData.LastEvaluatedKey;
       } while (typeof passData.LastEvaluatedKey !== "undefined");
 
