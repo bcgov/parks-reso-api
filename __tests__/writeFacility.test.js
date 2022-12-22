@@ -1,6 +1,8 @@
 const writeFacilityHandler = require('../lambda/writeFacility/index');
 const jwt = require('jsonwebtoken');
-const token = jwt.sign({ foo: 'bar' }, 'shhhhh');
+const ALGORITHM = process.env.ALGORITHM || "HS384";
+
+const token = jwt.sign({ foo: 'bar' }, 'shhhhh', { algorithm: ALGORITHM });
 
 describe('WriteFacility General', () => {
   test('Handler - 403 Unauthorized - nothing passed in', async () => {

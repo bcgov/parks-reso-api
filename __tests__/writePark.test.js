@@ -1,6 +1,8 @@
 const writeParkHandler = require('../lambda/writePark/index');
 const jwt = require('jsonwebtoken');
-var token = jwt.sign({ foo: 'bar' }, 'shhhhh');
+const ALGORITHM = process.env.ALGORITHM || "HS384";
+
+const token = jwt.sign({ foo: 'bar' }, 'shhhhh', { algorithm: ALGORITHM});
 
 test('Handler - 403 Unauthorized - nothing passed in', async () => {
   expect(await writeParkHandler.handler(null, null)).toMatchObject(

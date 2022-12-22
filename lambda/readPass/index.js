@@ -7,6 +7,7 @@ const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions, getParkAccess } = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
+const ALGORITHM = process.env.ALGORITHM || "HS384";
 
 exports.handler = async (event, context) => {
   logger.debug('Read Pass', event);
@@ -178,7 +179,7 @@ exports.handler = async (event, context) => {
           parkName: passData.data[0].pk.split('::')[1]
         };
         logger.info("Signing JWT");
-        const token = jwt.sign(claims, process.env.JWT_SECRET, { expiresIn: '15m' });
+        const token = jwt.sign(claims, process.env.JWT_SECRET, { expiresIn: '15m', algorithm: ALGORITHM });
 
         const cancellationLink =
           process.env.PUBLIC_FRONTEND +
