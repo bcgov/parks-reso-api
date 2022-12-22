@@ -1,10 +1,11 @@
 name: Deploy Test
+
+run-name: Deploying ${{ github.ref_name }} to test
+
 on:
-  workflow_dispatch:
-    inputs:
-      releaseTag:
-        description: "Tag of version to be promoted to TEST"
-        required: true
+  push:
+    tags:
+      - "*"
 
 env:
   TF_VERSION: 0.14.7
@@ -23,7 +24,7 @@ jobs:
       - name: Attempt to checkout tag
         uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.inputs.releaseTag }}
+          ref: ${{ github.ref_name }}
 
       - name: Tag not found
         if: ${{ failure() }}
