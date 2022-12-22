@@ -1,9 +1,12 @@
 name: Deploy Prod
+
+run-name: Deploying ${{ github.event.inputs.releaseTag }} to prod
+
 on:
   workflow_dispatch:
     inputs:
       releaseTag:
-        description: "Tag of version to be promoted to PROD"
+        description: 'Tag of version to be promoted to prod'
         required: true
 
 env:
