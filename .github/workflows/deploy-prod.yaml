@@ -49,7 +49,7 @@ jobs:
           role-skip-session-tagging: true
 
       - name: Download previous build from S3
-        run: aws s3 cp s3://parks-reso-lambda-artifacts/${{ github.ref_name }}-${{ env.SHORT_HASH }}/ terraform/src/artifacts/ --recursive
+        run: aws s3 cp s3://parks-reso-lambda-artifacts/${{ env.SHORT_HASH }}/ terraform/src/artifacts/ --recursive
 
       ### Run Terragrunt ###
 
