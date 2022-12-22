@@ -3,6 +3,8 @@ const { DocumentClient } = require('aws-sdk/clients/dynamodb');
 
 const { REGION, ENDPOINT, TABLE_NAME } = require('./global/settings');
 
+const ALGORITHM = process.env.ALGORITHM || "HS384";
+
 const ddb = new DocumentClient({
   region: REGION,
   endpoint: ENDPOINT,
@@ -14,7 +16,10 @@ const token = jwt.sign(
   {
     data: 'verified'
   },
-  'defaultSecret'
+  'defaultSecret',
+  {
+    algorithm: ALGORITHM
+  }
 );
 
 describe('Pass Fails', () => {

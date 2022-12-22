@@ -6,6 +6,7 @@ const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
+const ALGORITHM = process.env.ALGORITHM || "HS384";
 
 exports.handler = async (event, context) => {
   logger.debug('Delete Pass', event);
@@ -23,7 +24,7 @@ exports.handler = async (event, context) => {
     if (event.queryStringParameters.code) {
       logger.info('Get the specific pass, this person is NOT authenticated but has a code');
 
-      let decodedToken = jwt.verify(event.queryStringParameters.code, process.env.JWT_SECRET);
+      let decodedToken = jwt.verify(event.queryStringParameters.code, process.env.JWT_SECRET, { algorithm: ALGORITHM});
       logger.debug(decodedToken);
 
       if (decodedToken === null) {

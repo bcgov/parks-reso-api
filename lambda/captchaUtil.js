@@ -19,6 +19,8 @@ const { logger } = require('./logger');
 
 const AWS_REGION = process.env.AWS_DEFAULT_REGION || 'ca-central-1';
 
+const ALGORITHM = process.env.ALGORITHM || "HS384";
+
 async function getCaptcha(options) {
   const captcha = svgCaptcha.create({
     ...{
@@ -105,7 +107,8 @@ async function verifyCaptcha(payload) {
     },
     SECRET,
     {
-      expiresIn: JWT_SIGN_EXPIRY + 'm'
+      expiresIn: JWT_SIGN_EXPIRY + 'm',
+      algorithm: ALGORITHM
     }
   );
 
@@ -127,7 +130,8 @@ async function verifyCaptcha(payload) {
 
 function verifyJWT(token) {
   try {
-    const decoded = jwt.verify(token, SECRET);
+    const decoded = jwt.verify(token, SECRET, { algorithm: ALGORITHM });
+    // A256GCM
     if (decoded.data) {
       return {
         valid: true
