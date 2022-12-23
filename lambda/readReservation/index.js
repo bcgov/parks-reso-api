@@ -20,6 +20,7 @@ exports.handler = async (event, context) => {
     const getFutureReservationObjects = event.queryStringParameters.getFutureReservationObjects || false;
     let facilityObj = {};
     let bookingWindow = [date];
+    let overbookedData = null;
 
     const token = await decodeJWT(event);
     const permissionObject = resolvePermissions(token);
@@ -100,6 +101,8 @@ exports.handler = async (event, context) => {
         queryObj.ExpressionAttributeValues[':date'] = { S: date };
         queryObj.KeyConditionExpression += ' AND sk = :date';
       }
+      // Get overbooked data
+      overbookedData = await getOverbookedData(date, facility);
     } else {
       // We must be public, and we want to pull the whole date window.
       queryObj.ExpressionAttributeValues[':startDate'] = { S: bookingWindow[0] };
@@ -112,6 +115,24 @@ exports.handler = async (event, context) => {
     // Format/filter public results.
     if (!permissionObject.isAuthenticated) {
       reservations = formatPublicReservationObject(reservations, facilityObj, bookingWindow);
+    } else {
+      // Inject overbooked data if any exists
+      if (date && reservations.length > 0) {
+        let resObj = reservations[0];
+        // AM
+        if (resObj.capacities.AM) {
+          resObj.capacities.AM['overbooked'] = overbookedData.AM;
+        }
+        // PM
+        if (resObj.capacities.PM) {
+          resObj.capacities.PM['overbooked'] = overbookedData.PM;
+        }
+        // DAY
+        if (resObj.capacities.DAY) {
+          resObj.capacities.DAY['overbooked'] = overbookedData.DAY;
+        }
+        reservations = [resObj];
+      }
     }
 
     logger.info('GET reservations:', reservations.length);
@@ -134,3 +155,29 @@ function getBookingWindow(facilityObj) {
   return dates;
 }
 
+// Add overbooked numbers from pass data into new overbooked object
+async function getOverbookedData(date, facility) {
+  const shortDate = DateTime.fromISO(date).toISODate();
+  let queryObj = {
+    TableName: TABLE_NAME,
+    IndexName: 'shortPassDate-index',
+    ExpressionAttributeValues: {
+      ':shortPassDate': { S: shortDate },
+      ':facilityName': { S: facility },
+      ':isOverbooked': { BOOL: true }
+    },
+    KeyConditionExpression: 'shortPassDate =:shortPassDate AND facilityName =:facilityName',
+    FilterExpression: 'isOverbooked = :isOverbooked'
+  };
+  const passData = await runQuery(queryObj);
+  let overbookedObj = {
+    AM: 0,
+    PM: 0,
+    DAY: 0
+  };
+  for (pass of passData) {
+    const type = pass.type;
+    overbookedObj[type] += 1;
+  }
+  return overbookedObj;
+}
