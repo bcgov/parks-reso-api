@@ -25,7 +25,7 @@ exports.handler = async (event, context) => {
     const permissionObject = resolvePermissions(token);
 
     if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
-
+      
       if (permissionObject.isAuthenticated !== true) {
         logger.info('Unauthorized');
         return sendResponse(403, { msg: 'Unauthorized' });
@@ -125,6 +125,8 @@ exports.handler = async (event, context) => {
         queryObj.ExpressionAttributeValues[':email'] = AWS.DynamoDB.Converter.input(event.queryStringParameters.email);
         queryObj.FilterExpression += expressionBuilder('AND', queryObj.FilterExpression, 'email =:email');
       }
+      // Filter overbooked status
+      queryObj = checkOverbooked(event.queryStringParameters.overbooked, queryObj);
       queryObj = paginationHandler(queryObj, event);
 
       logger.info('Running query');
@@ -141,6 +143,10 @@ exports.handler = async (event, context) => {
       queryObj.ExpressionAttributeValues = {};
       queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
       queryObj.KeyConditionExpression = 'pk =:pk';
+
+      // Filter overbooked status
+      queryObj = checkOverbooked(event.queryStringParameters.overbooked, queryObj);
+
       queryObj = paginationHandler(queryObj, event);
       const passData = await runQuery(queryObj, true);
       logger.info('Returning Results:', passData.length);
@@ -274,5 +280,16 @@ const paginationHandler = function (queryObj, event) {
       sk: AWS.DynamoDB.Converter.input(event.queryStringParameters.ExclusiveStartKeySK)
     };
   }
+  return queryObj;
+};
+
+function checkOverbooked (queryParams, queryObj) {
+  if (queryParams === 'show') {
+    queryObj.ExpressionAttributeValues[':isOverbooked'] = { BOOL: true };
+    queryObj.FilterExpression += expressionBuilder('AND', queryObj.FilterExpression, 'isOverbooked=:isOverbooked');
+  } else if (queryParams === 'hide') {
+    queryObj.ExpressionAttributeValues[':isOverbooked'] = { BOOL: false };
+    queryObj.FilterExpression += expressionBuilder('AND', queryObj.FilterExpression, 'isOverbooked=:isOverbooked');
+  } 
   return queryObj;
 };
