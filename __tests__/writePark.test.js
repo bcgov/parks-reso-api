@@ -1,7 +1,8 @@
 const writeParkHandler = require('../lambda/writePark/index');
 const jwt = require('jsonwebtoken');
 const ALGORITHM = process.env.ALGORITHM || "HS384";
-const { mockdb } = require('./global/mock_db');
+const { dbTools } = require('./global/dbTools');
+const { TABLE_NAME } = require('./global/settings');
 
 jest.mock('../lambda/permissionUtil', () => {
   return {
@@ -216,10 +217,14 @@ describe('Create a park', () => {
     facilities: []
   }
 
-  let mockClient
+  let mockClient;
 
-  beforeEach(async () => {
-    mockClient = await mockdb.setupDb()
+  beforeAll(async () => {
+    mockClient = await dbTools.createDocClient()
+  });
+
+  afterAll(async () => {
+    await dbTools.clearTable();
   })
 
   test('creates a park', async () => {
@@ -233,7 +238,7 @@ describe('Create a park', () => {
     expect(await writeParkHandler.handler(createEvent, null)).toMatchObject({}) // success;
     const createRes = await mockClient
       .get({
-        TableName: mockdb.TABLE_NAME,
+        TableName: TABLE_NAME,
         Key: {
           pk: 'park',
           sk: 'MOC1'
@@ -259,7 +264,7 @@ describe('Create a park', () => {
     await writeParkHandler.handler(updateEvent, null);
     const updateRes = await mockClient
       .get({
-        TableName: mockdb.TABLE_NAME,
+        TableName: TABLE_NAME,
         Key: {
           pk: 'park',
           sk: 'MOC1'
