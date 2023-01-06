@@ -1,15 +1,98 @@
 const writePassHandler = require('../lambda/writePass/index');
-const { DocumentClient } = require('aws-sdk/clients/dynamodb');
-
-const { REGION, ENDPOINT, TABLE_NAME } = require('./global/settings');
+const { dbTools } = require('./global/dbTools')
+const { TABLE_NAME } = require('./global/settings');
 
 const ALGORITHM = process.env.ALGORITHM || "HS384";
 
-const ddb = new DocumentClient({
-  region: REGION,
-  endpoint: ENDPOINT,
-  convertEmptyValues: true
-});
+async function populateDb(docClient, version) {
+  if (version === 1) {
+    await docClient
+      .put({
+        TableName: TABLE_NAME,
+        Item: {
+          pk: 'park',
+          sk: 'Test Park 1',
+          name: 'Test Park 1',
+          description: '<p>My Description</p>',
+          bcParksLink: 'http://google.ca',
+          mapLink: 'https://maps.google.com',
+          status: 'open',
+          visible: true
+        }
+      })
+      .promise();
+
+    await docClient
+      .put({
+        TableName: TABLE_NAME,
+        Item: {
+          pk: 'facility::Test Park 1',
+          sk: 'Parking lot A',
+          name: 'Parking lot A',
+          description: 'A Parking Lot!',
+          isUpdating: false,
+          type: "Parking",
+          bookingTimes: {
+            AM: {
+              max: 25
+            },
+            DAY: {
+              max: 25
+            }
+          },
+          bookingDays: {
+            "Sunday": true,
+            "Monday": true,
+            "Tuesday": true,
+            "Wednesday": true,
+            "Thursday": true,
+            "Friday": true,
+            "Saturday": true
+          },
+          bookingDaysRichText: '',
+          bookableHolidays: [],
+          status: { stateReason: '', state: 'open' },
+          visible: true
+        }
+      })
+      .promise();
+
+    await docClient
+      .put({
+        TableName: TABLE_NAME,
+        Item: {
+          pk: 'facility::Test Park 1',
+          sk: 'Trail B',
+          name: 'Trail B',
+          description: 'A Trail!',
+          isUpdating: false,
+          type: "Trail",
+          bookingTimes: {
+            AM: {
+              max: 25
+            },
+            DAY: {
+              max: 25
+            }
+          },
+          bookingDays: {
+            "Sunday": true,
+            "Monday": true,
+            "Tuesday": true,
+            "Wednesday": true,
+            "Thursday": true,
+            "Friday": true,
+            "Saturday": true
+          },
+          bookingDaysRichText: '',
+          bookableHolidays: [],
+          status: { stateReason: '', state: 'open' },
+          visible: true
+        }
+      })
+      .promise();
+  }
+}
 
 const jwt = require('jsonwebtoken');
 const token = jwt.sign(
@@ -23,12 +106,16 @@ const token = jwt.sign(
 );
 
 describe('Pass Fails', () => {
+
+  let mockClient;
+
   beforeEach(async () => {
-    await databaseOperation(1, 'setup');
+    mockClient = await dbTools.createDocClient();
+    await populateDb(mockClient, 1);
   });
 
   afterEach(async () => {
-    await databaseOperation(1, 'teardown');
+    await dbTools.clearTable();
   });
 
   test('Handler - 400 Bad Request - nothing passed in', async () => {
@@ -244,12 +331,16 @@ describe('Pass Fails', () => {
 });
 
 describe('Pass Successes', () => {
+
+  let mockClient;
+
   beforeEach(async () => {
-    await databaseOperation(1, 'setup');
+    mockClient = await dbTools.createDocClient();
+    await populateDb(mockClient, 1);
   });
 
   afterEach(async () => {
-    await databaseOperation(1, 'teardown');
+    await dbTools.clearTable();
   });
 
   test('Handler - 200 Email Failed to Send, but pass has been created for a Trail.', async () => {
@@ -331,115 +422,3 @@ describe('Pass Successes', () => {
   });
 });
 
-async function databaseOperation(version, mode) {
-  if (version === 1) {
-    if (mode === 'setup') {
-      await ddb
-        .put({
-          TableName: TABLE_NAME,
-          Item: {
-            pk: 'park',
-            sk: 'Test Park 1',
-            name: 'Test Park 1',
-            description: '<p>My Description</p>',
-            bcParksLink: 'http://google.ca',
-            mapLink: 'https://maps.google.com',
-            status: 'open',
-            visible: true
-          }
-        })
-        .promise();
-
-      await ddb
-        .put({
-          TableName: TABLE_NAME,
-          Item: {
-            pk: 'facility::Test Park 1',
-            sk: 'Parking lot A',
-            name: 'Parking lot A',
-            description: 'A Parking Lot!',
-            isUpdating: false,
-            type: "Parking",
-            bookingTimes: {
-              AM: {
-                max: 25
-              },
-              DAY: {
-                max: 25
-              }
-            },
-            bookingDays: {
-              "Sunday": true,
-              "Monday": true,
-              "Tuesday": true,
-              "Wednesday": true,
-              "Thursday": true,
-              "Friday": true,
-              "Saturday": true
-            },
-            bookingDaysRichText: '',
-            bookableHolidays: [],
-            status: { stateReason: '', state: 'open' },
-            visible: true
-          }
-        })
-        .promise();
-
-      await ddb
-        .put({
-          TableName: TABLE_NAME,
-          Item: {
-            pk: 'facility::Test Park 1',
-            sk: 'Trail B',
-            name: 'Trail B',
-            description: 'A Trail!',
-            isUpdating: false,
-            type: "Trail",
-            bookingTimes: {
-              AM: {
-                max: 25
-              },
-              DAY: {
-                max: 25
-              }
-            },
-            bookingDays: {
-              "Sunday": true,
-              "Monday": true,
-              "Tuesday": true,
-              "Wednesday": true,
-              "Thursday": true,
-              "Friday": true,
-              "Saturday": true
-            },
-            bookingDaysRichText: '',
-            bookableHolidays: [],
-            status: { stateReason: '', state: 'open' },
-            visible: true
-          }
-        })
-        .promise();
-    } else {
-      console.log('Teardown');
-      // Teardown
-      await ddb
-        .delete({
-          TableName: TABLE_NAME,
-          Key: {
-            pk: 'park',
-            sk: 'Test Park 1'
-          }
-        })
-        .promise();
-      await ddb
-        .delete({
-          TableName: TABLE_NAME,
-          Key: {
-            pk: 'facility::Test Park 1',
-            sk: 'Parking lot A'
-          }
-        })
-        .promise();
-    }
-  }
-}

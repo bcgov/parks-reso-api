@@ -1,25 +1,10 @@
 const MockDate = require('mockdate');
 const { DateTime } = require('luxon');
-const AWS = require('aws-sdk');
-const { DocumentClient } = require('aws-sdk/clients/dynamodb');
-
+const { dbTools } = require('./global/dbTools')
 const checkActivation = require('../lambda/checkActivation/index');
-const { REGION, ENDPOINT, TABLE_NAME } = require('./global/settings');
+const { TABLE_NAME } = require('./global/settings');
 
-let dynamoDb;
-let docClient;
-
-async function setupDb() {
-  dynamoDb = new AWS.DynamoDB({
-    region: REGION,
-    endpoint: ENDPOINT
-  });
-  docClient = new DocumentClient({
-    region: REGION,
-    endpoint: ENDPOINT,
-    convertEmptyValues: true
-  });
-  
+async function populateDb(docClient) {
   await docClient
     .put({
       TableName: TABLE_NAME,
@@ -83,13 +68,21 @@ async function setupDb() {
 }
 
 describe('checkActivationHandler', () => {
-  beforeAll(() => {
-    return setupDb();
+
+  let mockClient;
+
+  beforeAll(async () => {
+    mockClient = await dbTools.createDocClient();
+    await populateDb(mockClient);
   });
+
+  afterAll(async () => {
+    await dbTools.clearTable();
+  })
 
   test.each([['AM', '123456702'], ['DAY', '123456703']])('should set %s passes with default opening hour to active', async (passType, sk) => {
     const passDate = DateTime.fromISO('2021-12-08T19:01:58.135Z').setZone('America/Vancouver');
-    await docClient
+    await mockClient
       .put({
         TableName: TABLE_NAME,
         Item: {
@@ -108,7 +101,7 @@ describe('checkActivationHandler', () => {
     await checkActivation.handler(null, {});
     MockDate.reset();
 
-    const result = await docClient
+    const result = await mockClient
       .get({
         TableName: TABLE_NAME,
         Key: {
@@ -122,7 +115,7 @@ describe('checkActivationHandler', () => {
 
   test.each([['AM', '123456704'], ['DAY', '123456705']])('should leave %s passes inactive before custom opening hour', async (passType, sk) => {
     const passDate = DateTime.fromISO('2021-12-08T19:01:58.135Z').setZone('America/Vancouver');
-    await docClient
+    await mockClient
       .put({
         TableName: TABLE_NAME,
         Item: {
@@ -141,7 +134,7 @@ describe('checkActivationHandler', () => {
     await checkActivation.handler(null, {});
     MockDate.reset();
 
-    const result = await docClient
+    const result = await mockClient
       .get({
         TableName: TABLE_NAME,
         Key: {
@@ -155,7 +148,7 @@ describe('checkActivationHandler', () => {
 
   test.each([['AM', '123456706'], ['DAY', '123456707']])('should set %s passes to active after custom opening hour', async (passType, sk) => {
     const passDate = DateTime.fromISO('2021-12-08T19:01:58.135Z').setZone('America/Vancouver');
-    await docClient
+    await mockClient
       .put({
         TableName: TABLE_NAME,
         Item: {
@@ -174,7 +167,7 @@ describe('checkActivationHandler', () => {
     await checkActivation.handler(null, {});
     MockDate.reset();
 
-    const result = await docClient
+    const result = await mockClient
       .get({
         TableName: TABLE_NAME,
         Key: {
@@ -188,7 +181,7 @@ describe('checkActivationHandler', () => {
 
   test('should leave PM passes before 12:00 inactive', async () => {
     const passDate = DateTime.fromISO('2021-12-08T19:01:58.135Z').setZone('America/Vancouver');
-    await docClient
+    await mockClient
       .put({
         TableName: TABLE_NAME,
         Item: {
@@ -207,7 +200,7 @@ describe('checkActivationHandler', () => {
     await checkActivation.handler(null, {});
     MockDate.reset();
 
-    const result = await docClient
+    const result = await mockClient
       .get({
         TableName: TABLE_NAME,
         Key: {
@@ -221,7 +214,7 @@ describe('checkActivationHandler', () => {
 
   test('should set PM passes after 12:00 to active', async () => {
     const passDate = DateTime.fromISO('2021-12-08T19:01:58.135Z').setZone('America/Vancouver');
-    await docClient
+    await mockClient
       .put({
         TableName: TABLE_NAME,
         Item: {
@@ -240,7 +233,7 @@ describe('checkActivationHandler', () => {
     await checkActivation.handler(null, {});
     MockDate.reset();
 
-    const result = await docClient
+    const result = await mockClient
       .get({
         TableName: TABLE_NAME,
         Key: {
