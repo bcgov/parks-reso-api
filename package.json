@@ -12,7 +12,7 @@
     "jsonwebtoken": "^9.0.0",
     "jwks-rsa": "^3.0.0",
     "keycloak-admin": "^1.14.22",
-    "luxon": "^3.1.0",
+    "luxon": "^3.2.1",
     "node-jose": "^2.0.0",
     "svg-captcha": "^1.4.0",
     "uuid": "^9.0.0",
