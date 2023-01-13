@@ -267,11 +267,11 @@ describe('Pass Successes', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        parkName: 'Test Park 1',
+        parkName: '0015',
         firstName: 'Jest',
         lastName: 'User',
         facilityName: 'Trail B',
-        email: 'testEmail1@test.ca',
+        email: 'testEmail7@test.ca',
         date: new Date(),
         type: 'DAY',
         numberOfGuests: 1,
@@ -283,12 +283,12 @@ describe('Pass Successes', () => {
     const response = await writePassHandler.handler(event, null);
     expect(response.statusCode).toEqual(200);
     const body = JSON.parse(response.body);
-    expect(body.pk).toEqual('pass::Test Park 1');
+    expect(body.pk).toEqual('pass::0015');
     expect(typeof body.sk).toBe('string');
     expect(body.firstName).toEqual('Jest');
     expect(body.lastName).toEqual('User');
     expect(body.facilityName).toEqual('Trail B');
-    expect(body.email).toEqual('testEmail1@test.ca');
+    expect(body.email).toEqual('testEmail7@test.ca');
     expect(typeof body.date).toBe('string');
     expect(body.type).toEqual('DAY');
     expect(typeof body.registrationNumber).toBe('string');
@@ -297,7 +297,7 @@ describe('Pass Successes', () => {
     expect(body.phoneNumber).toEqual('2505555555');
     expect(body.facilityType).toEqual('Trail');
     expect(typeof body.err).toBe('string');
-    expect(body.adminPassLink).toContain(`${process.env.ADMIN_FRONTEND}/pass-lookup/Test Park 1/`);
+    expect(body.adminPassLink).toContain(`${process.env.ADMIN_FRONTEND}/pass-lookup/0015/`);
   });
 
   test('Handler - 200 Email Failed to Send, but pass has been created for a Parking Pass.', async () => {
@@ -404,6 +404,22 @@ async function databaseOperation(version, mode) {
         .put({
           TableName: TABLE_NAME,
           Item: {
+            pk: 'park',
+            sk: '0015',
+            name: '0015',
+            description: '<p>My Description</p>',
+            bcParksLink: 'http://google.ca',
+            mapLink: 'https://maps.google.com',
+            status: 'open',
+            visible: true
+          }
+        })
+        .promise();
+
+      await ddb
+        .put({
+          TableName: TABLE_NAME,
+          Item: {
             pk: 'facility::Test Park 1',
             sk: 'Parking lot A',
             name: 'Parking lot A',
@@ -440,6 +456,41 @@ async function databaseOperation(version, mode) {
           TableName: TABLE_NAME,
           Item: {
             pk: 'facility::Test Park 1',
+            sk: 'Trail B',
+            name: 'Trail B',
+            description: 'A Trail!',
+            isUpdating: false,
+            type: "Trail",
+            bookingTimes: {
+              AM: {
+                max: 25
+              },
+              DAY: {
+                max: 25
+              }
+            },
+            bookingDays: {
+              "Sunday": true,
+              "Monday": true,
+              "Tuesday": true,
+              "Wednesday": true,
+              "Thursday": true,
+              "Friday": true,
+              "Saturday": true
+            },
+            bookingDaysRichText: '',
+            bookableHolidays: [],
+            status: { stateReason: '', state: 'open' },
+            visible: true
+          }
+        })
+        .promise();
+
+      await ddb
+        .put({
+          TableName: TABLE_NAME,
+          Item: {
+            pk: 'facility::0015',
             sk: 'Trail B',
             name: 'Trail B',
             description: 'A Trail!',
