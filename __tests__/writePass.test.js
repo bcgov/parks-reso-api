@@ -270,7 +270,7 @@ describe('Pass Successes', () => {
         parkName: '0015',
         firstName: 'Jest',
         lastName: 'User',
-        facilityName: 'Trail B',
+        facilityName: 'P1 and Lower P5',
         email: 'testEmail7@test.ca',
         date: new Date(),
         type: 'DAY',
@@ -287,7 +287,7 @@ describe('Pass Successes', () => {
     expect(typeof body.sk).toBe('string');
     expect(body.firstName).toEqual('Jest');
     expect(body.lastName).toEqual('User');
-    expect(body.facilityName).toEqual('Trail B');
+    expect(body.facilityName).toEqual('P1 and Lower P5');
     expect(body.email).toEqual('testEmail7@test.ca');
     expect(typeof body.date).toBe('string');
     expect(body.type).toEqual('DAY');
@@ -491,8 +491,8 @@ async function databaseOperation(version, mode) {
           TableName: TABLE_NAME,
           Item: {
             pk: 'facility::0015',
-            sk: 'Trail B',
-            name: 'Trail B',
+            sk: 'P1 and Lower P5',
+            name: 'P1 and Lower P5',
             description: 'A Trail!',
             isUpdating: false,
             type: "Trail",

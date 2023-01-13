@@ -435,7 +435,7 @@ exports.handler = async (event, context) => {
         }
       }
       // Temporarily assign the QRCode Link for the front end not to guess at it.
-      const adminLink = getAdminLinkToPass(parkName, registrationNumber.toString());
+      const adminLink = getAdminLinkToPass(parkName, facilityName, registrationNumber.toString());
       if (adminLink) {
         passObject.Item['adminPassLink'] = { "S": adminLink }
       }

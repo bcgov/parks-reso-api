@@ -21,14 +21,28 @@ describe('Pass Utility Tests', () => {
         sending_method: 'attach'
       }
     };
-    const qrObject = await getPersonalizationAttachment('0015', 'id2');
+    const qrObject = await getPersonalizationAttachment('0015', 'P1 and Lower P5', 'id2');
     expect(qrObject).toEqual(expected);
   });
 
   test('Ensure QR Code is not part of the payload', async () => {
     process.env.QR_CODE_ENABLED = undefined;
     const expected = undefined;
-    const qrObject = await getPersonalizationAttachment('0015', 'id2');
+    const qrObject = await getPersonalizationAttachment('0015', 'P1 and Lower P5', 'id2');
+    expect(qrObject).toEqual(expected);
+  });
+
+  test('Ensure QR Code is not part of the payload', async () => {
+    process.env.QR_CODE_ENABLED = 'true';
+    const expected = undefined;
+    const qrObject = await getPersonalizationAttachment('0015', 'P1 and something else', 'id2');
+    expect(qrObject).toEqual(expected);
+  });
+
+  test('Ensure QR Code is not part of the payload', async () => {
+    process.env.QR_CODE_ENABLED = 'true';
+    const expected = undefined;
+    const qrObject = await getPersonalizationAttachment('0014', 'P1 and Lower P5', 'id2');
     expect(qrObject).toEqual(expected);
   });
 });
