@@ -244,8 +244,15 @@ describe('Pass Fails', () => {
 });
 
 describe('Pass Successes', () => {
+  const OLD_ENV = process.env;
   beforeEach(async () => {
+    jest.resetModules();
+    process.env = { ...OLD_ENV }; // Make a copy of environment
     await databaseOperation(1, 'setup');
+  });
+
+  afterAll(() => {
+    process.env = OLD_ENV; // Restore old environment
   });
 
   afterEach(async () => {
@@ -253,6 +260,8 @@ describe('Pass Successes', () => {
   });
 
   test('Handler - 200 Email Failed to Send, but pass has been created for a Trail.', async () => {
+    process.env.QR_CODE_ENABLED = "true";
+    process.env.ADMIN_FRONTEND = "http://localhost:4300";
     const event = {
       headers: {
         Authorization: 'None'
@@ -288,6 +297,7 @@ describe('Pass Successes', () => {
     expect(body.phoneNumber).toEqual('2505555555');
     expect(body.facilityType).toEqual('Trail');
     expect(typeof body.err).toBe('string');
+    expect(body.adminPassLink).toContain(`${process.env.ADMIN_FRONTEND}/pass-lookup/Test Park 1/`);
   });
 
   test('Handler - 200 Email Failed to Send, but pass has been created for a Parking Pass.', async () => {
@@ -328,6 +338,46 @@ describe('Pass Successes', () => {
     expect(body.phoneNumber).toEqual('2505555555');
     expect(body.facilityType).toEqual('Parking');
     expect(typeof body.err).toBe('string');
+  });
+
+  test('Handler - 400 Number of guests cannot be less than 1.', async () => {
+    const event = {
+      headers: {
+        Authorization: 'None'
+      },
+      body: JSON.stringify({
+        parkName: 'Test Park 1',
+        firstName: '',
+        lastName: '',
+        facilityName: 'Trail B',
+        email: '',
+        date: '',
+        type: '',
+        numberOfGuests: 0, // Too little
+        phoneNumber: '',
+        captchaJwt: token
+      })
+    };
+
+    const response = await writePassHandler.handler(event, null);
+    expect(response.statusCode).toEqual(400);
+    const body = JSON.parse(response.body);
+    expect(body.msg).toEqual('Passes must have at least 1 guest.');
+    expect(body.title).toEqual('Invalid number of guests');
+  });
+
+  test('Expect checkWarmup function to fire.', async () => {
+    const event = {
+      headers: {
+        Authorization: 'None'
+      },
+      warmup: true
+    };
+
+    const response = await writePassHandler.handler(event, null);
+    expect(response.statusCode).toEqual(200);
+    const body = JSON.parse(response.body);
+    expect(body).toEqual({});
   });
 });
 

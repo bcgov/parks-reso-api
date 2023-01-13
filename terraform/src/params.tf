@@ -62,6 +62,14 @@ data "aws_ssm_parameter" "public_url" {
   name = "/parks-reso-public/url"
 }
 
+data "aws_ssm_parameter" "admin_url" {
+  name = "/parks-reso-admin/url"
+}
+
+data "aws_ssm_parameter" "qr_code_enabled" {
+  name = "/parks-reso-api/qr_code_enabled"
+}
+
 data "aws_ssm_parameter" "aws_account_list" {
   name = "/parks-reso-api/aws_account_list"
 }
