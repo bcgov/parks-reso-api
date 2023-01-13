@@ -282,7 +282,7 @@ exports.handler = async (event, context) => {
       parkName: parkName,
       mapLink: parkData[0].mapLink,
       parksLink: parkData[0].bcParksLink,
-      ...(await getPersonalizationAttachment(parkName, registrationNumber.toString()))
+      ...(await getPersonalizationAttachment(parkName, facilityName, registrationNumber.toString()))
     };
 
     // Parking.
