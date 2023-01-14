@@ -64,6 +64,8 @@ resource "aws_lambda_function" "writePassLambda" {
       TABLE_NAME                            = data.aws_ssm_parameter.db_name.value,
       JWT_SECRET                            = local.jwtSecret.jwtSecret,
       PUBLIC_FRONTEND                       = data.aws_ssm_parameter.public_url.value,
+      ADMIN_FRONTEND                        = data.aws_ssm_parameter.admin_url.value,
+      QR_CODE_ENABLED                       = data.aws_ssm_parameter.qr_code_enabled.value,
       GC_NOTIFY_API_PATH                    = data.aws_ssm_parameter.gc_notify_api_path.value,
       GC_NOTIFY_API_KEY                     = data.aws_ssm_parameter.gc_notify_api_key.value,
       GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID = data.aws_ssm_parameter.gc_notify_parking_receipt_template_id.value,

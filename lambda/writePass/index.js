@@ -7,6 +7,7 @@ const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
 const { createNewReservationsObj } = require('../writeReservation');
+const { getPersonalizationAttachment, getAdminLinkToPass } = require('../passUtils');
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
@@ -280,7 +281,8 @@ exports.handler = async (event, context) => {
       cancellationLink: encodedCancellationLink,
       parkName: parkName,
       mapLink: parkData[0].mapLink,
-      parksLink: parkData[0].bcParksLink
+      parksLink: parkData[0].bcParksLink,
+      ...(await getPersonalizationAttachment(parkName, facilityName, registrationNumber.toString()))
     };
 
     // Parking.
@@ -432,9 +434,21 @@ exports.handler = async (event, context) => {
           throw error;
         }
       }
+      // Temporarily assign the QRCode Link for the front end not to guess at it.
+      const adminLink = getAdminLinkToPass(parkName, facilityName, registrationNumber.toString());
+      if (adminLink) {
+        passObject.Item['adminPassLink'] = { "S": adminLink }
+      }
 
       try {
         logger.info('Posting to GC Notify');
+        const gcnData = {
+          email_address: email,
+          template_id: gcNotifyTemplate,
+          personalisation: personalisation
+        };
+        logger.debug(JSON.stringify(gcnData));
+
         await axios({
           method: 'post',
           url: process.env.GC_NOTIFY_API_PATH,
@@ -442,17 +456,12 @@ exports.handler = async (event, context) => {
             Authorization: process.env.GC_NOTIFY_API_KEY,
             'Content-Type': 'application/json'
           },
-          data: {
-            email_address: email,
-            template_id: gcNotifyTemplate,
-            personalisation: personalisation
-          }
+          data: gcnData
         });
         logger.info('GCNotify email sent.');
 
         // Prune audit
         delete passObject.Item['audit'];
-
         return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
       } catch (err) {
         logger.error('GCNotify error:', err);
