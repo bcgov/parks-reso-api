@@ -29,7 +29,7 @@ function getAdminPortalURL() {
 
 function isQRCodeEnabled(parkIdentifier, facilityIdentifier) {
   // HC for now
-  return process.env.QR_CODE_ENABLED
+  return process.env.QR_CODE_ENABLED === 'true'
          && (parkIdentifier === 'Mount Seymour Provincial Park' || parkIdentifier === '0015')
          && facilityIdentifier === 'P1 and Lower P5';
 }
