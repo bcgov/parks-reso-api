@@ -27,6 +27,14 @@ async function modifyPassCheckInStatus(pk, sk, checkedIn) {
     TableName: TABLE_NAME,
     ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)'
   };
+
+  if (checkedIn) {
+    updateParams.ExpressionAttributeValues[':checkedInTime'] = { "S": DateTime.now().setZone(TIMEZONE).toISO() }
+    updateParams.UpdateExpression += ', checkedInTime =:checkedInTime';
+  } else {
+    // Remove time as it's irrelevant now
+    updateParams.UpdateExpression += ' remove checkedInTime';
+  }
   const res = await dynamodb.updateItem(updateParams).promise();
   return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(res.Attributes));
 }
