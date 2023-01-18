@@ -234,7 +234,7 @@ resource "aws_lambda_permission" "writePassPermission" {
 }
 
 resource "aws_lambda_permission" "putPassPermission" {
-  statement_id  = "AllowParksDayUsePassAPIInvoke"
+  statement_id  = "AllowParksDayUsePassPutAPIInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.writePassLambda.function_name
   principal     = "apigateway.amazonaws.com"
