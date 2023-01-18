@@ -166,6 +166,7 @@ resource "aws_api_gateway_deployment" "apideploy" {
     aws_api_gateway_integration.putIntegration,
     aws_api_gateway_integration.readPassIntegration,
     aws_api_gateway_integration.writePassIntegration,
+    aws_api_gateway_integration.putPassIntegration,
     aws_api_gateway_integration.deletePassIntegration,
     aws_api_gateway_integration.metricIntegration,
     aws_api_gateway_integration.exportPassIntegration,
