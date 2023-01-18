@@ -199,7 +199,7 @@ resource "aws_api_gateway_integration" "writePassIntegration" {
 resource "aws_api_gateway_integration" "putPassIntegration" {
   rest_api_id = aws_api_gateway_rest_api.apiLambda.id
   resource_id = aws_api_gateway_resource.passResource.id
-  http_method = aws_api_gateway_method.writePassMethod.http_method
+  http_method = aws_api_gateway_method.putPassMethod.http_method
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
