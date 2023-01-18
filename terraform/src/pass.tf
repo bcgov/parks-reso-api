@@ -196,6 +196,17 @@ resource "aws_api_gateway_integration" "writePassIntegration" {
 
 
 // Integrates the APIG to Lambda via POST method
+resource "aws_api_gateway_integration" "putPassIntegration" {
+  rest_api_id = aws_api_gateway_rest_api.apiLambda.id
+  resource_id = aws_api_gateway_resource.passResource.id
+  http_method = aws_api_gateway_method.writePassMethod.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.writePassLambda.invoke_arn
+}
+
+// Integrates the APIG to Lambda via POST method
 resource "aws_api_gateway_integration" "deletePassIntegration" {
   rest_api_id = aws_api_gateway_rest_api.apiLambda.id
   resource_id = aws_api_gateway_resource.passResource.id
