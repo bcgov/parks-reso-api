@@ -13,6 +13,57 @@ const { getPersonalizationAttachment, getAdminLinkToPass } = require('../passUti
 const DEFAULT_AM_OPENING_HOUR = 7;
 const DEFAULT_PM_OPENING_HOUR = 12;
 
+async function modifyPassCheckInStatus(pk, sk, checkedIn) {
+  let updateParams = {
+    Key: {
+      pk: { S: pk },
+      sk: { S: sk }
+    },
+    ExpressionAttributeValues: {
+      ":checkedIn": { "BOOL": checkedIn }
+    },
+    UpdateExpression: 'set checkedIn =:checkedIn',
+    ReturnValues: 'ALL_NEW',
+    TableName: TABLE_NAME,
+    ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)'
+  };
+  const res = await dynamodb.updateItem(updateParams).promise();
+  return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(res.Attributes));
+}
+
+async function putPassHandler(event, context, permissionObject, passObj) {
+  try {
+    if (!permissionObject.isAdmin) {
+      return sendResponse(
+        403,
+        {
+          msg: 'You are not authorized to perform this operation.',
+          title: 'Unauthorized'
+        }
+      )
+    }
+
+    // Only support check-in
+    if (event?.queryStringParameters?.checkedIn === 'true') {
+      return await modifyPassCheckInStatus(passObj.pk, passObj.sk, true);
+    } else if (event?.queryStringParameters?.checkedIn === 'false') {
+      return await modifyPassCheckInStatus(passObj.pk, passObj.sk, false);
+    } else {
+      throw 'Bad Request';
+    }
+  } catch(e) {
+    logger.error(e);
+    return sendResponse(
+      400,
+      {
+        msg: 'The operation failed.',
+        title: 'Bad Request'
+      },
+      context
+    );
+  }
+}
+
 exports.handler = async (event, context) => {
   logger.debug("WritePass:", event);
   let passObject = {
@@ -41,7 +92,12 @@ exports.handler = async (event, context) => {
     const permissionObject = resolvePermissions(token);
 
     let newObject = JSON.parse(event.body);
+    // Check for update method (check this pass in)
+    if (event.httpMethod === 'PUT') {
+      return putPassHandler(event, context, permissionObject, newObject);
+    }
 
+    // http POST (new)
     const registrationNumber = generate(10);
 
     let {
