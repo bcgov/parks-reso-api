@@ -305,7 +305,7 @@ describe('Pass Successes', () => {
     expect(body.phoneNumber).toEqual('2505555555');
     expect(body.facilityType).toEqual('Trail');
     expect(typeof body.err).toBe('string');
-    expect(body.adminPassLink).toContain(`${process.env.ADMIN_FRONTEND}/pass-lookup/0015/`);
+    expect(body.adminPassLink).toContain(`${process.env.ADMIN_FRONTEND}?park=0015`);
   });
 
   test('Handler - 200 Email Failed to Send, but pass has been created for a Parking Pass.', async () => {

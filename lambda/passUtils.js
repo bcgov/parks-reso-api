@@ -17,7 +17,7 @@ async function getPersonalizationAttachment(parkIdentifier, facilityIdentifier, 
 
 function getAdminLinkToPass(parkIdentifier, facilityIdentifier, registrationNumber) {
   if (isQRCodeEnabled(parkIdentifier, facilityIdentifier)) {
-    return `${getAdminPortalURL()}/pass-lookup/${parkIdentifier}/${registrationNumber}`;
+    return `${getAdminPortalURL()}?park=${parkIdentifier}&registrationNumber=${registrationNumber}`;
   } else {
     return undefined;
   }
