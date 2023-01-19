@@ -269,7 +269,8 @@ exports.handler = async (event, context) => {
     logger.info("Running query");
     const parkData = await runQuery(parkObj);
     logger.debug('ParkData:', parkData);
-
+    const QRData = await getPersonalizationAttachment(parkName, facilityName, registrationNumber.toString())
+    
     let personalisation = {
       firstName: firstName,
       lastName: lastName,
@@ -282,7 +283,7 @@ exports.handler = async (event, context) => {
       parkName: parkName,
       mapLink: parkData[0].mapLink,
       parksLink: parkData[0].bcParksLink,
-      ...(await getPersonalizationAttachment(parkName, facilityName, registrationNumber.toString()))
+      ...QRData
     };
 
     // Parking.
@@ -456,6 +457,8 @@ exports.handler = async (event, context) => {
             Authorization: process.env.GC_NOTIFY_API_KEY,
             'Content-Type': 'application/json'
           },
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
           data: gcnData
         });
         logger.info('GCNotify email sent.');
@@ -464,7 +467,7 @@ exports.handler = async (event, context) => {
         delete passObject.Item['audit'];
         return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
       } catch (err) {
-        logger.error('GCNotify error:', err);
+        logger.error('GCNotify error:', err.response?.data || err);
         let errRes = AWS.DynamoDB.Converter.unmarshall(passObject.Item);
         errRes['err'] = 'Email Failed to Send';
         return sendResponse(200, errRes);
