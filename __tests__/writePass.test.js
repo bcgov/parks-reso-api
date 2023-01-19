@@ -1,4 +1,4 @@
-const writePassHandler = require('../lambda/writePass/index');
+const AWS = require('aws-sdk');
 const { DocumentClient } = require('aws-sdk/clients/dynamodb');
 
 const { REGION, ENDPOINT, TABLE_NAME } = require('./global/settings');
@@ -32,6 +32,7 @@ describe('Pass Fails', () => {
   });
 
   test('Handler - 400 Bad Request - nothing passed in', async () => {
+    const writePassHandler = require('../lambda/writePass/index');
     expect(await writePassHandler.handler(null, null)).toMatchObject({
       body: JSON.stringify({
         msg: 'There was an error in your submission.',
@@ -48,6 +49,7 @@ describe('Pass Fails', () => {
   });
 
   test('Handler - 400 Bad Request - Missing JWT', async () => {
+    const writePassHandler = require('../lambda/writePass/index');
     const event = {
       headers: {
         Authorization: 'None'
@@ -81,6 +83,7 @@ describe('Pass Fails', () => {
   });
 
   test('Handler - 400 Bad Request - JWT Invalid', async () => {
+    const writePassHandler = require('../lambda/writePass/index');
     const event = {
       headers: {
         Authorization: 'None'
@@ -114,6 +117,7 @@ describe('Pass Fails', () => {
   });
 
   test('Handler - 400 Bad Request - Trail pass limit maximum', async () => {
+    const writePassHandler = require('../lambda/writePass/index');
     const event = {
       headers: {
         Authorization: 'None'
@@ -144,6 +148,7 @@ describe('Pass Fails', () => {
   });
 
   test('Handler - 400 Bad Request - Invalid Date', async () => {
+    const writePassHandler = require('../lambda/writePass/index');
     const event = {
       headers: {
         Authorization: 'None'
@@ -177,6 +182,7 @@ describe('Pass Fails', () => {
   });
 
   test('Handler - 400 Bad Request - Booking date in the past', async () => {
+    const writePassHandler = require('../lambda/writePass/index');
     const event = {
       headers: {
         Authorization: 'None'
@@ -210,6 +216,7 @@ describe('Pass Fails', () => {
   });
 
   test('Handler - 400 Bad Request - One or more params are invalid.', async () => {
+    const writePassHandler = require('../lambda/writePass/index');
     const event = {
       headers: {
         Authorization: 'None'
@@ -260,6 +267,7 @@ describe('Pass Successes', () => {
   });
 
   test('Handler - 200 Email Failed to Send, but pass has been created for a Trail.', async () => {
+    const writePassHandler = require('../lambda/writePass/index');
     process.env.QR_CODE_ENABLED = "true";
     process.env.ADMIN_FRONTEND = "http://localhost:4300";
     const event = {
@@ -297,10 +305,11 @@ describe('Pass Successes', () => {
     expect(body.phoneNumber).toEqual('2505555555');
     expect(body.facilityType).toEqual('Trail');
     expect(typeof body.err).toBe('string');
-    expect(body.adminPassLink).toContain(`${process.env.ADMIN_FRONTEND}/pass-lookup/0015/`);
+    expect(body.adminPassLink).toContain(`${process.env.ADMIN_FRONTEND}?park=0015`);
   });
 
   test('Handler - 200 Email Failed to Send, but pass has been created for a Parking Pass.', async () => {
+    const writePassHandler = require('../lambda/writePass/index');
     const event = {
       headers: {
         Authorization: 'None'
@@ -341,6 +350,7 @@ describe('Pass Successes', () => {
   });
 
   test('Handler - 400 Number of guests cannot be less than 1.', async () => {
+    const writePassHandler = require('../lambda/writePass/index');
     const event = {
       headers: {
         Authorization: 'None'
@@ -367,6 +377,7 @@ describe('Pass Successes', () => {
   });
 
   test('Expect checkWarmup function to fire.', async () => {
+    const writePassHandler = require('../lambda/writePass/index');
     const event = {
       headers: {
         Authorization: 'None'
@@ -378,6 +389,127 @@ describe('Pass Successes', () => {
     expect(response.statusCode).toEqual(200);
     const body = JSON.parse(response.body);
     expect(body).toEqual({});
+  });
+
+  test('Expect pass check in to fail 403.', async () => {
+    // Mock the auth to be fail (This is the new method for mocking auth)
+    jest.mock('../lambda/permissionUtil', () => {
+      return {
+        decodeJWT: jest.fn((event) => {
+          // console.log("STUB");
+        }),
+        resolvePermissions: jest.fn((token) => {
+          return {
+            isAdmin: false,
+            roles: ['badRole']
+          }
+        })
+      }
+    });
+    const writePassHandler = require('../lambda/writePass/index');
+    const event = {
+      headers: {
+        Authorization: 'None'
+      },
+      httpMethod: 'PUT',
+      body: JSON.stringify({})
+    };
+
+    const response = await writePassHandler.handler(event, null);
+    expect(response.statusCode).toEqual(403);
+  });
+
+  test('Expect pass to be checked in.', async () => {
+    jest.mock('../lambda/permissionUtil', () => {
+      return {
+        decodeJWT: jest.fn((event) => {
+          // console.log("STUB");
+        }),
+        resolvePermissions: jest.fn((token) => {
+          return {
+            isAdmin: true,
+            roles: ['sysadmin']
+          }
+        })
+      }
+    });
+    const writePassHandler = require('../lambda/writePass/index');
+    const event = {
+      httpMethod: 'PUT',
+      body: JSON.stringify({
+        pk: 'pass::0015',
+        sk: '123456789'
+      }),
+      queryStringParameters: {
+        checkedIn: 'true'
+      }
+    };
+
+    const response = await writePassHandler.handler(event, null);
+    const body = JSON.parse(response.body);
+    expect(response.statusCode).toEqual(200);
+    expect(body.checkedIn).toEqual(true);
+  });
+
+  test('Expect pass not to be checked in.', async () => {
+    jest.mock('../lambda/permissionUtil', () => {
+      return {
+        decodeJWT: jest.fn((event) => {
+          // console.log("STUB");
+        }),
+        resolvePermissions: jest.fn((token) => {
+          return {
+            isAdmin: true,
+            roles: ['sysadmin']
+          }
+        })
+      }
+    });
+    const writePassHandler = require('../lambda/writePass/index');
+    const event = {
+      httpMethod: 'PUT',
+      body: JSON.stringify({
+        pk: 'pass::0015',
+        sk: '123456789'
+      }),
+      queryStringParameters: {
+        checkedIn: 'false'
+      }
+    };
+
+    const response = await writePassHandler.handler(event, null);
+    const body = JSON.parse(response.body);
+    expect(response.statusCode).toEqual(200);
+    expect(body.checkedIn).toEqual(false);
+  });
+
+  test('Expect pass not to be checked in.', async () => {
+    jest.mock('../lambda/permissionUtil', () => {
+      return {
+        decodeJWT: jest.fn((event) => {
+          // console.log("STUB");
+        }),
+        resolvePermissions: jest.fn((token) => {
+          return {
+            isAdmin: true,
+            roles: ['sysadmin']
+          }
+        })
+      }
+    });
+    const writePassHandler = require('../lambda/writePass/index');
+    const event = {
+      httpMethod: 'PUT',
+      body: JSON.stringify({
+        sk: '123456789'
+      }),
+      queryStringParameters: {
+        foo: 'false'
+      }
+    };
+
+    const response = await writePassHandler.handler(event, null);
+    expect(response.statusCode).toEqual(400);
   });
 });
 
@@ -412,6 +544,34 @@ async function databaseOperation(version, mode) {
             mapLink: 'https://maps.google.com',
             status: 'open',
             visible: true
+          }
+        })
+        .promise();
+
+      // Example Pass
+      await ddb
+        .put({
+          TableName: TABLE_NAME,
+          Item: {
+            pk: 'pass::0015',
+            sk: '123456789',
+            firstName: 'First',
+            searchFirstName: 'first',
+            lastName: 'Last',
+            searchLastName: 'last',
+            facilityName: 'Parking lot A',
+            email: 'noreply@gov.bc.ca',
+            date: new Date('2012-01-01'),
+            shortPassDate: '2012-01-01',
+            type: 'DAY',
+            registrationNumber: '123456789',
+            numberOfGuests: '4',
+            passStatus: 'active',
+            phoneNumber: '5555555555',
+            facilityType: 'Trail',
+            isOverbooked: false,
+            creationDate: new Date('2012-01-01'),
+            dateUpdated: new Date('2012-01-01'),
           }
         })
         .promise();

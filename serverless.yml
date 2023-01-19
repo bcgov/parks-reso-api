@@ -151,6 +151,13 @@ functions:
           method: POST
           path: /pass
           cors: true
+  putPass:
+    handler: lambda/writePass/index.handler
+    events:
+      - http:
+          method: PUT
+          path: /pass
+          cors: true
   deletePass:
     handler: lambda/deletePass/index.handler
     events:
