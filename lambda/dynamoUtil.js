@@ -192,20 +192,20 @@ async function getParks() {
 
 // get a single facility by park name & facility sk.
 // if not authenticated, invisible facilities will not be returned.
-async function getFacility(parkName, sk, authenticated = false){
-  const facility = await getOne(`facility::${parkName}`, sk);
+async function getFacility(parkSk, sk, authenticated = false){
+  const facility = await getOne(`facility::${parkSk}`, sk);
   if (!authenticated && !facility.visible.BOOL) {
     return {};
   };
   return AWS.DynamoDB.Converter.unmarshall(facility);
 };
 
-async function getFacilities(parkName) {
+async function getFacilities(parkSk) {
   const facilitiesQuery = {
     TableName: TABLE_NAME,
     KeyConditionExpression: 'pk = :pk',
     ExpressionAttributeValues: {
-      ':pk': { S: `facility::${parkName}` }
+      ':pk': { S: `facility::${parkSk}` }
     }
   };
   return await runQuery(facilitiesQuery);

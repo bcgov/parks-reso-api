@@ -19,19 +19,19 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}pass?park=Joffre Lakes Provincial Park&passId=07377107&email=email",
+							"raw": "{{base_url}}pass?park=0363&passId=0123456789&email=email",
 							"host": [
 								"{{base_url}}pass"
 							],
 							"query": [
 								{
 									"key": "park",
-									"value": "Joffre Lakes Provincial Park",
-									"description": "Park name"
+									"value": "0363",
+									"description": "Park Orcs"
 								},
 								{
 									"key": "passId",
-									"value": "07377107",
+									"value": "0123456789",
 									"description": "Pass reservation number"
 								},
 								{
@@ -51,15 +51,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}pass?park=Joffre Lakes Provincial Park&facilityName=Joffre Lakes&passType=DAY",
+							"raw": "{{base_url}}pass?park=0363&facilityName=Joffre Lakes&passType=DAY&reservationNumber=71080166",
 							"host": [
 								"{{base_url}}pass"
 							],
 							"query": [
 								{
 									"key": "park",
-									"value": "Joffre Lakes Provincial Park",
-									"description": "Name of park"
+									"value": "0363",
+									"description": "Park Orcs"
 								},
 								{
 									"key": "facilityName",
@@ -73,7 +73,7 @@
 								},
 								{
 									"key": "date",
-									"value": "2022-07-26",
+									"value": "2022-11-23",
 									"description": "(optional) Date in YYYY-MM-DD format. ",
 									"disabled": true
 								},
@@ -85,13 +85,12 @@
 								},
 								{
 									"key": "reservationNumber",
-									"value": "485646064",
-									"description": "(optional) Pass reservation number (unique ID). For getting a single pass. Must provide `park` and `facilityName`.",
-									"disabled": true
+									"value": "71080166",
+									"description": "(optional) Pass reservation number (unique ID). For getting a single pass. Must provide `park` and `facilityName`."
 								},
 								{
-									"key": "status",
-									"value": "active",
+									"key": "passStatus",
+									"value": "active,cancelled",
 									"description": "(optional) Filter pass status (reserved, active, expired, cancelled)",
 									"disabled": true
 								},
@@ -133,7 +132,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"numberOfGuests\": 1,\r\n    \"lastName\": \"lastName\",\r\n    \"facilityName\": \"Cheakamus\",\r\n    \"email\": \"email\",\r\n    \"firstName\": \"firstName\",\r\n    \"date\": \"2022-07-28T11:00:00.003-07:00\",\r\n    \"type\": \"PM\",\r\n    \"parkName\": \"Garibaldi Provincial Park\",\r\n    \"phoneNumber\": 1234567890,\r\n    \"facilityType\": \"Trail\",\r\n    \"license\": \"abc123\",\r\n    \"maplink\": \"www.google.ca/maps\",\r\n    \"captchaJwt\": \"{{captcha_jwt}}\"\r\n}\r\n\r\n",
+							"raw": "{\r\n    \"numberOfGuests\": 1,\r\n    \"lastName\": \"lastName\",\r\n    \"facilityName\": \"Joffre Lakes\",\r\n    \"email\": \"email\",\r\n    \"firstName\": \"firstName\",\r\n    \"date\": \"2022-07-28T11:00:00.003-07:00\",\r\n    \"type\": \"PM\",\r\n    \"parkOrcs\": \"0363\",\r\n    \"phoneNumber\": 1234567890,\r\n    \"facilityType\": \"Trail\",\r\n    \"license\": \"abc123\",\r\n    \"maplink\": \"www.google.ca/maps\",\r\n    \"captchaJwt\": \"{{captcha_jwt}}\"\r\n}\r\n\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -167,7 +166,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"numberOfGuests\": 8,\r\n    \"lastName\": \"lastName\",\r\n    \"facilityName\": \"Joffre Lakes\",\r\n    \"email\": \"email\",\r\n    \"firstName\": \"firstName\",\r\n    \"date\": \"2022-08-14T11:00:00.003-07:00\",\r\n    \"type\": \"DAY\",\r\n    \"parkName\": \"Joffre Lakes Provincial Park\"\r\n}\r\n\r\n",
+							"raw": "{\r\n    \"numberOfGuests\": 1,\r\n    \"lastName\": \"lastName\",\r\n    \"facilityName\": \"Joffre Lakes\",\r\n    \"email\": \"email\",\r\n    \"firstName\": \"firstName\",\r\n    \"date\": \"2023-01-19T11:00:00.003-07:00\",\r\n    \"type\": \"DAY\",\r\n    \"parkOrcs\": \"0363\",\r\n    \"captchaJwt\": \"{{captcha_jwt}}\"\r\n}\r\n\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -192,26 +191,20 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/api/pass?passId=10727135&park=Garibaldi Provincial Park&code=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJiY3BhcmtzLWxhbWJkYSIsInN1YiI6InJlYWRQYXNzIiwicGFzc0lkIjoiMzY3NTY5IiwicGFya05hbWUiOiJSYXRodHJldm9yIiwiaWF0IjoxNjIzMzU1NTQxLCJleHAiOjE2MjMzNTY0NDF9.5dWfAK1xc-W0R74T425yaVe9QCDrVdYE_2aONYfRPWE",
-							"protocol": "http",
+							"raw": "{{base_url}}pass?passId=0123456789&park=0363&code=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJiY3BhcmtzLWxhbWJkYSIsInN1YiI6InJlYWRQYXNzIiwicGFzc0lkIjoiMzY3NTY5IiwicGFya05hbWUiOiJSYXRodHJldm9yIiwiaWF0IjoxNjIzMzU1NTQxLCJleHAiOjE2MjMzNTY0NDF9.5dWfAK1xc-W0R74T425yaVe9QCDrVdYE_2aONYfRPWE",
 							"host": [
-								"localhost"
-							],
-							"port": "3000",
-							"path": [
-								"api",
-								"pass"
+								"{{base_url}}pass"
 							],
 							"query": [
 								{
 									"key": "passId",
-									"value": "10727135",
+									"value": "0123456789",
 									"description": "Pass reservation number (unique ID)"
 								},
 								{
 									"key": "park",
-									"value": "Garibaldi Provincial Park",
-									"description": "Park name"
+									"value": "0363",
+									"description": "Park SK"
 								},
 								{
 									"key": "code",
@@ -229,26 +222,20 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/api/pass?passId=680217705&park=Joffre Lakes Provincial Park",
-							"protocol": "http",
+							"raw": "{{base_url}}pass?passId=150400745&park=0363",
 							"host": [
-								"localhost"
-							],
-							"port": "3000",
-							"path": [
-								"api",
-								"pass"
+								"{{base_url}}pass"
 							],
 							"query": [
 								{
 									"key": "passId",
-									"value": "680217705",
+									"value": "150400745",
 									"description": "Pass reservation number (unique ID)"
 								},
 								{
 									"key": "park",
-									"value": "Joffre Lakes Provincial Park",
-									"description": "Park name"
+									"value": "0363",
+									"description": "Park Orcs"
 								}
 							]
 						}
@@ -283,13 +270,34 @@
 					"response": []
 				},
 				{
+					"name": "Get Single Park",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}park?park=0363",
+							"host": [
+								"{{base_url}}park"
+							],
+							"query": [
+								{
+									"key": "park",
+									"value": "0363",
+									"description": "Park ORCS"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Create Park (Auth)",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"park\": {\r\n        \"name\": \"park1\",\r\n        \"orcs\": \"0000\",\r\n        \"bcParksLink\": \"www.google.ca\",\r\n        \"mapLink\": \"https://wwwd.bcparks.ca/explore/parkpgs/mt_seymour/parking-map.pdf\",\r\n        \"status\": \"open\",\r\n        \"capacity\": 150\r\n    },\r\n    \"description\": \"<p>This is a park description.</p>\",\r\n    \"visible\": true,\r\n    \"facilities\": []\r\n}",
+							"raw": "{\r\n    \"park\": {\r\n        \"name\": \"Test Park\",\r\n        \"orcs\": \"TEST\",\r\n        \"bcParksLink\": \"www.google.ca\",\r\n        \"mapLink\": \"https://wwwd.bcparks.ca/explore/parkpgs/mt_seymour/parking-map.pdf\",\r\n        \"status\": \"open\",\r\n        \"capacity\": 150\r\n    },\r\n    \"description\": \"<p>This is a park description.</p>\",\r\n    \"visible\": true,\r\n    \"facilities\": []\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -312,7 +320,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"pk\": \"park\",\r\n    \"sk\": \"0000\",\r\n    \"park\": {\r\n        \"name\": \"park1\",\r\n        \"orcs\": \"0000\",\r\n        \"bcParksLink\": \"www.google.ca\",\r\n        \"mapLink\": \"https://wwwd.bcparks.ca/explore/parkpgs/mt_seymour/parking-map.pdf\",\r\n        \"status\": \"open\",\r\n        \"capacity\": 150\r\n    },\r\n    \"description\": \"<p>This is a park description.</p>\",\r\n    \"visible\": true,\r\n    \"facilities\": []\r\n}",
+							"raw": "{\r\n    \"pk\": \"park\",\r\n    \"sk\": \"TEST\",\r\n    \"park\": {\r\n        \"name\": \"New Park Name\",\r\n        \"bcParksLink\": \"www.google.ca\",\r\n        \"mapLink\": \"https://wwwd.bcparks.ca/explore/parkpgs/mt_seymour/parking-map.pdf\",\r\n        \"status\": \"open\",\r\n        \"capacity\": 150\r\n    },\r\n    \"description\": \"<p>This is a park description.</p>\",\r\n    \"visible\": true,\r\n    \"facilities\": []\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -343,7 +351,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}facility?facilities=true&park=Garibaldi Provincial Park",
+							"raw": "{{base_url}}facility?facilities=true&park=0363",
 							"host": [
 								"{{base_url}}facility"
 							],
@@ -355,7 +363,7 @@
 								},
 								{
 									"key": "park",
-									"value": "Garibaldi Provincial Park",
+									"value": "0363",
 									"description": "Park Name"
 								}
 							]
@@ -372,19 +380,19 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}facility?park=Garibaldi Provincial Park&facilityName=Cheakamus",
+							"raw": "{{base_url}}facility?park=0363&facilityName=Joffre Lakes",
 							"host": [
 								"{{base_url}}facility"
 							],
 							"query": [
 								{
 									"key": "park",
-									"value": "Garibaldi Provincial Park",
+									"value": "0363",
 									"description": "Park Name"
 								},
 								{
 									"key": "facilityName",
-									"value": "Cheakamus",
+									"value": "Joffre Lakes",
 									"description": "Facility Name"
 								}
 							]
@@ -399,7 +407,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\": \"facility1\",\r\n    \"status\": {\r\n        \"state\": \"open\",\r\n        \"stateReason\": null\r\n    },\r\n    \"type\": \"Parking\",\r\n    \"visible\": true,\r\n    \"bookingTimes\": {\r\n        \"AM\": {\r\n            \"max\": 20\r\n        },\r\n        \"PM\": {\r\n            \"max\": 30\r\n        }\r\n    },\r\n    \"parkName\": \"Joffre Lakes Provincial Park\",\r\n    \"bookingOpeningHour\": null,\r\n    \"bookingDaysAhead\": null\r\n}",
+							"raw": "{\r\n    \"name\": \"New Facility\",\r\n    \"status\": {\r\n        \"state\": \"open\",\r\n        \"stateReason\": null\r\n    },\r\n    \"type\": \"Parking\",\r\n    \"visible\": true,\r\n    \"bookingTimes\": {\r\n        \"AM\": {\r\n            \"max\": 20\r\n        },\r\n        \"PM\": {\r\n            \"max\": 30\r\n        }\r\n    },\r\n    \"parkOrcs\": \"0363\",\r\n    \"bookingOpeningHour\": null,\r\n    \"bookingDaysAhead\": null,\r\n    \"bookingDays\": {\r\n        \"Sunday\": true,\r\n        \"Monday\": true,\r\n        \"Tuesday\": true,\r\n        \"Wednesday\": true,\r\n        \"Thursday\": true,\r\n        \"Friday\": true,\r\n        \"Saturday\": true\r\n    },\r\n    \"bookingDaysRichText\": \"<p>Booking Days HTML text</p>\",\r\n    \"bookableHolidays\": [\r\n        \"2022-01-01\",\r\n        \"2022-02-21\",\r\n        \"2022-04-15\",\r\n        \"2022-05-23\",\r\n        \"2022-07-01\",\r\n        \"2022-08-01\",\r\n        \"2022-09-05\",\r\n        \"2022-10-10\",\r\n        \"2022-11-11\",\r\n        \"2022-12-25\"\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -422,7 +430,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"pk\": \"facility::Joffre Lakes Provincial Park\",\r\n    \"sk\": \"facility1\",\r\n    \"name\": \"facility1\",\r\n    \"status\": {\r\n        \"state\": \"open\",\r\n        \"stateReason\": null\r\n    },\r\n    \"type\": \"Parking\",\r\n    \"visible\": true,\r\n    \"bookingTimes\": {\r\n        \"AM\": {\r\n            \"max\": 20\r\n        },\r\n        \"PM\": {\r\n            \"max\": 32\r\n        }\r\n    },\r\n    \"parkName\": \"Joffre Lakes Provincial Park\",\r\n    \"bookingOpeningHour\": null,\r\n    \"bookingDaysAhead\": null,\r\n    \"mode\": \"editFacililty\"\r\n}",
+							"raw": "{\r\n    \"pk\": \"facility::0363\",\r\n    \"sk\": \"New Facility\",\r\n    \"name\": \"New Facility 2\",\r\n    \"status\": {\r\n        \"state\": \"open\",\r\n        \"stateReason\": null\r\n    },\r\n    \"type\": \"Parking\",\r\n    \"visible\": true,\r\n    \"bookingTimes\": {\r\n        \"AM\": {\r\n            \"max\": 20\r\n        },\r\n        \"PM\": {\r\n            \"max\": 30\r\n        }\r\n    },\r\n    \"parkOrcs\": \"0363\",\r\n    \"bookingOpeningHour\": null,\r\n    \"bookingDaysAhead\": null,\r\n    \"bookingDays\": {\r\n        \"Sunday\": true,\r\n        \"Monday\": true,\r\n        \"Tuesday\": true,\r\n        \"Wednesday\": true,\r\n        \"Thursday\": false,\r\n        \"Friday\": false,\r\n        \"Saturday\": true\r\n    },\r\n    \"bookingDaysRichText\": \"\",\r\n    \"bookableHolidays\": [\r\n        \"2022-08-26\"\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -453,14 +461,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}reservation?park=Joffre Lakes Provincial Park&facility=Joffre Lakes",
+							"raw": "{{base_url}}reservation?park=0363&facility=Joffre Lakes",
 							"host": [
 								"{{base_url}}reservation"
 							],
 							"query": [
 								{
 									"key": "park",
-									"value": "Joffre Lakes Provincial Park",
+									"value": "0363",
 									"description": "Park name"
 								},
 								{
@@ -473,6 +481,37 @@
 									"value": "2022-08-12",
 									"description": "(optional) Date (YYYY-MM-DD)",
 									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Reservations (Auth)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}reservation?park=0363&facility=Joffre Lakes&date=2023-01-18",
+							"host": [
+								"{{base_url}}reservation"
+							],
+							"query": [
+								{
+									"key": "park",
+									"value": "0363",
+									"description": "Park name"
+								},
+								{
+									"key": "facility",
+									"value": "Joffre Lakes",
+									"description": "Facility name"
+								},
+								{
+									"key": "date",
+									"value": "2023-01-18",
+									"description": "(optional) Date (YYYY-MM-DD)"
 								}
 							]
 						}
@@ -550,7 +589,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"date\": \"2022-08-08T19:00:00.000Z\",\r\n    \"bookingTimes\": {\r\n        \"PM\": \"2\"\r\n    },\r\n    \"parkName\": \"Garibaldi Provincial Park\",\r\n    \"facility\": \"Cheakamus\"\r\n}",
+							"raw": "{\r\n    \"date\": \"2023-01-18\",\r\n    \"bookingTimes\": {\r\n        \"DAY\": \"1\"\r\n    },\r\n    \"parkOrcs\": \"0363\",\r\n    \"facility\": \"Joffre Lakes\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -568,6 +607,103 @@
 									"value": "",
 									"disabled": true
 								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Other",
+			"item": [
+				{
+					"name": "RocketChat Bulk Email",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{rocketchat_token_email_service}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"postTitle\": \"Day Use Pass - Bulk Email Service\",\r\n    \"productName\": \"Day Use Pass\",\r\n    \"postText\": \"A bulk email reminder job has failed.\",\r\n    \"field1Title\": \"Job key:\",\r\n    \"field1Text\": \"pk: sendReminderSummary\\nsk: 2022-11-24T00:10:30.106Z\",\r\n    \"field2Title\": \"Number of users affected\",\r\n    \"field2Text\": \"2\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://chat.developer.gov.bc.ca/hooks/637eb87bbe5cf300071ee6b1/94DpAXeeHriyXNnEEkmYfpoZRdk7uiGLhZD2Ys2v4SQDq6Px",
+							"protocol": "https",
+							"host": [
+								"chat",
+								"developer",
+								"gov",
+								"bc",
+								"ca"
+							],
+							"path": [
+								"hooks",
+								"637eb87bbe5cf300071ee6b1",
+								"94DpAXeeHriyXNnEEkmYfpoZRdk7uiGLhZD2Ys2v4SQDq6Px"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RocketChat Bulk Email (sandbox)",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{rocketchat_token_email_service}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"postTitle\": \"@all **Day Use Pass - Bulk Email Service**\",\r\n    \"productName\": \"Day Use Pass\",\r\n    \"postText\": \"A bulk email reminder job has failed.\",\r\n    \"author_name\": \"Day Use Pass\",\r\n    \"author_icon\": \"https://bcparks.ca/_shared/images/logos/logo-bcparks-v-200.png\",\r\n    \"author_link\": \"https://chat.developer.gov.bc.ca/avatar/room/9H6zPKhZxD4AY4Jzx?etag=9WbsNytiHm4prt3aH\",\r\n    \"alias\": \"sPARKy McTestFace\",\r\n    \"avatar\": \"https://chat.developer.gov.bc.ca/avatar/room/9H6zPKhZxD4AY4Jzx?etag=9WbsNytiHm4prt3aH\",\r\n    \"color\": \"#2D834F\",\r\n    \"fields\": [\r\n        {\r\n            \"title\": \"Job key\",\r\n            \"value\": \"pk: sendReminderSummary\\nsk: 2022-11-24T00:10:30.106Z\",\r\n            \"short\": true\r\n        },\r\n                {\r\n            \"title\": \"Number of users affected\",\r\n            \"value\": \"156\",\r\n            \"short\": true\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://chat.developer.gov.bc.ca/hooks/637eb87bbe5cf300071ee6b1/94DpAXeeHriyXNnEEkmYfpoZRdk7uiGLhZD2Ys2v4SQDq6Px",
+							"protocol": "https",
+							"host": [
+								"chat",
+								"developer",
+								"gov",
+								"bc",
+								"ca"
+							],
+							"path": [
+								"hooks",
+								"637eb87bbe5cf300071ee6b1",
+								"94DpAXeeHriyXNnEEkmYfpoZRdk7uiGLhZD2Ys2v4SQDq6Px"
 							]
 						}
 					},
@@ -644,6 +780,13 @@
 					""
 				]
 			}
+		}
+	],
+	"variable": [
+		{
+			"key": "rocketchat_email_alert_token",
+			"value": "637eb87bbe5cf300071ee6b1/94DpAXeeHriyXNnEEkmYfpoZRdk7uiGLhZD2Ys2v4SQDq6Px",
+			"type": "string"
 		}
 	]
 }

@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const axios = require('axios');
 const { verifyJWT } = require('../captchaUtil');
-const { dynamodb, runQuery, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE, getFacility } = require('../dynamoUtil');
+const { dynamodb, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE, getFacility, getPark } = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { DateTime } = require('luxon');
@@ -109,7 +109,7 @@ exports.handler = async (event, context) => {
     const registrationNumber = generate(10);
 
     let {
-      parkName,
+      parkOrcs,
       firstName,
       lastName,
       facilityName,
@@ -124,7 +124,8 @@ exports.handler = async (event, context) => {
 
     logger.info("GetFacility");
     logger.debug(permissionObject.roles);
-    const facilityData = await getFacility(parkName, facilityName, permissionObject.isAdmin);
+    const parkData = await getPark(parkOrcs);
+    const facilityData = await getFacility(parkOrcs, facilityName, permissionObject.isAdmin);
 
     if (Object.keys(facilityData).length === 0) {
       throw 'Facility not found.';
@@ -262,8 +263,9 @@ exports.handler = async (event, context) => {
     }
 
     passObject.Item = {};
-    passObject.Item['pk'] = { S: 'pass::' + parkName };
+    passObject.Item['pk'] = { S: 'pass::' + parkData.sk };
     passObject.Item['sk'] = { S: registrationNumber };
+    passObject.Item['parkName'] = {S: parkData.name};
     passObject.Item['firstName'] = { S: firstName };
     passObject.Item['searchFirstName'] = { S: firstName.toLowerCase() };
     passObject.Item['lastName'] = { S: lastName };
@@ -309,7 +311,7 @@ exports.handler = async (event, context) => {
       '&email=' +
       email +
       '&park=' +
-      parkName +
+      parkOrcs +
       '&date=' +
       bookingPSTShortDate +
       '&type=' +
@@ -322,18 +324,6 @@ exports.handler = async (event, context) => {
     const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
     const formattedBookingDate = bookingPSTDateTime.toLocaleString(dateOptions);
 
-    let parkObj = {
-      TableName: TABLE_NAME
-    };
-
-    parkObj.ExpressionAttributeValues = {};
-    parkObj.ExpressionAttributeValues[':pk'] = { S: 'park' };
-    parkObj.ExpressionAttributeValues[':sk'] = { S: parkName };
-    parkObj.KeyConditionExpression = 'pk =:pk AND sk =:sk';
-    logger.info("Running query");
-    const parkData = await runQuery(parkObj);
-    logger.debug('ParkData:', parkData);
-
     let personalisation = {
       firstName: firstName,
       lastName: lastName,
@@ -343,10 +333,10 @@ exports.handler = async (event, context) => {
       numberOfGuests: numberOfGuests.toString(),
       registrationNumber: registrationNumber.toString(),
       cancellationLink: encodedCancellationLink,
-      parkName: parkName,
-      mapLink: parkData[0].mapLink,
-      parksLink: parkData[0].bcParksLink,
-      ...(await getPersonalizationAttachment(parkName, facilityName, registrationNumber.toString()))
+      parkName: parkData.name,
+      mapLink: parkData.mapLink || null,
+      parksLink: parkData.bcParksLink,
+      ...(await getPersonalizationAttachment(parkData.sk, facilityName, registrationNumber.toString()))
     };
 
     // Parking.
@@ -354,7 +344,7 @@ exports.handler = async (event, context) => {
       gcNotifyTemplate = process.env.GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID;
     }
 
-    if (parkData[0].visible === true) {
+    if (parkData.visible === true) {
       // Check existing pass for the same facility, email, type and date
       try {
         const existingPassCheckObject = {
@@ -403,7 +393,7 @@ exports.handler = async (event, context) => {
       // https://github.com/bcgov/parks-reso-api/wiki/Models
 
       // TODO: We need to change park name in the PK to use orcs instead.
-      const reservationsObjectPK = `reservations::${parkName}::${facilityName}`;
+      const reservationsObjectPK = `reservations::${parkData.sk}::${facilityName}`;
 
       const bookingTimeTypes = Object.keys(facilityData.bookingTimes);
       if (!bookingTimeTypes.includes(type)) {
@@ -427,8 +417,7 @@ exports.handler = async (event, context) => {
             ConditionCheck: {
               TableName: TABLE_NAME,
               Key: {
-                // TODO: Make this use Orcs instead of parkName
-                pk: { S: `facility::${parkName}` },
+                pk: { S: `facility::${parkData.sk}` },
                 sk: { S: facilityName }
               },
               ExpressionAttributeValues: {
@@ -499,7 +488,7 @@ exports.handler = async (event, context) => {
         }
       }
       // Temporarily assign the QRCode Link for the front end not to guess at it.
-      const adminLink = getAdminLinkToPass(parkName, facilityName, registrationNumber.toString());
+      const adminLink = getAdminLinkToPass(parkData.sk, facilityName, registrationNumber.toString());
       if (adminLink) {
         passObject.Item['adminPassLink'] = { "S": adminLink }
       }

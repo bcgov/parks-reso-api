@@ -32,7 +32,7 @@ exports.handler = async (event, context) => {
         return sendResponse(400, { msg: 'Invalid request' });
       }
       // We need to lookup the pass to provide user feedback
-      const passNoAuth = await getPass(decodedToken.parkName, decodedToken.passId);
+      const passNoAuth = await getPass(decodedToken.parkSk, decodedToken.passId);
 
       let transactionObj = { TransactItems: [] };
 
@@ -40,8 +40,7 @@ exports.handler = async (event, context) => {
       const facilityUpdateCheck = {
         TableName: TABLE_NAME,
         Key: {
-          // TODO: Make this use Orcs instead of parkName
-          pk: { S: 'facility::' + decodedToken.parkName },
+          pk: { S: 'facility::' + decodedToken.parkSk },
           sk: { S: decodedToken.facilityName }
         },
         ExpressionAttributeValues: {
@@ -56,7 +55,7 @@ exports.handler = async (event, context) => {
       // Get the specific pass, this person is NOT authenticated
       const updatePassQuery = {
         Key: {
-          pk: { S: 'pass::' + decodedToken.parkName },
+          pk: { S: 'pass::' + decodedToken.parkSk },
           sk: { S: decodedToken.passId }
         },
         ExpressionAttributeValues: {
@@ -99,7 +98,7 @@ exports.handler = async (event, context) => {
         const updateReservationsObjQuery = {
           TableName: TABLE_NAME,
           Key: {
-            pk: { S: `reservations::${decodedToken.parkName}::${decodedToken.facilityName}` },
+            pk: { S: `reservations::${decodedToken.parkSk}::${decodedToken.facilityName}` },
             sk: { S: decodedToken.dateselector }
           },
           ExpressionAttributeValues: {
@@ -145,7 +144,6 @@ exports.handler = async (event, context) => {
         const facilityUpdateCheck = {
           TableName: TABLE_NAME,
           Key: {
-            // TODO: Make this use Orcs instead of parkName
             pk: { S: `facility::${event.queryStringParameters.park}` },
             sk: { S: pass.facilityName }
           },

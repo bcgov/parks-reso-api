@@ -296,6 +296,7 @@ resources:
                 - license
                 - creationDate
                 - isOverbooked
+                - parkName
             ProvisionedThroughput:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
