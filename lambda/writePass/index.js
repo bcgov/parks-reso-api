@@ -16,7 +16,7 @@ const DEFAULT_PM_OPENING_HOUR = 12;
 async function modifyPassCheckInStatus(pk, sk, checkedIn) {
   let updateParams = {
     Key: {
-      pk: { S: pk },
+      pk: { S: `pass::${pk}` },
       sk: { S: sk }
     },
     ExpressionAttributeValues: {
