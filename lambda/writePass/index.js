@@ -333,7 +333,6 @@ exports.handler = async (event, context) => {
     logger.info("Running query");
     const parkData = await runQuery(parkObj);
     logger.debug('ParkData:', parkData);
-    const QRData = await getPersonalizationAttachment(parkName, facilityName, registrationNumber.toString())
     
     let personalisation = {
       firstName: firstName,
@@ -347,7 +346,7 @@ exports.handler = async (event, context) => {
       parkName: parkName,
       mapLink: parkData[0].mapLink,
       parksLink: parkData[0].bcParksLink,
-      ...QRData
+      ...(await getPersonalizationAttachment(parkName, facilityName, registrationNumber.toString()))
     };
 
     // Parking.
@@ -521,8 +520,6 @@ exports.handler = async (event, context) => {
             Authorization: process.env.GC_NOTIFY_API_KEY,
             'Content-Type': 'application/json'
           },
-          maxContentLength: Infinity,
-          maxBodyLength: Infinity,
           data: gcnData
         });
         logger.info('GCNotify email sent.');
