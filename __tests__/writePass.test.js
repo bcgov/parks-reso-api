@@ -437,7 +437,7 @@ describe('Pass Successes', () => {
     const event = {
       httpMethod: 'PUT',
       body: JSON.stringify({
-        pk: 'pass::0015',
+        pk: '0015',
         sk: '123456789'
       }),
       queryStringParameters: {
@@ -469,7 +469,7 @@ describe('Pass Successes', () => {
     const event = {
       httpMethod: 'PUT',
       body: JSON.stringify({
-        pk: 'pass::0015',
+        pk: '0015',
         sk: '123456789'
       }),
       queryStringParameters: {
