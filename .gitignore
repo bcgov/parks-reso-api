@@ -3,6 +3,7 @@ node_modules/
 *.DS_Store
 .terragrunt-cache
 terraform/src/.terraform
+.env
 
 yarn-error.log
 coverage/

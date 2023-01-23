@@ -333,7 +333,7 @@ exports.handler = async (event, context) => {
     logger.info("Running query");
     const parkData = await runQuery(parkObj);
     logger.debug('ParkData:', parkData);
-
+    
     let personalisation = {
       firstName: firstName,
       lastName: lastName,
@@ -528,7 +528,7 @@ exports.handler = async (event, context) => {
         delete passObject.Item['audit'];
         return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
       } catch (err) {
-        logger.error('GCNotify error:', err);
+        logger.error('GCNotify error:', err.response?.data || err);
         let errRes = AWS.DynamoDB.Converter.unmarshall(passObject.Item);
         errRes['err'] = 'Email Failed to Send';
         return sendResponse(200, errRes);
