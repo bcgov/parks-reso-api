@@ -5,7 +5,7 @@ async function getPersonalizationAttachment(parkIdentifier, facilityIdentifier, 
     const base64image = await qrcode.toDataURL(getAdminLinkToPass(parkIdentifier, facilityIdentifier, registrationNumber));
     return {
       "application_file": {
-        "file": base64image,
+        "file": base64image.split('base64,')[1],
         "filename": 'QRCode.png',
         "sending_method": "attach" 
       }
