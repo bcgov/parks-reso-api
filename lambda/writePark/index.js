@@ -66,6 +66,9 @@ async function createItem(obj, context) {
     parkObject.Item['bcParksLink'] = { S: park.bcParksLink };
   }
   parkObject.Item['description'] = { S: description };
+  parkObject.Item['orcs'] = { S: park.orcs };
+  const roles = ['sysadmin', `${park.orcs}`];
+  parkObject.Item['roles'] = AWS.DynamoDB.Converter.input(roles);
 
   // TODO: Lookup name from database via orcs
   parkObject.Item['name'] = { S: park.name };

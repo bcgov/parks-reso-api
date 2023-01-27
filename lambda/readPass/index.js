@@ -182,7 +182,7 @@ exports.handler = async (event, context) => {
           numberOfGuests: passData.data[0].numberOfGuests,
           dateselector: dateselector,
           type: passData.data[0].type,
-          parkName: passData.data[0].pk.split('::')[1]
+          parkSk: passData.data[0].pk.split('::')[1]
         };
         logger.info("Signing JWT");
         const token = jwt.sign(claims, process.env.JWT_SECRET, { expiresIn: '15m', algorithm: ALGORITHM });
@@ -209,7 +209,7 @@ exports.handler = async (event, context) => {
           registrationNumber: passData.data[0].registrationNumber.toString(),
           link: encodedCancellationLink,
           date: formattedDate,
-          parkName: passData.data[0].pk.split('::')[1] || '',
+          parkName: passData.data[0].parkName || '',
           facilityName: passData.data[0].facilityName || ''
         };
 

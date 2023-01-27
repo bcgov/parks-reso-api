@@ -55,7 +55,7 @@ describe('Pass Fails', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        parkName: 'Test Park 1',
+        parkOrcs: 'Test Park 1',
         firstName: '',
         lastName: '',
         facilityName: 'Parking lot A',
@@ -89,7 +89,7 @@ describe('Pass Fails', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        parkName: 'Test Park 1',
+        parkOrcs: 'Test Park 1',
         firstName: '',
         lastName: '',
         facilityName: 'Parking lot A',
@@ -123,7 +123,7 @@ describe('Pass Fails', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        parkName: 'Test Park 1',
+        parkOrcs: 'Test Park 1',
         firstName: '',
         lastName: '',
         facilityName: 'Trail B',
@@ -154,7 +154,7 @@ describe('Pass Fails', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        parkName: '',
+        parkOrcs: '',
         firstName: '',
         lastName: '',
         facilityName: '',
@@ -188,7 +188,7 @@ describe('Pass Fails', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        parkName: 'Test Park 1',
+        parkOrcs: 'Test Park 1',
         firstName: '',
         lastName: '',
         facilityName: 'Parking lot A',
@@ -222,7 +222,7 @@ describe('Pass Fails', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        parkName: '',
+        parkOrcs: '',
         firstName: '',
         lastName: '',
         facilityName: '',
@@ -275,7 +275,7 @@ describe('Pass Successes', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        parkName: '0015',
+        parkOrcs: '0015',
         firstName: 'Jest',
         lastName: 'User',
         facilityName: 'P1 and Lower P5',
@@ -315,7 +315,7 @@ describe('Pass Successes', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        parkName: 'Test Park 1',
+        parkOrcs: 'Test Park 1',
         firstName: 'Jest',
         lastName: 'User',
         facilityName: 'Parking lot A',
@@ -356,7 +356,7 @@ describe('Pass Successes', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        parkName: 'Test Park 1',
+        parkOrcs: 'Test Park 1',
         firstName: '',
         lastName: '',
         facilityName: 'Trail B',
@@ -555,6 +555,7 @@ async function databaseOperation(version, mode) {
           Item: {
             pk: 'pass::0015',
             sk: '123456789',
+            parkName: 'Test Park 1',
             firstName: 'First',
             searchFirstName: 'first',
             lastName: 'Last',

@@ -68,7 +68,7 @@ exports.handler = async (event, context) => {
         for (let pass of passChunk) {
           const row = [
             pass.email || null,
-            pass.pk.split('::')[1] || null,
+            pass.parkName || null,
             pass.facilityName || null,
             pass.shortPassDate || null,
             pass.type || null,

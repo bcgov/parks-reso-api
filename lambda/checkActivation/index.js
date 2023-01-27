@@ -77,12 +77,12 @@ exports.handler = async (event, context) => {
 
       // pass dates are saved in UTC.
       const passPSTDateTime = DateTime.fromISO(pass.date).setZone(TIMEZONE);
-      const passParkName = pass.pk.split('::')[1];
+      const passParkSk = pass.pk.split('::')[1];
       const passFacilityName = pass.facilityName;
 
       // TODO: Fixme into a MAP for better lookups.
       let openingHourTimeForFacility = 7;
-      const theFacility = facilities.filter(fac => fac.pk === 'facility::' + passParkName && fac.sk === passFacilityName);
+      const theFacility = facilities.filter(fac => fac.pk === 'facility::' + passParkSk && fac.sk === passFacilityName);
 
       if (theFacility && theFacility.length > 0 && theFacility[0].bookingOpeningHour !== undefined && theFacility[0].bookingOpeningHour !== null) {
         openingHourTimeForFacility = theFacility[0].bookingOpeningHour;

@@ -15,7 +15,7 @@ const { DateTime } = require('luxon');
 //         DAY: 0,
 //         WHATEVER: 0
 //     },
-//     parkName: 'Garibaldi Provincial Park'
+//     parkOrcs: '0007'
 //     facility: 'Cheakamus'
 // }
 exports.handler = async (event, context) => {
@@ -47,7 +47,7 @@ exports.handler = async (event, context) => {
     return sendResponse(400, e, context);
   }
 
-  const { date, bookingTimes, parkName, facility } = obj;
+  const { date, bookingTimes, parkOrcs, facility } = obj;
 
   // date must be a valid shortDate:
   try {
@@ -62,7 +62,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    await getParkAccess(parkName, permissionObject);
+    await getParkAccess(parkOrcs, permissionObject);
   } catch (error) {
     logger.error('ERR:', error);
     return sendResponse(403, { msg: error.msg });
@@ -73,37 +73,37 @@ exports.handler = async (event, context) => {
     // This also locks reservation objects for that facility to be messed with.
     // This can be assumed because any other possible way to edit reservation objects are protected by the same facility lock
     logger.info('Locking facility');
-    const currentFacility = await setFacilityLock(`facility::${parkName}`, facility);
+    const currentFacility = await setFacilityLock(`facility::${parkOrcs}`, facility);
 
     // Apply the update to the locked facility
-    const res = await updateModifier(date, bookingTimes, parkName, currentFacility);
+    const res = await updateModifier(date, bookingTimes, parkOrcs, currentFacility);
     logger.info('Unlocking facility');
 
     // Unlock before returning.
-    await unlockFacility(`facility::${parkName}`, facility);
+    await unlockFacility(`facility::${parkOrcs}`, facility);
 
     return sendResponse(200, res);
   } catch (err) {
     logger.error('err', err);
     // Attempt to unlock the facility if we broke after it locked.
-    await unlockFacility(`facility::${parkName}`, facility);
+    await unlockFacility(`facility::${parkOrcs}`, facility);
     return sendResponse(400, err, context);
   }
 };
 
-async function updateModifier(date, modTimes, parkName, currentFacility) {
+async function updateModifier(date, modTimes, parkOrcs, currentFacility) {
   try {
     if (!currentFacility || !currentFacility.name || !currentFacility.bookingTimes) {
       throw 'Could not GET current facility';
     }
 
-    const reservationsObjectPK = `reservations::${parkName}::${currentFacility.name}`;
+    const reservationsObjectPK = `reservations::${parkOrcs}::${currentFacility.name}`;
     
     // Apply modifier - ReservationObjUtil will handle available pass logic.
     //// Ensure the res obj exists
     await createNewReservationsObj(currentFacility, reservationsObjectPK, date);
     //// Get modifier via date
-    const reservationObj = await getReservationObject(parkName, currentFacility.name, date);
+    const reservationObj = await getReservationObject(parkOrcs, currentFacility.name, date);
     // Make sure all modifiers are actually booking types we have active in the facility
     //// Build timesToUpdate
     let timesToUpdate = [];

@@ -3,14 +3,14 @@ const { logger } = require('./logger');
 const { dynamodb, TABLE_NAME, TIMEZONE, runQuery } = require('./dynamoUtil');
 const { DateTime } = require('luxon');
 
-async function getFutureReservationObjects(parkName, facilityName) {
+async function getFutureReservationObjects(parkSk, facilityName) {
   let futureResObjects = [];
   const todaysShortDate = DateTime.now().setZone(TIMEZONE).toISODate();
   const reservationsObjectQuery = {
     TableName: TABLE_NAME,
     ExpressionAttributeValues: {
       // TODO: change this to use orcs
-      ':pk': { S: `reservations::${parkName}::${facilityName}` },
+      ':pk': { S: `reservations::${parkSk}::${facilityName}` },
       ':date': { S: todaysShortDate }
     },
     KeyConditionExpression: 'pk = :pk AND sk >= :date'
@@ -357,7 +357,7 @@ async function getOverbookedPassSet(passes, numberOfPassesOverbooked) {
   return overbookObj;
 }
 
-async function getReservationObject(parkName, facilityName, bookingPSTDateTime) {
+async function getReservationObject(parkSk, facilityName, bookingPSTDateTime) {
   const todaysShortDate = DateTime.now().setZone(TIMEZONE).toISODate();
 
   if (bookingPSTDateTime < todaysShortDate) {
@@ -367,7 +367,7 @@ async function getReservationObject(parkName, facilityName, bookingPSTDateTime) 
   const reservationsObjectQuery = {
     TableName: TABLE_NAME,
     ExpressionAttributeValues: {
-      ':pk': { S: `reservations::${parkName}::${facilityName}` },
+      ':pk': { S: `reservations::${parkSk}::${facilityName}` },
       ':date': { S: bookingPSTDateTime }
     },
     KeyConditionExpression: 'pk = :pk AND sk = :date'

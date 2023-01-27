@@ -34,7 +34,7 @@ exports.handler = async (event, context) => {
     const obj = JSON.parse(event.body);
 
     try {
-      await getParkAccess(obj.parkName, permissionObject);
+      await getParkAccess(obj.parkOrcs, permissionObject);
     } catch (error) {
       logger.error('ERR:', error);
       return sendResponse(403, { msg: error.msg });
@@ -58,7 +58,7 @@ exports.handler = async (event, context) => {
 };
 
 async function createFacility(obj) {
-  let { parkName, bookingTimes, name, status, type, visible, bookingOpeningHour, bookingDaysAhead, bookingDays, bookingDaysRichText, bookableHolidays, ...otherProps } =
+  let { parkOrcs, bookingTimes, name, status, type, visible, bookingOpeningHour, bookingDaysAhead, bookingDays, bookingDaysRichText, bookableHolidays, ...otherProps } =
     obj;
 
   const bookingOpeningHourAttrValue = {};
@@ -79,7 +79,7 @@ async function createFacility(obj) {
     TableName: TABLE_NAME,
     ConditionExpression: 'attribute_not_exists(sk)',
     Item: {
-      pk: { S: `facility::${parkName}` },
+      pk: { S: `facility::${parkOrcs}` },
       sk: { S: name },
       bookingTimes: { M: AWS.DynamoDB.Converter.marshall(bookingTimes) },
       name: { S: name },
@@ -103,7 +103,7 @@ async function createFacility(obj) {
 }
 
 async function updateFacility(obj) {
-  let { sk, parkName, bookingTimes, name, status, type, visible, bookingOpeningHour, bookingDaysAhead, bookingDays, bookingDaysRichText, bookableHolidays, ...otherProps } =
+  let { pk, sk, parkOrcs, bookingTimes, name, status, type, visible, bookingOpeningHour, bookingDaysAhead, bookingDays, bookingDaysRichText, bookableHolidays, ...otherProps } =
     obj;
 
   const bookingOpeningHourAttrValue = {};
@@ -122,7 +122,7 @@ async function updateFacility(obj) {
 
   try {
     // Conditional update on updating flag
-    const currentFacility = await setFacilityLock(`facility::${parkName}`, sk);
+    const currentFacility = await setFacilityLock(`facility::${parkOrcs}`, sk);
 
     // Check if we are updating booking times
     if (!deepEqual(obj, currentFacility)) {
@@ -159,7 +159,7 @@ async function updateFacility(obj) {
       // Gather all future reservation objects
       let futureResObjects = [];
       if (timesToUpdate.length > 0 || timesToRemove.length > 0 || newStatus) {
-        futureResObjects = await getFutureReservationObjects(parkName, name);
+        futureResObjects = await getFutureReservationObjects(parkOrcs, name);
       }
       if (futureResObjects.length > 0) {
         await processReservationObjects(futureResObjects, timesToUpdate, timesToRemove, newStatus);
@@ -168,10 +168,11 @@ async function updateFacility(obj) {
 
     let updateParams = {
       Key: {
-        pk: { S: `facility::${parkName}` },
+        pk: { S: pk },
         sk: { S: sk }
       },
       ExpressionAttributeValues: {
+        ':name': {S: name},
         ':statusValue': { M: AWS.DynamoDB.Converter.marshall(status) },
         ':visibility': { BOOL: visible },
         ':bookingTimes': { M: AWS.DynamoDB.Converter.marshall(bookingTimes) },
@@ -184,10 +185,11 @@ async function updateFacility(obj) {
       },
       ExpressionAttributeNames: {
         '#facilityStatus': 'status',
-        '#visibility': 'visible'
+        '#visibility': 'visible',
+        '#name': 'name'
       },
       UpdateExpression:
-        'SET #facilityStatus =:statusValue, bookingTimes =:bookingTimes, #visibility =:visibility, bookingOpeningHour = :bookingOpeningHour, bookingDaysAhead = :bookingDaysAhead, isUpdating = :isUpdating, bookingDays = :bookingDays, bookingDaysRichText = :bookingDaysRichText, bookableHolidays = :bookableHolidays',
+        'SET #facilityStatus =:statusValue, bookingTimes =:bookingTimes, #visibility =:visibility, bookingOpeningHour = :bookingOpeningHour, bookingDaysAhead = :bookingDaysAhead, isUpdating = :isUpdating, bookingDays = :bookingDays, bookingDaysRichText = :bookingDaysRichText, bookableHolidays = :bookableHolidays, #name = :name',
       ReturnValues: 'ALL_NEW',
       TableName: TABLE_NAME
     };
@@ -196,14 +198,14 @@ async function updateFacility(obj) {
     // Attempt to create a new reservation object for 'today' if it doesn't exist.
     // We want a record of every facility update when the updated data affects the reservation obj. 
     // If it already exists, this will intentionally fail.
-    const reservationsObjectPK = `reservations::${parkName}::${name}`;
+    const reservationsObjectPK = `reservations::${parkOrcs}::${name}`;
     const todayShortDate = DateTime.now().setZone(TIMEZONE).toISODate();
     await createNewReservationsObj(obj, reservationsObjectPK, todayShortDate);
 
     return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(Attributes));
   } catch (error) {
     logger.error(JSON.stringify(error));
-    await unlockFacility(`facility::${parkName}`, sk);
+    await unlockFacility(`facility::${parkOrcs}`, sk);
     return sendResponse(400, error);
   }
 }
