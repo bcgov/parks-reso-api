@@ -11,7 +11,6 @@ const ALGORITHM = process.env.ALGORITHM || "HS384";
 
 exports.handler = async (event, context) => {
   logger.debug('Read Pass', event);
-  logger.debug('event.queryStringParameters', event.queryStringParameters);
 
   let queryObj = {
     TableName: TABLE_NAME
@@ -24,7 +23,7 @@ exports.handler = async (event, context) => {
     const token = await decodeJWT(event);
     const permissionObject = resolvePermissions(token);
 
-    if (event.queryStringParameters.facilityName && event.queryStringParameters.park) {
+    if (!event.queryStringParameters.manualLookup && event.queryStringParameters.facilityName && event.queryStringParameters.park) {
       
       if (permissionObject.isAuthenticated !== true) {
         logger.info('Unauthorized');
@@ -255,6 +254,15 @@ exports.handler = async (event, context) => {
         const passData = await runQuery(queryObj, true);
         return sendResponse(200, passData, context);
       }
+    } else if (event.queryStringParameters.manualLookup && event.queryStringParameters.park && event.queryStringParameters.date) {
+      // Manual Lookup Search by ADMIN
+      if (permissionObject.isAdmin !== true) {
+        logger.info("Unauthorized.");
+        logger.debug(permissionObject);
+        return sendResponse(403, { msg: 'Unauthorized to perform this action.', title: 'Unauthorized.' });
+      }
+
+      return await checkManualLookup(event.queryStringParameters, queryObj, context);
     } else {
       logger.info('Invalid Request');
       return sendResponse(400, { msg: 'Invalid Request' }, context);
@@ -264,6 +272,63 @@ exports.handler = async (event, context) => {
     return sendResponse(400, err, context);
   }
 };
+
+const checkManualLookup = async function (queryStringParameters, queryObj, context) {
+  try {
+    // REQUIRED: park, date, facilityName
+    // OPTIONAL: registrationNumber, email, firstName, lastName
+    const date = queryStringParameters.date;
+    const park = queryStringParameters.park;
+    const facilityName = queryStringParameters.facilityName;
+    const registrationNumber = queryStringParameters.registrationNumber;
+    const email = queryStringParameters.email;
+    const firstName = queryStringParameters.firstName;
+    const lastName = queryStringParameters.lastName;
+
+    const pk = `pass::${park}`;
+    // Search the index
+    queryObj['IndexName'] = 'manualLookup-index';
+    queryObj['ExpressionAttributeValues'] = {
+      ':shortPassDate': { S: date },
+      ':facilityName': { S: facilityName },
+      ':pk': { S: pk  }
+    };
+    queryObj['FilterExpression'] = 'pk = :pk';
+    queryObj['KeyConditionExpression'] = 'shortPassDate = :shortPassDate AND facilityName = :facilityName';
+
+    // Buid optionals
+    if (registrationNumber !== undefined) {
+      queryObj.FilterExpression += ' AND sk =:sk';
+      queryObj.ExpressionAttributeValues[':sk'] = { S: registrationNumber };
+    }
+    if (email !== undefined) {
+      queryObj.FilterExpression += ' AND email =:email';
+      queryObj.ExpressionAttributeValues[':email'] = { S: email.toLowerCase() };
+    }
+    if (firstName !== undefined) {
+      queryObj.FilterExpression += ' AND searchFirstName =:searchFirstName';
+      queryObj.ExpressionAttributeValues[':searchFirstName'] = { S: firstName.toLowerCase() };
+    }
+    if (lastName !== undefined) {
+      queryObj.FilterExpression += ' AND searchLastName =:searchLastName';
+      queryObj.ExpressionAttributeValues[':searchLastName'] = { S: lastName.toLowerCase() };
+    }
+    const passData = await runQuery(queryObj);
+    for(pass of passData) {
+      pass['park'] = park;
+      pass['facilityName'] = facilityName;
+      delete pass.pk;
+      delete pass.sk;
+      delete pass.searchLastName;
+      delete pass.searchFirstName;
+    }
+    return sendResponse(200, passData, context);
+  } catch (e) {
+    logger.info("Invalid Request (err):");
+    logger.debug(e);
+    return sendResponse(400, { msg: 'Invalid Request' }, context);
+  }
+}
 
 const checkAddExpressionAttributeNames = function (queryObj) {
   if (!queryObj.ExpressionAttributeNames) {

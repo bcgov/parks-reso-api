@@ -65,6 +65,25 @@ resource "aws_dynamodb_table" "park_dup_table" {
   }
 
   global_secondary_index {
+    name               = "manualLookup-index"
+    hash_key           = "shortPassDate"
+    range_key          = "facilityName"
+    write_capacity     = 10
+    read_capacity      = 10
+    projection_type    = "INCLUDE"
+    non_key_attributes = [
+      "email",
+      "firstName",
+      "lastName",
+      "pk",
+      "registrationNumber",
+      "searchFirstName",
+      "searchLastName",
+      "sk"
+]
+  }
+
+  global_secondary_index {
     name               = "passStatus-index"
     hash_key           = "passStatus"
     write_capacity     = 1
