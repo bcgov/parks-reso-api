@@ -270,6 +270,39 @@ resources:
             ProvisionedThroughput:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
+          - IndexName: manualLookup-index
+            KeySchema:
+              - AttributeName: shortPassDate
+                KeyType: HASH
+              - AttributeName: facilityName
+                KeyType: RANGE
+            Projection:
+              ProjectionType: INCLUDE
+              NonKeyAttributes:
+                - email
+                - firstName
+                - lastName
+                - pk
+                - registrationNumber
+                - searchFirstName
+                - searchLastName
+                - sk
+                - passStatus
+                - checkedIn
+                - checkedInTime
+                - date
+                - type
+                - numberOfGuests
+                - phoneNumber
+                - facilityType
+                - license
+                - creationDate
+                - isOverbooked
+                - parkName
+                - park
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
           - IndexName: shortPassDate-index
             KeySchema:
               - AttributeName: shortPassDate
