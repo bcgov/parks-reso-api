@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const axios = require('axios');
 const { verifyJWT } = require('../captchaUtil');
-const { dynamodb, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE, getFacility, getPark } = require('../dynamoUtil');
+const { dynamodb, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE, getFacility, getPark, getConfig } = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { DateTime } = require('luxon');
@@ -346,47 +346,52 @@ exports.handler = async (event, context) => {
 
     if (parkData.visible === true) {
       // Check existing pass for the same facility, email, type and date
-      try {
-        const existingPassCheckObject = {
-          TableName: TABLE_NAME,
-          IndexName: 'shortPassDate-index',
-          KeyConditionExpression: 'shortPassDate = :shortPassDate AND facilityName = :facilityName',
-          FilterExpression:
-            'email = :email AND #type = :type AND passStatus IN (:reserved, :active)',
-          ExpressionAttributeNames: {
-            '#type': 'type',
-          },
-          ExpressionAttributeValues: {
-            ':facilityName': { S: facilityName },
-            ':email': { S: email },
-            ':type': { S: type },
-            ':shortPassDate': { S: bookingPSTShortDate },
-            ':reserved': { S: 'reserved' },
-            ':active': { S: 'active' }
-          }
-        };
-        let existingItems;
+      // Unless not in production
+      const config = await getConfig();
+      console.log('config:', config);
+      if (config.ENVIRONMENT === 'prod') {
         try {
-          logger.info("Running existingPassCheckObject");
-          existingItems = await dynamodb.query(existingPassCheckObject).promise();
-        } catch (error) {
-          logger.error('Error while running query for existingPassCheckObject');
-          logger.error(error);
-          throw error;
-        }
+          const existingPassCheckObject = {
+            TableName: TABLE_NAME,
+            IndexName: 'shortPassDate-index',
+            KeyConditionExpression: 'shortPassDate = :shortPassDate AND facilityName = :facilityName',
+            FilterExpression:
+              'email = :email AND #type = :type AND passStatus IN (:reserved, :active)',
+            ExpressionAttributeNames: {
+              '#type': 'type',
+            },
+            ExpressionAttributeValues: {
+              ':facilityName': { S: facilityName },
+              ':email': { S: email },
+              ':type': { S: type },
+              ':shortPassDate': { S: bookingPSTShortDate },
+              ':reserved': { S: 'reserved' },
+              ':active': { S: 'active' }
+            }
+          };
+          let existingItems;
+          try {
+            logger.info("Running existingPassCheckObject");
+            existingItems = await dynamodb.query(existingPassCheckObject).promise();
+          } catch (error) {
+            logger.error('Error while running query for existingPassCheckObject');
+            logger.error(error);
+            throw error;
+          }
 
-        if (existingItems.Count === 0) {
-          logger.debug('No existing pass found. Creating new pass...');
-        } else {
-          logger.info("email account already has a reservation");
-          return sendResponse(400, {
-            title: 'This email account already has a reservation for this booking time.',
-            msg: 'A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>'
-          });
+          if (existingItems.Count === 0) {
+            logger.debug('No existing pass found. Creating new pass...');
+          } else {
+            logger.info("email account already has a reservation");
+            return sendResponse(400, {
+              title: 'This email account already has a reservation for this booking time.',
+              msg: 'A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>'
+            });
+          }
+        } catch (err) {
+          logger.error(err);
+          return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
         }
-      } catch (err) {
-        logger.error(err);
-        return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
       }
 
       // Here, we must create/update a reservation object

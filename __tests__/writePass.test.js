@@ -520,6 +520,17 @@ async function databaseOperation(version, mode) {
         .put({
           TableName: TABLE_NAME,
           Item: {
+            pk: 'config',
+            sk: 'config',
+            ENVIRONMENT: 'prod'
+          }
+        })
+        .promise();
+
+      await ddb
+        .put({
+          TableName: TABLE_NAME,
+          Item: {
             pk: 'park',
             sk: 'Test Park 1',
             name: 'Test Park 1',
