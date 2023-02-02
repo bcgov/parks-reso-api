@@ -158,15 +158,8 @@ async function runScan(query, paginated = false) {
 }
 
 async function getConfig() {
-  const configQuery = {
-    TableName: TABLE_NAME,
-    KeyConditionExpression: 'pk = :pk AND sk = :sk',
-    ExpressionAttributeValues: {
-      ':pk': { S: 'config' },
-      ':sk': { S: 'config' }
-    }
-  };
-  return await runQuery(configQuery);
+  const config = await getOne('config', 'config');
+  return AWS.DynamoDB.Converter.unmarshall(config);
 }
 
 // get a single park by park sk.
