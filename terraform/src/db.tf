@@ -70,30 +70,7 @@ resource "aws_dynamodb_table" "park_dup_table" {
     range_key          = "facilityName"
     write_capacity     = 10
     read_capacity      = 10
-    projection_type    = "INCLUDE"
-    non_key_attributes = [
-      "email",
-      "firstName",
-      "lastName",
-      "pk",
-      "registrationNumber",
-      "searchFirstName",
-      "searchLastName",
-      "sk",
-      "passStatus",
-      "checkedIn",
-      "checkedInTime",
-      "date",
-      "type",
-      "numberOfGuests",
-      "phoneNumber",
-      "facilityType",
-      "license",
-      "creationDate",
-      "isOverbooked",
-      "parkName",
-      "park"
-]
+    projection_type    = "ALL"
   }
 
   global_secondary_index {
