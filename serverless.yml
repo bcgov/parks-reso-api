@@ -287,6 +287,19 @@ resources:
                 - searchFirstName
                 - searchLastName
                 - sk
+                - passStatus
+                - checkedIn
+                - checkedInTime
+                - date
+                - type
+                - numberOfGuests
+                - phoneNumber
+                - facilityType
+                - license
+                - creationDate
+                - isOverbooked
+                - parkName
+                - park
             ProvisionedThroughput:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1

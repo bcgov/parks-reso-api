@@ -79,7 +79,20 @@ resource "aws_dynamodb_table" "park_dup_table" {
       "registrationNumber",
       "searchFirstName",
       "searchLastName",
-      "sk"
+      "sk",
+      "passStatus",
+      "checkedIn",
+      "checkedInTime",
+      "date",
+      "type",
+      "numberOfGuests",
+      "phoneNumber",
+      "facilityType",
+      "license",
+      "creationDate",
+      "isOverbooked",
+      "parkName",
+      "park"
 ]
   }
 

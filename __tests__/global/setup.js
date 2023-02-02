@@ -134,7 +134,20 @@ module.exports = async () => {
                 'registrationNumber',
                 'searchFirstName',
                 'searchLastName',
-                'sk'
+                'sk',
+                'passStatus',
+                'checkedIn',
+                'checkedInTime',
+                'date',
+                'type',
+                'numberOfGuests',
+                'phoneNumber',
+                'facilityType',
+                'license',
+                'creationDate',
+                'isOverbooked',
+                'parkName',
+                'park'
               ]
             },
             ProvisionedThroughput: {

@@ -4,6 +4,30 @@ const jwt = require('jsonwebtoken');
 
 const { REGION, ENDPOINT, TABLE_NAME } = require('./global/settings');
 
+const pass1 = {
+  pk: 'pass::0016',
+  sk: '123456789',
+  parkName: 'Test Park 2',
+  firstName: 'First',
+  searchFirstName: 'first',
+  lastName: 'Last',
+  searchLastName: 'last',
+  facilityName: 'Parking lot A',
+  email: 'noreply@gov.bc.ca',
+  date: new Date('2012-01-01').toISOString(),
+  shortPassDate: '2012-01-01',
+  type: 'DAY',
+  registrationNumber: '123456789',
+  numberOfGuests: '4',
+  passStatus: 'active',
+  phoneNumber: '5555555555',
+  facilityType: 'Trail',
+  park: '0016',
+  isOverbooked: false,
+  creationDate: new Date('2012-01-01').toISOString(),
+  dateUpdated: new Date('2012-01-01').toISOString(),
+};
+
 const ddb = new DocumentClient({
   region: REGION,
   endpoint: ENDPOINT,
@@ -189,16 +213,14 @@ describe('Read Pass', () => {
     };
 
     const response = await handler.handler(event, null);
-    const body = JSON.parse(response.body);
-    expect(body).toEqual([{
-      park: '0016',
-      shortPassDate: '2012-01-01',
-      facilityName: 'Parking lot A',
-      registrationNumber: '123456789',
-      email: 'noreply@gov.bc.ca',
-      firstName: 'First',
-      lastName: 'Last'
-    }])
+    const body = JSON.parse(response.body)[0];
+    expect(body.email).toEqual(pass1.email);
+    expect(body.registrationNumber).toEqual(pass1.registrationNumber);
+    expect(body.firstName).toEqual(pass1.firstName);
+    expect(body.lastName).toEqual(pass1.lastName);
+    expect(body.facilityName).toEqual(pass1.facilityName);
+    expect(body.park).toEqual(pass1.park);
+    expect(body.date).toEqual(pass1.date);
   });
 });
 
@@ -241,28 +263,7 @@ async function databaseOperation(version, mode) {
       await ddb
         .put({
           TableName: TABLE_NAME,
-          Item: {
-            pk: 'pass::0016',
-            sk: '123456789',
-            parkName: 'Test Park 2',
-            firstName: 'First',
-            searchFirstName: 'first',
-            lastName: 'Last',
-            searchLastName: 'last',
-            facilityName: 'Parking lot A',
-            email: 'noreply@gov.bc.ca',
-            date: new Date('2012-01-01'),
-            shortPassDate: '2012-01-01',
-            type: 'DAY',
-            registrationNumber: '123456789',
-            numberOfGuests: '4',
-            passStatus: 'active',
-            phoneNumber: '5555555555',
-            facilityType: 'Trail',
-            isOverbooked: false,
-            creationDate: new Date('2012-01-01'),
-            dateUpdated: new Date('2012-01-01'),
-          }
+          Item: pass1
         })
         .promise();
 
