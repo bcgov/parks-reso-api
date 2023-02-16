@@ -13,7 +13,7 @@
     "jwks-rsa": "^3.0.0",
     "keycloak-admin": "^1.14.22",
     "luxon": "^3.2.1",
-    "node-jose": "^2.0.0",
+    "node-jose": "^2.2.0",
     "qrcode": "^1.5.1",
     "svg-captcha": "^1.4.0",
     "uuid": "^9.0.0",
