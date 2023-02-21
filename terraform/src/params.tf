@@ -42,8 +42,20 @@ data "aws_ssm_parameter" "gc_notify_reminder_template_id" {
   name = "/parks-reso-api/gc-notify-reminder-template-id"
 }
 
+data "aws_ssm_parameter" "gc_notify_survey_template_id" {
+  name = "/parks-reso-api/gc-notify-survey-template-id"
+}
+
 data "aws_ssm_parameter" "gc_notify_is_sending_reminders" {
   name = "/parks-reso-api/gc-notify-is-sending-reminders"
+}
+
+data "aws_ssm_parameter" "gc_notify_is_sending_surveys" {
+  name = "/parks-reso-api/gc-notify-is-sending-surveys"
+}
+
+data "aws_ssm_parameter" "feedback_survey_url" {
+  name = "/parks-reso-api/feedback-survey-url"
 }
 
 data "aws_ssm_parameter" "gc_notify_cancel_template_id" {

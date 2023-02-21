@@ -2,7 +2,8 @@ const qrcode = require('qrcode');
 
 async function getPersonalizationAttachment(parkIdentifier, facilityIdentifier, registrationNumber) {
   if (isQRCodeEnabled(parkIdentifier, facilityIdentifier)) {
-    const base64image = await qrcode.toDataURL(getAdminLinkToPass(parkIdentifier, facilityIdentifier, registrationNumber));
+    const base64image = await qrcode.toDataURL(getAdminLinkToPass(parkIdentifier, facilityIdentifier, registrationNumber),
+                                               { errorCorrectionLevel: 'H', margin: 6 });
     return {
       "application_file": {
         "file": base64image.split('base64,')[1],

@@ -41,7 +41,7 @@ exports.handler = async (event, context) => {
         return await createItem(obj);
       } else {
         logger.info('Unauthorized');
-        throw "Unauthorized Access.";
+        throw 'Unauthorized Access.';
       }
     }
   } catch (err) {
@@ -194,8 +194,7 @@ async function updateItem(obj, context) {
   updateParams.UpdateExpression = updateParams.UpdateExpression.slice(0, -1);
 
   logger.debug('Updating item:', updateParams);
-  const res = await dynamodb.updateItem(updateParams).promise();
-  logger.info('Results:', res.length);
-  logger.debug('res:', res);
-  return sendResponse(200, res, context);
+  const { Attributes } = await dynamodb.updateItem(updateParams).promise();
+  logger.info('Results:', Attributes);
+  return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(Attributes), context);
 }
