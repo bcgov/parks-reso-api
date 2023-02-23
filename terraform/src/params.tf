@@ -78,6 +78,10 @@ data "aws_ssm_parameter" "admin_url" {
   name = "/parks-reso-admin/url"
 }
 
+data "aws_ssm_parameter" "pass_manage_path" {
+  name = "/parks-reso-api/pass-manage-path"
+}
+
 data "aws_ssm_parameter" "qr_code_enabled" {
   name = "/parks-reso-api/qr_code_enabled"
 }

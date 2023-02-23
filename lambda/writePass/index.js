@@ -348,7 +348,6 @@ exports.handler = async (event, context) => {
       // Check existing pass for the same facility, email, type and date
       // Unless not in production
       const config = await getConfig();
-      console.log('config:', config);
       if (config.ENVIRONMENT === 'prod') {
         try {
           const existingPassCheckObject = {
