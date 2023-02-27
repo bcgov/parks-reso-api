@@ -5,6 +5,7 @@ const { rcPost } = require('../rocketChatUtils');
 const { sendResponse } = require('../responseUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
+const { isQRCodeEnabled } = require('../passUtils');
 
 
 // Default look-ahead days.
@@ -56,7 +57,7 @@ exports.handler = async (event, context) => {
     // Construct array of data to pass to GCNotify.
     // Entries must follow the order of the bulkReminderRows array:
     // Note: an empty list will have length = 1.
-    const headerRow = [["email address", "park", "facility", "date", "type", "registrationNumber", "cancellationLink"]];
+    const headerRow = [["email address", "park", "facility", "date", "type", "registrationNumber", "cancellationLink", "hasQRCode"]];
 
     // An object containing the passes to be sent via GCN, divided into MAX_BULK_SIZE chunks.
     let bulkReminderObject = [];
@@ -73,7 +74,8 @@ exports.handler = async (event, context) => {
             pass.shortPassDate || null,
             pass.type || null,
             pass.sk || null,
-            buildCancellationLink(pass)
+            buildCancellationLink(pass),
+            isQRCodeEnabled(pass.pk.split('::')[1], pass.facilityName) ? true : false
           ];
           bulkReminderChunk.push(row);
         }

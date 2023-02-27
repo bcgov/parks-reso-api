@@ -5,6 +5,7 @@ async function getPersonalizationAttachment(parkIdentifier, facilityIdentifier, 
     const base64image = await qrcode.toDataURL(getAdminLinkToPass(parkIdentifier, facilityIdentifier, registrationNumber),
                                                { errorCorrectionLevel: 'H', margin: 6 });
     return {
+      "hasQRCode": true,
       "application_file": {
         "file": base64image.split('base64,')[1],
         "filename": 'QRCode.png',
@@ -12,7 +13,9 @@ async function getPersonalizationAttachment(parkIdentifier, facilityIdentifier, 
       }
     }
   } else {
-    return undefined;
+    return {
+      "hasQRCode": false
+    };
   }
 }
 
@@ -41,5 +44,6 @@ function isQRCodeEnabled(parkIdentifier, facilityIdentifier) {
 module.exports = {
   getAdminLinkToPass,
   getAdminPortalURL,
-  getPersonalizationAttachment
+  getPersonalizationAttachment,
+  isQRCodeEnabled
 }
