@@ -266,6 +266,97 @@ describe('Pass Successes', () => {
     await databaseOperation(1, 'teardown');
   });
 
+  test('writePass warmup', async () => {
+    const writePassHandler = require('../lambda/writePass/index').handler;
+    const event = {
+      warmup: true
+    };
+    const context = null;
+    const response = await writePassHandler(event, context);
+    expect(response.statusCode).toEqual(200);
+  });
+
+  test('writePass putPassHandler', async () => {
+    const writePassHandler = require('../lambda/writePass/index').handler;
+    jest.mock('../lambda/permissionUtil', () => {
+      return {
+        decodeJWT: jest.fn((event) => {
+          // console.log("STUB");
+        }),
+        resolvePermissions: jest.fn((token) => {
+          return {
+            isAdmin: true,
+            roles: ['sysasdmin']
+          }
+        })
+      }
+    });
+    let event = {
+      httpMethod: 'PUT',
+      headers: {
+        Authorization: "Bearer " + token
+      },
+      queryStringParameters: {
+        checkedIn: 'true'
+      },
+      body: JSON.stringify({
+        pk: '0015',
+        sk: '523456789'
+      })
+    };
+    const context = null;
+    let response = await writePassHandler(event, context);
+    expect(response.statusCode).toEqual(200);
+
+    let params = {
+      TableName: TABLE_NAME,
+      Key: {
+        pk: 'pass::0015',
+        sk: '523456789'
+      }
+    }
+
+    let dbRes = await ddb.get(params).promise();
+    expect(dbRes.Item?.checkedIn).toEqual(true);
+
+    event = {
+      httpMethod: 'PUT',
+      headers: {
+        Authorization: "Bearer " + token
+      },
+      queryStringParameters: {
+        checkedIn: 'false'
+      },
+      body: JSON.stringify({
+        pk: '0015',
+        sk: '523456789'
+      })
+    };
+
+    response = await writePassHandler(event, context);
+    expect(response.statusCode).toEqual(200);
+
+    dbRes = await ddb.get(params).promise();
+    expect(dbRes.Item?.checkedIn).toEqual(false);
+
+    event = {
+      httpMethod: 'PUT',
+      headers: {
+        Authorization: "Bearer " + token
+      },
+      queryStringParameters: {
+        checkedIn: 1234
+      },
+      body: JSON.stringify({
+        pk: '0015',
+        sk: '523456789'
+      })
+    };
+
+    response = await writePassHandler(event, context);
+    expect(response.statusCode).toEqual(400);
+  });
+
   test('Handler - 200 Email Failed to Send, but pass has been created for a Trail.', async () => {
     const writePassHandler = require('../lambda/writePass/index');
     process.env.QR_CODE_ENABLED = "true";
@@ -570,6 +661,34 @@ async function databaseOperation(version, mode) {
           Item: {
             pk: 'pass::0015',
             sk: '123456789',
+            parkName: 'Test Park 1',
+            firstName: 'First',
+            searchFirstName: 'first',
+            lastName: 'Last',
+            searchLastName: 'last',
+            facilityName: 'Parking lot A',
+            email: 'noreply@gov.bc.ca',
+            date: new Date('2012-01-01'),
+            shortPassDate: '2012-01-01',
+            type: 'DAY',
+            registrationNumber: '123456789',
+            numberOfGuests: '4',
+            passStatus: 'active',
+            phoneNumber: '5555555555',
+            facilityType: 'Trail',
+            isOverbooked: false,
+            creationDate: new Date('2012-01-01'),
+            dateUpdated: new Date('2012-01-01'),
+          }
+        })
+        .promise();
+
+      await ddb
+        .put({
+          TableName: TABLE_NAME,
+          Item: {
+            pk: 'pass::0015',
+            sk: '523456789',
             parkName: 'Test Park 1',
             firstName: 'First',
             searchFirstName: 'first',

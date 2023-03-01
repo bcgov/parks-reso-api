@@ -35,6 +35,7 @@ async function modifyPassCheckInStatus(pk, sk, checkedIn) {
     // Remove time as it's irrelevant now
     updateParams.UpdateExpression += ' remove checkedInTime';
   }
+
   const res = await dynamodb.updateItem(updateParams).promise();
   return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(res.Attributes));
 }
@@ -57,9 +58,10 @@ async function putPassHandler(event, context, permissionObject, passObj) {
     } else if (event?.queryStringParameters?.checkedIn === 'false') {
       return await modifyPassCheckInStatus(passObj.pk, passObj.sk, false);
     } else {
-      throw 'Bad Request';
+      throw 'Bad Request - invalid query string parameters';
     }
   } catch(e) {
+    logger.info("There was an error in putPassHandler");
     logger.error(e);
     return sendResponse(
       400,
@@ -373,7 +375,7 @@ exports.handler = async (event, context) => {
             logger.info("Running existingPassCheckObject");
             existingItems = await dynamodb.query(existingPassCheckObject).promise();
           } catch (error) {
-            logger.error('Error while running query for existingPassCheckObject');
+            logger.info('Error while running query for existingPassCheckObject');
             logger.error(error);
             throw error;
           }
@@ -388,6 +390,7 @@ exports.handler = async (event, context) => {
             });
           }
         } catch (err) {
+          logger.info('Error on check existing pass for the same facility, email, type and date');
           logger.error(err);
           return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
         }
@@ -458,28 +461,29 @@ exports.handler = async (event, context) => {
       logger.debug('Transact obj:', transactionObj);
       logger.debug('Putting item:', passObject);
       try {
-        logger.info('Writing Transact obj:');
+        logger.info('Writing Transact obj.');
         const res = await dynamodb.transactWriteItems(transactionObj).promise();
         logger.debug('Res:', res);
       } catch (error) {
-        logger.error('Transaction failed:', error);
+        logger.info('Transaction failed:', error.code);
+        logger.error(error);
         if (error.code === 'TransactionCanceledException') {
           let cancellationReasons = error.message.slice(error.message.lastIndexOf('[') + 1);
           cancellationReasons = cancellationReasons.slice(0, -1);
           cancellationReasons = cancellationReasons.split(', ');
           let message = error.message;
           if (cancellationReasons[0] != 'None') {
-            logger.error('Facility is currently locked');
+            logger.info('Facility is currently locked');
             message = 'An error has occured, please try again.';
             // TODO: we could implement a retry transaction here.
           }
           if (cancellationReasons[1] != 'None') {
-            logger.error('Sold out of passes.');
+            logger.info('Sold out of passes.');
             message =
               'We have sold out of allotted passes for this time, please check back on the site from time to time as new passes may come available.';
           }
           if (cancellationReasons[2] != 'None') {
-            logger.error('Error creating pass.');
+            logger.info('Error creating pass.');
             message = 'An error has occured, please try again.';
           }
           logger.info('unable to fill your specific request');
@@ -521,13 +525,14 @@ exports.handler = async (event, context) => {
         delete passObject.Item['audit'];
         return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
       } catch (err) {
-        logger.error('GCNotify error:', err.response?.data || err);
+        logger.info('GCNotify error, return 200 anyway.');
+        logger.error(err.response?.data || err);
         let errRes = AWS.DynamoDB.Converter.unmarshall(passObject.Item);
         errRes['err'] = 'Email Failed to Send';
         return sendResponse(200, errRes);
       }
     } else {
-      logger.info('Something went wrong');
+      logger.info('Something went wrong, park not visible.');
       // Not allowed for whatever reason.
       return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
     }
