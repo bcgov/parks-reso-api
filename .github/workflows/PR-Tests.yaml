@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --silent --frozen-lockfile
       - name: Setup DynamoDB Local
-        uses: rrainn/dynamodb-action@v3
+        uses: rrainn/dynamodb-action@v3.0.0
         with:
           sharedDb: true
           port: 8000
