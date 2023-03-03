@@ -47,7 +47,7 @@ data "aws_iam_policy_document" "sns-topic-policy" {
     condition {
       test     = "StringEquals"
       variable = "AWS:SourceOwner"
-      values   = ["${var.target_aws_account_id}"]
+      values   = [var.target_aws_account_id]
     }
 
     principals {
@@ -55,7 +55,7 @@ data "aws_iam_policy_document" "sns-topic-policy" {
       identifiers = ["*"]
     }
 
-    resources = ["${aws_sns_topic.cloudwatch_error_alarm.arn}"]
+    resources = [aws_sns_topic.cloudwatch_error_alarm.arn]
   }
 
   statement {
@@ -68,7 +68,7 @@ data "aws_iam_policy_document" "sns-topic-policy" {
       identifiers = ["cloudwatch.amazonaws.com"]
     }
 
-    resources = ["${aws_sns_topic.cloudwatch_error_alarm.arn}"]
+    resources = [aws_sns_topic.cloudwatch_error_alarm.arn]
   }
 }
 
