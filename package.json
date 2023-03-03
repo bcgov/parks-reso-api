@@ -36,6 +36,7 @@
   "scripts": {
     "start": "sls offline start",
     "build": "sls package --package ./artifacts",
+    "build-ci": "sls package --package ./terraform/src/artifacts",
     "test": "cross-env IS_OFFLINE=1 TABLE_NAME=parksreso-tests jest --coverage",
     "migration": "node ./node_modules/@digitalspace/dynamodb-migrate/migrate.js"
   },
