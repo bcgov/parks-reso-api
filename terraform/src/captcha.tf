@@ -37,15 +37,15 @@ resource "aws_lambda_alias" "generateCaptchaLambdaLatest" {
 resource "null_resource" "alias_provisioned_concurrency_transition_delay_generate_captcha_lambda" {
   depends_on = [aws_lambda_alias.generateCaptchaLambdaLatest]
   provisioner "local-exec" {
-   command = "sleep 240"
+    command = "sleep 240"
   }
   triggers = {
-     function_version = "${aws_lambda_function.generateCaptchaLambda.version}"
+    function_version = aws_lambda_function.generateCaptchaLambda.version
   }
 }
 
 resource "aws_lambda_provisioned_concurrency_config" "generateCaptchaLambda" {
-  depends_on = [null_resource.alias_provisioned_concurrency_transition_delay_generate_captcha_lambda]
+  depends_on                        = [null_resource.alias_provisioned_concurrency_transition_delay_generate_captcha_lambda]
   function_name                     = aws_lambda_alias.generateCaptchaLambdaLatest.function_name
   provisioned_concurrent_executions = 2
   qualifier                         = aws_lambda_alias.generateCaptchaLambdaLatest.name
@@ -92,15 +92,15 @@ resource "aws_lambda_alias" "verifyCaptchaLambdaLatest" {
 resource "null_resource" "alias_provisioned_concurrency_transition_delay_verify_captcha_lambda" {
   depends_on = [aws_lambda_alias.verifyCaptchaLambdaLatest]
   provisioner "local-exec" {
-   command = "sleep 240"
+    command = "sleep 240"
   }
   triggers = {
-     function_version = "${aws_lambda_function.verifyCaptchaLambda.version}"
+    function_version = aws_lambda_function.verifyCaptchaLambda.version
   }
 }
 
 resource "aws_lambda_provisioned_concurrency_config" "verifyCaptchaLambda" {
-  depends_on = [null_resource.alias_provisioned_concurrency_transition_delay_verify_captcha_lambda]
+  depends_on                        = [null_resource.alias_provisioned_concurrency_transition_delay_verify_captcha_lambda]
   function_name                     = aws_lambda_alias.verifyCaptchaLambdaLatest.function_name
   provisioned_concurrent_executions = 2
   qualifier                         = aws_lambda_alias.verifyCaptchaLambdaLatest.name

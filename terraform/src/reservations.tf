@@ -36,7 +36,7 @@ resource "null_resource" "alias_provisioned_concurrency_transition_delay_read_re
    command = "sleep 240"
   }
   triggers = {
-     function_version = "${aws_lambda_function.readReservationLambda.version}"
+     function_version = aws_lambda_function.readReservationLambda.version
   }
 }
 

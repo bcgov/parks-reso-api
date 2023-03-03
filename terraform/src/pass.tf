@@ -93,7 +93,7 @@ resource "null_resource" "alias_provisioned_concurrency_transition_delay_write_p
    command = "sleep 240"
   }
   triggers = {
-     function_version = "${aws_lambda_function.writePassLambda.version}"
+     function_version = aws_lambda_function.writePassLambda.version
   }
 }
 

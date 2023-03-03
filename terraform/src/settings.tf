@@ -10,7 +10,7 @@ resource "aws_lambda_function" "readConfigLambda" {
   publish = "true"
 
   memory_size = 768
-  timeout = 10
+  timeout     = 10
 
   environment {
     variables = {
@@ -33,15 +33,15 @@ resource "aws_lambda_alias" "readConfigLambdaLatest" {
 resource "null_resource" "alias_provisioned_concurrency_transition_delay_read_config_lambda" {
   depends_on = [aws_lambda_alias.readConfigLambdaLatest]
   provisioner "local-exec" {
-   command = "sleep 240"
+    command = "sleep 240"
   }
   triggers = {
-     function_version = "${aws_lambda_function.readConfigLambda.version}"
+    function_version = aws_lambda_function.readConfigLambda.version
   }
 }
 
 resource "aws_lambda_provisioned_concurrency_config" "readConfigLambda" {
-  depends_on = [null_resource.alias_provisioned_concurrency_transition_delay_read_config_lambda]
+  depends_on                        = [null_resource.alias_provisioned_concurrency_transition_delay_read_config_lambda]
   function_name                     = aws_lambda_alias.readConfigLambdaLatest.function_name
   provisioned_concurrent_executions = 3
   qualifier                         = aws_lambda_alias.readConfigLambdaLatest.name

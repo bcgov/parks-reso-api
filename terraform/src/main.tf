@@ -50,7 +50,7 @@ resource "null_resource" "alias_provisioned_concurrency_transition_delay_read_pa
    command = "sleep 240"
   }
   triggers = {
-     function_version = "${aws_lambda_function.readParkLambda.version}"
+     function_version = aws_lambda_function.readParkLambda.version
   }
 }
 

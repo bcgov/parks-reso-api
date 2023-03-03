@@ -10,7 +10,7 @@ resource "aws_lambda_function" "readFacilityLambda" {
   publish = "true"
 
   memory_size = 768
-  timeout = 10
+  timeout     = 10
 
   environment {
     variables = {
@@ -33,15 +33,15 @@ resource "aws_lambda_alias" "readFacilityLambdaLatest" {
 resource "null_resource" "alias_provisioned_concurrency_transition_delay_read_facility_lambda" {
   depends_on = [aws_lambda_alias.readFacilityLambdaLatest]
   provisioner "local-exec" {
-   command = "sleep 240"
+    command = "sleep 240"
   }
   triggers = {
-     function_version = "${aws_lambda_function.readFacilityLambda.version}"
+    function_version = aws_lambda_function.readFacilityLambda.version
   }
 }
 
 resource "aws_lambda_provisioned_concurrency_config" "readFacilityLambda" {
-  depends_on = [null_resource.alias_provisioned_concurrency_transition_delay_read_facility_lambda]
+  depends_on                        = [null_resource.alias_provisioned_concurrency_transition_delay_read_facility_lambda]
   function_name                     = aws_lambda_alias.readFacilityLambdaLatest.function_name
   provisioned_concurrent_executions = 2
   qualifier                         = aws_lambda_alias.readFacilityLambdaLatest.name
@@ -54,11 +54,11 @@ resource "aws_lambda_function" "writeFacilityLambda" {
   filename         = "artifacts/writeFacility.zip"
   source_code_hash = filebase64sha256("artifacts/writeFacility.zip")
 
-  handler = "lambda/writeFacility/index.handler"
-  runtime = "nodejs14.x"
-  publish = "true"
+  handler     = "lambda/writeFacility/index.handler"
+  runtime     = "nodejs14.x"
+  publish     = "true"
   memory_size = 768
-  timeout = 10
+  timeout     = 10
 
   environment {
     variables = {
