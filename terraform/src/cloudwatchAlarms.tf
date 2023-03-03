@@ -13,16 +13,16 @@ resource "aws_lambda_function" "cloudwatch_alarm" {
 
   environment {
     variables = {
-      AWS_ACCOUNT_LIST = data.aws_ssm_parameter.aws_account_list.value,
-      ROCKETCHAT_URL = data.aws_ssm_parameter.rocketchat_url.value,
+      AWS_ACCOUNT_LIST        = data.aws_ssm_parameter.aws_account_list.value,
+      ROCKETCHAT_URL          = data.aws_ssm_parameter.rocketchat_url.value,
       ROCKETCHAT_BEARER_TOKEN = data.aws_ssm_parameter.rocketchat_bearer_token.value,
-      LOG_LEVEL = "debug"
+      LOG_LEVEL               = "debug"
     }
   }
 }
 
 resource "aws_sns_topic" "cloudwatch_error_alarm" {
-  name            = "lambda-error-topic"
+  name = "lambda-error-topic"
 }
 
 data "aws_iam_policy_document" "sns-topic-policy" {
@@ -74,8 +74,8 @@ data "aws_iam_policy_document" "sns-topic-policy" {
 
 
 resource "aws_sns_topic_policy" "default" {
-  arn = aws_sns_topic.cloudwatch_error_alarm.arn
-  policy = "${data.aws_iam_policy_document.sns-topic-policy.json}"
+  arn    = aws_sns_topic.cloudwatch_error_alarm.arn
+  policy = data.aws_iam_policy_document.sns-topic-policy.json
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_alert" {
