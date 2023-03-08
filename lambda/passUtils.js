@@ -1,8 +1,8 @@
 const qrcode = require('qrcode');
 
-async function getPersonalizationAttachment(parkIdentifier, facilityIdentifier, registrationNumber) {
-  if (isQRCodeEnabled(parkIdentifier, facilityIdentifier)) {
-    const base64image = await qrcode.toDataURL(getAdminLinkToPass(parkIdentifier, facilityIdentifier, registrationNumber),
+async function getPersonalizationAttachment(parkIdentifier, registrationNumber, qrCode = false) {
+  if (qrCode) {
+    const base64image = await qrcode.toDataURL(getAdminLinkToPass(parkIdentifier, registrationNumber),
                                                { errorCorrectionLevel: 'H', margin: 6 });
     return {
       "hasQRCode": true,
@@ -19,31 +19,17 @@ async function getPersonalizationAttachment(parkIdentifier, facilityIdentifier, 
   }
 }
 
-function getAdminLinkToPass(parkIdentifier, facilityIdentifier, registrationNumber) {
-  if (isQRCodeEnabled(parkIdentifier, facilityIdentifier)) {
-    return (
-      `${getAdminPortalURL()}${process.env.PASS_MANAGEMENT_ROUTE}`+
-      `?park=${parkIdentifier}&registrationNumber=${registrationNumber}`
-    );
-  } else {
-    return undefined;
-  }
+function getAdminLinkToPass(parkIdentifier, registrationNumber) {
+  return (`${getAdminPortalURL()}${process.env.PASS_MANAGEMENT_ROUTE}`
+          + `?park=${parkIdentifier}&registrationNumber=${registrationNumber}`);
 }
 
 function getAdminPortalURL() {
   return process.env.ADMIN_FRONTEND;
 }
 
-function isQRCodeEnabled(parkIdentifier, facilityIdentifier) {
-  // HC for now
-  return process.env.QR_CODE_ENABLED === 'true'
-         && (parkIdentifier === 'Mount Seymour Provincial Park' || parkIdentifier === '0015')
-         && facilityIdentifier === 'P1 and Lower P5';
-}
-
 module.exports = {
   getAdminLinkToPass,
   getAdminPortalURL,
-  getPersonalizationAttachment,
-  isQRCodeEnabled
+  getPersonalizationAttachment
 }

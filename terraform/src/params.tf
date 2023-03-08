@@ -82,10 +82,6 @@ data "aws_ssm_parameter" "pass_manage_path" {
   name = "/parks-reso-api/pass-manage-path"
 }
 
-data "aws_ssm_parameter" "qr_code_enabled" {
-  name = "/parks-reso-api/qr_code_enabled"
-}
-
 data "aws_ssm_parameter" "aws_account_list" {
   name = "/parks-reso-api/aws_account_list"
 }

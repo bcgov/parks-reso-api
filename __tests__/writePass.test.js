@@ -359,7 +359,6 @@ describe('Pass Successes', () => {
 
   test('Handler - 200 Email Failed to Send, but pass has been created for a Trail.', async () => {
     const writePassHandler = require('../lambda/writePass/index');
-    process.env.QR_CODE_ENABLED = "true";
     process.env.ADMIN_FRONTEND = "http://localhost:4300";
     process.env.PASS_MANAGEMENT_ROUTE="/pass-management";
     
