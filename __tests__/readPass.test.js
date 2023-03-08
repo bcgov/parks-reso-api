@@ -297,6 +297,7 @@ async function databaseOperation(version, mode) {
             bookingDaysRichText: '',
             bookableHolidays: [],
             status: { stateReason: '', state: 'open' },
+            qrcode: true,
             visible: true
           }
         })
@@ -310,6 +311,7 @@ async function databaseOperation(version, mode) {
             sk: 'Trail B',
             name: 'Trail B',
             description: 'A Trail!',
+            qrcode: true,
             isUpdating: false,
             type: "Trail",
             bookingTimes: {
@@ -345,6 +347,7 @@ async function databaseOperation(version, mode) {
             sk: 'P1 and Lower P5',
             name: 'P1 and Lower P5',
             description: 'A Trail!',
+            qrcode: true,
             isUpdating: false,
             type: "Trail",
             bookingTimes: {

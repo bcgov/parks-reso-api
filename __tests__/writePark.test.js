@@ -61,7 +61,6 @@ test('GET fails - 405 - Not Implemented', async () => {
   );
 });
 
-// TODO: Mock jwksClient
 test('POST operation TODO', async () => {
   const event = {
     headers: {
