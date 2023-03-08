@@ -29,6 +29,7 @@ exports.handler = async (event, context) => {
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
 
+
   try {
     logger.debug(event.body);
     const obj = JSON.parse(event.body);
@@ -48,7 +49,7 @@ exports.handler = async (event, context) => {
       if (permissionObject.isAdmin) {
         return await createFacility(obj);
       } else {
-        throw 'Unauthorized Access.';
+        return sendResponse(403, { msg: 'Unauthorized' });
       }
     }
   } catch (err) {
@@ -58,7 +59,7 @@ exports.handler = async (event, context) => {
 };
 
 async function createFacility(obj) {
-  let { parkOrcs, bookingTimes, name, status, type, visible, bookingOpeningHour, bookingDaysAhead, bookingDays, bookingDaysRichText, bookableHolidays, ...otherProps } =
+  let { parkOrcs, bookingTimes, name, status, type, visible, bookingOpeningHour, bookingDaysAhead, bookingDays, bookingDaysRichText, bookableHolidays, qrcode, ...otherProps } =
     obj;
 
   const bookingOpeningHourAttrValue = {};
@@ -86,6 +87,7 @@ async function createFacility(obj) {
       status: { M: AWS.DynamoDB.Converter.marshall(status) },
       type: { S: type },
       visible: { BOOL: visible },
+      qrcode: { BOOL: qrcode },
       isUpdating: { BOOL: false },
       bookingOpeningHour: bookingOpeningHourAttrValue,
       bookingDaysAhead: bookingDaysAheadAttrValue,
@@ -103,7 +105,7 @@ async function createFacility(obj) {
 }
 
 async function updateFacility(obj) {
-  let { pk, sk, parkOrcs, bookingTimes, name, status, type, visible, bookingOpeningHour, bookingDaysAhead, bookingDays, bookingDaysRichText, bookableHolidays, ...otherProps } =
+  let { pk, sk, parkOrcs, bookingTimes, name, status, type, visible, bookingOpeningHour, bookingDaysAhead, bookingDays, bookingDaysRichText, bookableHolidays, qrcode, ...otherProps } =
     obj;
 
   const bookingOpeningHourAttrValue = {};
@@ -175,6 +177,7 @@ async function updateFacility(obj) {
         ':name': {S: name},
         ':statusValue': { M: AWS.DynamoDB.Converter.marshall(status) },
         ':visibility': { BOOL: visible },
+        ':qrcode': { BOOL: qrcode },
         ':bookingTimes': { M: AWS.DynamoDB.Converter.marshall(bookingTimes) },
         ':bookingOpeningHour': bookingOpeningHourAttrValue,
         ':bookingDaysAhead': bookingDaysAheadAttrValue,
@@ -189,7 +192,7 @@ async function updateFacility(obj) {
         '#name': 'name'
       },
       UpdateExpression:
-        'SET #facilityStatus =:statusValue, bookingTimes =:bookingTimes, #visibility =:visibility, bookingOpeningHour = :bookingOpeningHour, bookingDaysAhead = :bookingDaysAhead, isUpdating = :isUpdating, bookingDays = :bookingDays, bookingDaysRichText = :bookingDaysRichText, bookableHolidays = :bookableHolidays, #name = :name',
+        'SET #facilityStatus =:statusValue, bookingTimes =:bookingTimes, #visibility =:visibility, bookingOpeningHour = :bookingOpeningHour, bookingDaysAhead = :bookingDaysAhead, isUpdating = :isUpdating, bookingDays = :bookingDays, bookingDaysRichText = :bookingDaysRichText, bookableHolidays = :bookableHolidays, #name = :name, qrcode = :qrcode',
       ReturnValues: 'ALL_NEW',
       TableName: TABLE_NAME
     };

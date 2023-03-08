@@ -45,6 +45,7 @@ async function setupDb() {
         bcParksLink: '',
         status: 'open',
         visible: true,
+        qrcode: true,
         type: 'parking',
         reservations: {},
         bookingOpeningHour: null,
