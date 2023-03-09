@@ -180,7 +180,7 @@ async function getParks() {
       ':pk': { S: 'park' }
     }
   };
-  return await runQuery(parksQuery);
+  return await runQuery(parksQuery, false);
 }
 
 // get a single facility by park name & facility sk.

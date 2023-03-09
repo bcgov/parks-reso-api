@@ -338,7 +338,7 @@ exports.handler = async (event, context) => {
       parkName: parkData.name,
       mapLink: parkData.mapLink || null,
       parksLink: parkData.bcParksLink,
-      ...(await getPersonalizationAttachment(parkData.sk, facilityName, registrationNumber.toString()))
+      ...(await getPersonalizationAttachment(parkData.sk, registrationNumber.toString(), facilityData.qrcode))
     };
 
     // Parking.
@@ -496,9 +496,8 @@ exports.handler = async (event, context) => {
         }
       }
       // Temporarily assign the QRCode Link for the front end not to guess at it.
-      const adminLink = getAdminLinkToPass(parkData.sk, facilityName, registrationNumber.toString());
-      if (adminLink) {
-        passObject.Item['adminPassLink'] = { "S": adminLink }
+      if (facilityData.qrcode === true) {
+        passObject.Item['adminPassLink'] = { "S": getAdminLinkToPass(parkData.sk, registrationNumber.toString()) }
       }
 
       try {

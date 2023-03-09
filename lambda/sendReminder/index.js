@@ -1,12 +1,10 @@
 const AWS = require('aws-sdk');
-const { runQuery, TABLE_NAME, META_TABLE_NAME, TIMEZONE, dynamodb } = require('../dynamoUtil');
+const { runQuery, TABLE_NAME, META_TABLE_NAME, TIMEZONE, dynamodb, getParks, getFacilities, getPark } = require('../dynamoUtil');
 const { gcnSend } = require('../gcNotifyUtils');
 const { rcPost } = require('../rocketChatUtils');
 const { sendResponse } = require('../responseUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
-const { isQRCodeEnabled } = require('../passUtils');
-
 
 // Default look-ahead days.
 const LOOK_AHEAD_DAYS = 1;
@@ -20,6 +18,7 @@ exports.handler = async (event, context) => {
 
   // environment variables are cast as strings
   if (process.env.GC_NOTIFY_IS_SENDING_REMINDERS !== 'true') {
+    logger.info(`Email reminders are currently disabled.`);
     return sendResponse(200, { msg: `Email reminders are currently disabled.` });
   }
 
@@ -62,6 +61,20 @@ exports.handler = async (event, context) => {
     // An object containing the passes to be sent via GCN, divided into MAX_BULK_SIZE chunks.
     let bulkReminderObject = [];
 
+    let parkTracker = [];
+
+    const parks = await getParks();
+    parkTracker = [...parks];
+
+    for(const park of parks) {
+      const facilities = await getFacilities(park.sk);
+      const foundIndex = await parkTracker.findIndex(x => x.sk == park.sk);
+      const oldParkObj = parkTracker[foundIndex];
+      let newParkObj = oldParkObj;
+      newParkObj.facilities = [...facilities];
+      parkTracker[foundIndex] = newParkObj;
+    }
+
     if (passData) {
       for (let i = 0; i < passData.length; i += MAX_BULK_SIZE) {
         let bulkReminderChunk = [...headerRow];
@@ -75,7 +88,7 @@ exports.handler = async (event, context) => {
             pass.type || null,
             pass.sk || null,
             buildCancellationLink(pass),
-            isQRCodeEnabled(pass.pk.split('::')[1], pass.facilityName) ? true : false
+            await isQRCodeEnabled(pass.pk.split('::')[1], pass.facilityName)
           ];
           bulkReminderChunk.push(row);
         }
@@ -159,6 +172,13 @@ exports.handler = async (event, context) => {
     );
     return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
   }
+}
+
+async function isQRCodeEnabled(parks, parkSk, facility) {
+  const foundIndex = await parks.findIndex(x => x.sk === parkSk);
+  const park = parks[foundIndex];
+  const foundFacilityIndex = await park.facilities.findIndex(f => f.sk === facility);
+  return park.facilities[foundFacilityIndex].qrcode ? true : false;
 }
 
 // Construct pass cancellation links to include in reminder emails.
