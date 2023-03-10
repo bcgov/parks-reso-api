@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.44.0",
-    "@digitalspace/dynamodb-migrate": "^1.0.5",
+    "@digitalspace/dynamodb-migrate": "^1.0.6",
     "aws-sdk-mock": "^5.4.0",
     "cross-env": "^7.0.3",
     "jest": "^29.3.1",
