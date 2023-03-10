@@ -313,6 +313,11 @@ resource "aws_iam_role_policy_attachment" "lambda_exportPass_cloudwatch_logs" {
   policy_arn = aws_iam_policy.lambda_logging.arn
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_sendReminder_cloudwatch_logs" {
+  role       = aws_iam_role.metaWriteRole.name
+  policy_arn = aws_iam_policy.lambda_logging.arn
+}
+
 resource "aws_iam_role_policy_attachment" "lambda_metric_cloudwatch_logs" {
   role       = aws_iam_role.metricRole.name
   policy_arn = aws_iam_policy.lambda_logging.arn
