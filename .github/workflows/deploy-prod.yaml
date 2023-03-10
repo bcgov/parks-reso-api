@@ -17,7 +17,7 @@ env:
   TARGET_ENV: prod
 
 jobs:
-  run:
+  ci:
     name: Push to AWS Lambda
     runs-on: ubuntu-latest
     environment: prod

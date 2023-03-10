@@ -15,7 +15,7 @@ env:
   TARGET_ENV: test
 
 jobs:
-  run:
+  ci:
     name: Push to AWS Lambda
     runs-on: ubuntu-latest
     environment: test
