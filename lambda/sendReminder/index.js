@@ -88,7 +88,7 @@ exports.handler = async (event, context) => {
             pass.type || null,
             pass.sk || null,
             buildCancellationLink(pass),
-            await isQRCodeEnabled(pass.pk.split('::')[1], pass.facilityName)
+            await isQRCodeEnabled(parkTracker, pass.pk.split('::')[1], pass.facilityName)
           ];
           bulkReminderChunk.push(row);
         }
