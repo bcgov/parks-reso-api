@@ -1708,14 +1708,14 @@
     enabled "2.0.x"
     kuler "^2.0.0"
 
-"@digitalspace/dynamodb-migrate@^1.0.5":
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@digitalspace/dynamodb-migrate/-/dynamodb-migrate-1.0.5.tgz#bf26d079c19e304743e0fa98b0bdd95033c077ac"
-  integrity sha512-DLS61qQiF/FW1+H2DhFpCtW+CxwEIYnHJkB2iwoM68DspMBp432iNywKauY7RCOtPhfnDqq07kCqO1U0jV/JCg==
+"@digitalspace/dynamodb-migrate@^1.0.6":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@digitalspace/dynamodb-migrate/-/dynamodb-migrate-1.0.6.tgz#d2bda0aae83575288e4ff0d231d3567794afc1ad"
+  integrity sha512-iz0e8d6TlMu5zHRFHlwhzA6qULGq/g+pUMJQJk4pesdUyYGrspwaODjCs42TBkHpeE5OWRJtld47kcvVYRWf+Q==
   dependencies:
     aws-sdk "^2.1059.0"
     commander "^8.3.0"
-    luxon "^2.5.2"
+    luxon "^3.3.0"
 
 "@hapi/accept@^6.0.1":
   version "6.0.1"
@@ -5882,12 +5882,7 @@ luxon@^1.26.0:
   resolved "https://registry.yarnpkg.com/luxon/-/luxon-1.28.0.tgz#e7f96daad3938c06a62de0fb027115d251251fbf"
   integrity sha512-TfTiyvZhwBYM/7QdAVDh+7dBTBA29v4ik0Ce9zda3Mnf8on1S5KJI8P2jKFZ8+5C0jhmr0KwJEO/Wdpm0VeWJQ==
 
-luxon@^2.5.2:
-  version "2.5.2"
-  resolved "https://registry.yarnpkg.com/luxon/-/luxon-2.5.2.tgz#17ed497f0277e72d58a4756d6a9abee4681457b6"
-  integrity sha512-Yg7/RDp4nedqmLgyH0LwgGRvMEKVzKbUdkBYyCosbHgJ+kaOUx0qzSiSatVc3DFygnirTPYnMM2P5dg2uH1WvA==
-
-luxon@^3.2.0:
+luxon@^3.2.0, luxon@^3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/luxon/-/luxon-3.3.0.tgz#d73ab5b5d2b49a461c47cedbc7e73309b4805b48"
   integrity sha512-An0UCfG/rSiqtAIiBPO0Y9/zAnHUZxAMiCpTd5h2smgsj7GGmcenvrvww2cqNA8/4A5ZrD1gJpHN2mIHZQF+Mg==
