@@ -28,7 +28,7 @@ resource "aws_lambda_alias" "warm_up_latest" {
 
 resource "aws_cloudwatch_event_rule" "warm_up_every_morning" {
   name                = "warm-up-every-morning"
-  description         = "Fires at 5:45, 5:46, 5:47, 5:48, 5:49 in the morning"
+  description         = "Fires at 5:57, 5:58, 5:49 in the morning"
   schedule_expression = "cron(57,58,59 13 ? * * *)"
 }
 
