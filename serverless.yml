@@ -15,7 +15,6 @@ package:
     - '!./**' # This causes Serverless to only package referenced source files
 
 plugins:
-  - serverless-dynamodb-local
   - serverless-offline
   - serverless-plugin-include-dependencies
   - serverless-dotenv-plugin
