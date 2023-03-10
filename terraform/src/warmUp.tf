@@ -26,11 +26,10 @@ resource "aws_lambda_alias" "warm_up_latest" {
   function_version = aws_lambda_function.warm_up.version
 }
 
-# 07:00 PDT (summer) = 13:00 UTC / 07:00 PST (winter) = 14:00 UTC.
 resource "aws_cloudwatch_event_rule" "warm_up_every_morning" {
   name                = "warm-up-every-morning"
-  description         = "Fires at 6:45, 6:46, 6:47, 6:48, 6:49 in the morning"
-  schedule_expression = "cron(57,58,59 14 ? * * *)"
+  description         = "Fires at 5:45, 5:46, 5:47, 5:48, 5:49 in the morning"
+  schedule_expression = "cron(57,58,59 13 ? * * *)"
 }
 
 resource "aws_cloudwatch_event_target" "warm_up_every_morning" {
