@@ -110,7 +110,7 @@ exports.handler = async (event, context) => {
     // HC Adjustment
     if (newObject.parkName === '0015') {
       // Running an old version
-      newObject.parkOrcs = '0015';
+      newObject['parkOrcs'] = '0015';
       newObject.parkName = 'Mount Seymour Provincial Park';
     }
 
