@@ -243,7 +243,8 @@ exports.handler = async (event, context) => {
       }
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
       if (permissionObject.isAuthenticated !== true
-          || permissionObject.roles.indexOf(event.queryStringParameters.park) === -1) {
+        || (permissionObject.roles.indexOf(event.queryStringParameters.park) === -1
+            && permissionObject.roles.indexOf('sysadmin') === -1)) {
         logger.info("Unauthorized");
         return sendResponse(403, { msg: 'Unauthorized!' });
       } else {
@@ -258,7 +259,8 @@ exports.handler = async (event, context) => {
     } else if (event.queryStringParameters.manualLookup && event.queryStringParameters.park && event.queryStringParameters.date) {
       // Manual Lookup Search by ADMIN
       if (permissionObject.isAuthenticated !== true
-          || permissionObject.roles.indexOf(event.queryStringParameters.park) === -1) {
+          || (permissionObject.roles.indexOf(event.queryStringParameters.park) === -1
+              && permissionObject.roles.indexOf('sysadmin') === -1)) {
         logger.info("Unauthorized.");
         logger.debug(permissionObject);
         return sendResponse(403, { msg: 'Unauthorized to perform this action.', title: 'Unauthorized.' });
