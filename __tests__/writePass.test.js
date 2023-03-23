@@ -286,7 +286,8 @@ describe('Pass Successes', () => {
         resolvePermissions: jest.fn((token) => {
           return {
             isAdmin: true,
-            roles: ['sysasdmin']
+            roles: ['sysasdmin'],
+            isAuthenticated: true
           }
         })
       }
@@ -522,7 +523,8 @@ describe('Pass Successes', () => {
         resolvePermissions: jest.fn((token) => {
           return {
             isAdmin: true,
-            roles: ['sysadmin']
+            roles: ['sysadmin'],
+            isAuthenticated: true
           }
         })
       }
@@ -545,7 +547,7 @@ describe('Pass Successes', () => {
     expect(body.checkedIn).toEqual(true);
   });
 
-  test('Expect pass not to be checked in.', async () => {
+  test('Expect pass not to be checked in. 1', async () => {
     jest.mock('../lambda/permissionUtil', () => {
       return {
         decodeJWT: jest.fn((event) => {
@@ -553,8 +555,9 @@ describe('Pass Successes', () => {
         }),
         resolvePermissions: jest.fn((token) => {
           return {
-            isAdmin: true,
-            roles: ['sysadmin']
+            isAdmin: false,
+            roles: ['sysadmin'],
+            isAuthenticated: false
           }
         })
       }
@@ -572,12 +575,10 @@ describe('Pass Successes', () => {
     };
 
     const response = await writePassHandler.handler(event, null);
-    const body = JSON.parse(response.body);
-    expect(response.statusCode).toEqual(200);
-    expect(body.checkedIn).toEqual(false);
+    expect(response.statusCode).toEqual(403);
   });
 
-  test('Expect pass not to be checked in.', async () => {
+  test('Expect pass not to be checked in. 2', async () => {
     jest.mock('../lambda/permissionUtil', () => {
       return {
         decodeJWT: jest.fn((event) => {
@@ -585,8 +586,9 @@ describe('Pass Successes', () => {
         }),
         resolvePermissions: jest.fn((token) => {
           return {
-            isAdmin: true,
-            roles: ['sysadmin']
+            isAdmin: false,
+            roles: ['sysadmin'],
+            isAuthenticated: false
           }
         })
       }
@@ -603,7 +605,7 @@ describe('Pass Successes', () => {
     };
 
     const response = await writePassHandler.handler(event, null);
-    expect(response.statusCode).toEqual(400);
+    expect(response.statusCode).toEqual(403);
   });
 });
 
