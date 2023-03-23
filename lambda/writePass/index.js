@@ -42,7 +42,7 @@ async function modifyPassCheckInStatus(pk, sk, checkedIn) {
 
 async function putPassHandler(event, context, permissionObject, passObj) {
   try {
-    if (!permissionObject.isAdmin) {
+    if (!permissionObject.isAuthenticated) {
       return sendResponse(
         403,
         {
