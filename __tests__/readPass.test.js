@@ -116,6 +116,7 @@ describe('Read Pass', () => {
         resolvePermissions: jest.fn((token) => {
           return {
             isAdmin: true,
+            isAuthenticated: true,
             roles: ['sysadmin']
           }
         })
@@ -152,6 +153,7 @@ describe('Read Pass', () => {
         resolvePermissions: jest.fn((token) => {
           return {
             isAdmin: true,
+            isAuthenticated: true,
             roles: ['sysadmin']
           }
         })
@@ -190,6 +192,7 @@ describe('Read Pass', () => {
         resolvePermissions: jest.fn((token) => {
           return {
             isAdmin: true,
+            isAuthenticated: true,
             roles: ['sysadmin']
           }
         })

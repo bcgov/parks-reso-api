@@ -242,7 +242,7 @@ exports.handler = async (event, context) => {
         return sendResponse(400, { msg: 'Invalid Request, pass does not exist' }, context);
       }
     } else if (event.queryStringParameters.passId && event.queryStringParameters.park) {
-      if (permissionObject.isAdmin !== true) {
+      if (permissionObject.isAuthenticated !== true) {
         logger.info("Unauthorized");
         return sendResponse(403, { msg: 'Unauthorized!' });
       } else {
@@ -256,7 +256,7 @@ exports.handler = async (event, context) => {
       }
     } else if (event.queryStringParameters.manualLookup && event.queryStringParameters.park && event.queryStringParameters.date) {
       // Manual Lookup Search by ADMIN
-      if (permissionObject.isAdmin !== true) {
+      if (permissionObject.isAuthenticated !== true) {
         logger.info("Unauthorized.");
         logger.debug(permissionObject);
         return sendResponse(403, { msg: 'Unauthorized to perform this action.', title: 'Unauthorized.' });
