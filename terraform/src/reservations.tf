@@ -1,6 +1,6 @@
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "readReservationLambda" {
-  function_name = "readReservation"
+  function_name = "readReservation${var.env_identifier}"
 
   filename         = "artifacts/readReservation.zip"
   source_code_hash = filebase64sha256("artifacts/readReservation.zip")

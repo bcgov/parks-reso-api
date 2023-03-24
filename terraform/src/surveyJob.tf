@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "send_survey_cronjob_target" {
-  function_name = "sendSurvey"
+  function_name = "sendSurvey${var.env_identifier}"
 
   filename         = "artifacts/sendSurvey.zip"
   source_code_hash = filebase64sha256("artifacts/sendSurvey.zip")

@@ -10,7 +10,7 @@ locals {
 
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "readPassLambda" {
-  function_name = "readPass"
+  function_name = "readPass${var.env_identifier}"
 
   filename         = "artifacts/readPass.zip"
   source_code_hash = filebase64sha256("artifacts/readPass.zip")
@@ -48,7 +48,7 @@ resource "aws_lambda_alias" "readPassLambdaLatest" {
 
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "writePassLambda" {
-  function_name = "writePass"
+  function_name = "writePass${var.env_identifier}"
 
   filename         = "artifacts/writePass.zip"
   source_code_hash = filebase64sha256("artifacts/writePass.zip")
@@ -105,7 +105,7 @@ resource "aws_lambda_provisioned_concurrency_config" "writePassLambda" {
 
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "deletePassLambda" {
-  function_name = "deletePass"
+  function_name = "deletePass${var.env_identifier}"
 
   filename         = "artifacts/deletePass.zip"
   source_code_hash = filebase64sha256("artifacts/deletePass.zip")

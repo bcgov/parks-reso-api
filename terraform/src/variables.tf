@@ -15,3 +15,11 @@ variable "captcha_sign_expiry" {
   default = "5"
   description = "CAPTCHA JWT signature expiry duration in minutes"
 }
+
+variable "env_identifier" {
+  # For DUP merges - this should remain "" as dev/test/prod do not have these.  This is only for 
+  # the sandbox environment to split up between developers by making your own unique environment
+  # set to "-something"
+  default = ""
+  description = "Default string resource identifier"
+}

@@ -8,7 +8,7 @@ locals {
 
 # generateCaptchaLambda
 resource "aws_lambda_function" "generateCaptchaLambda" {
-  function_name = "generateCaptcha"
+  function_name = "generateCaptcha${var.env_identifier}"
 
   filename         = "artifacts/generateCaptcha.zip"
   source_code_hash = filebase64sha256("artifacts/generateCaptcha.zip")
@@ -61,7 +61,7 @@ resource "aws_lambda_permission" "generateCaptchaPermission" {
 
 # verifyCaptchaLambda
 resource "aws_lambda_function" "verifyCaptchaLambda" {
-  function_name = "verifyCaptcha"
+  function_name = "verifyCaptcha${var.env_identifier}"
 
   filename         = "artifacts/verifyCaptcha.zip"
   source_code_hash = filebase64sha256("artifacts/verifyCaptcha.zip")
@@ -116,7 +116,7 @@ resource "aws_lambda_permission" "verifyCaptchaPermission" {
 
 # generateCaptchaAudioLambda
 resource "aws_lambda_function" "generateCaptchaAudioLambda" {
-  function_name = "generateCaptchaAudio"
+  function_name = "generateCaptchaAudio${var.env_identifier}"
 
   filename         = "artifacts/generateCaptchaAudio.zip"
   source_code_hash = filebase64sha256("artifacts/generateCaptchaAudio.zip")

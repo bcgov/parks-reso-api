@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "cloudwatch_alarm" {
-  function_name = "cloudwatchAlarm"
+  function_name = "cloudwatchAlarm${var.env_identifier}"
 
   filename         = "artifacts/cloudwatchAlarm.zip"
   source_code_hash = filebase64sha256("artifacts/cloudwatchAlarm.zip")

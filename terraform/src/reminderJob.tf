@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "send_reminder" {
-  function_name = "sendReminder"
+  function_name = "sendReminder${var.env_identifier}"
 
   filename         = "artifacts/sendReminder.zip"
   source_code_hash = filebase64sha256("artifacts/sendReminder.zip")

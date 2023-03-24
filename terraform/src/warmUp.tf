@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "warm_up" {
-  function_name = "warmUp"
+  function_name = "warmUp${var.env_identifier}"
 
   filename         = "artifacts/warmUp.zip"
   source_code_hash = filebase64sha256("artifacts/warmUp.zip")

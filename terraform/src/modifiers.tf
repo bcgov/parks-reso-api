@@ -1,6 +1,6 @@
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "writeModifierLambda" {
-  function_name = "writeModifier"
+  function_name = "writeModifier${var.env_identifier}"
 
   filename         = "artifacts/writeModifier.zip"
   source_code_hash = filebase64sha256("artifacts/writeModifier.zip")
