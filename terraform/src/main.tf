@@ -14,7 +14,7 @@ provider "aws" {
 
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "readParkLambda" {
-  function_name = "readPark"
+  function_name = "readPark${var.env_identifier}"
 
   filename         = "artifacts/readPark.zip"
   source_code_hash = filebase64sha256("artifacts/readPark.zip")
@@ -63,7 +63,7 @@ resource "aws_lambda_provisioned_concurrency_config" "readParkLambda" {
 
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "writeParkLambda" {
-  function_name = "writePark"
+  function_name = "writePark${var.env_identifier}"
 
   filename         = "artifacts/writePark.zip"
   source_code_hash = filebase64sha256("artifacts/writePark.zip")
@@ -281,7 +281,7 @@ output "base_url" {
 }
 
 resource "aws_iam_policy" "lambda_logging" {
-  name        = "lambda_logging"
+  name        = "lambda_logging${var.env_identifier}"
   path        = "/"
   description = "IAM policy for logging from a lambda"
 
@@ -343,7 +343,7 @@ resource "aws_api_gateway_account" "DUPAPIGateway" {
 }
 
 resource "aws_iam_role" "cloudwatch" {
-  name = "api_gateway_cloudwatch_global"
+  name = "api_gateway_cloudwatch_global${var.env_identifier}"
 
   assume_role_policy = <<EOF
 {
@@ -389,7 +389,7 @@ EOF
 }
 
 resource "aws_iam_policy" "lambda_invoke_function" {
-  name        = "lambda_invoke_function"
+  name        = "lambda_invoke_function${var.env_identifier}"
   path        = "/"
   description = "IAM policy for Lambda to invoke another Lambda"
 

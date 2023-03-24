@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "exportPassLambda" {
-  function_name = "exportPass"
+  function_name = "exportPass${var.env_identifier}"
 
   filename         = "artifacts/exportPass.zip"
   source_code_hash = filebase64sha256("artifacts/exportPass.zip")

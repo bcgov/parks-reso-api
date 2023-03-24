@@ -1,5 +1,5 @@
 resource "aws_dynamodb_table" "park_dup_table" {
-  name           = data.aws_ssm_parameter.db_name.value
+  name = "${data.aws_ssm_parameter.db_name.value}${var.env_identifier}"
   hash_key       = "pk"
   range_key      = "sk"
   billing_mode   = "PAY_PER_REQUEST"
@@ -90,7 +90,7 @@ resource "aws_dynamodb_table" "park_dup_table" {
 }
 
 resource "aws_dynamodb_table" "park_dup_meta_table" {
-  name           = data.aws_ssm_parameter.meta_db_name.value
+  name           = "${data.aws_ssm_parameter.meta_db_name.value}${var.env_identifier}"
   hash_key       = "pk"
   range_key      = "sk"
   billing_mode   = "PAY_PER_REQUEST"
@@ -115,11 +115,11 @@ resource "aws_dynamodb_table" "park_dup_meta_table" {
 }
 
 resource "aws_backup_vault" "parksreso_backup_vault" {
-  name        = "backup_vault_for_parksreso"
+  name        = "backup_vault_for_parksreso${var.env_identifier}"
 }
 
 resource "aws_backup_plan" "parksreso_backup" {
-  name = "parksreso_backup_plan"
+  name = "parksreso_backup_plan${var.env_identifier}"
 
   rule {
     rule_name         = "parksreso_backup_rule"

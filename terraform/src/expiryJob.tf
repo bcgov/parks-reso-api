@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "check_expiry" {
-  function_name = "checkExpiry"
+  function_name = "checkExpiry${var.env_identifier}"
 
   filename         = "artifacts/checkExpiry.zip"
   source_code_hash = filebase64sha256("artifacts/checkExpiry.zip")

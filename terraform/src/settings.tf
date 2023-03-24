@@ -1,6 +1,6 @@
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "readConfigLambda" {
-  function_name = "readConfig"
+  function_name = "readConfig${var.env_identifier}"
 
   filename         = "artifacts/readConfig.zip"
   source_code_hash = filebase64sha256("artifacts/readConfig.zip")
@@ -49,7 +49,7 @@ resource "aws_lambda_provisioned_concurrency_config" "readConfigLambda" {
 
 // Deploys the lambda via the zip above
 resource "aws_lambda_function" "writeConfigLambda" {
-  function_name = "writeConfig"
+  function_name = "writeConfig${var.env_identifier}"
 
   filename         = "artifacts/writeConfig.zip"
   source_code_hash = filebase64sha256("artifacts/writeConfig.zip")

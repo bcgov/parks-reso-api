@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "metricLambda" {
-  function_name = "metric"
+  function_name = "metric${var.env_identifier}"
 
   filename         = "artifacts/metric.zip"
   source_code_hash = filebase64sha256("artifacts/metric.zip")

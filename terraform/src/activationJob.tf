@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "check_activation" {
-  function_name = "checkActivation"
+  function_name = "checkActivation${var.env_identifier}"
 
   filename         = "artifacts/checkActivation.zip"
   source_code_hash = filebase64sha256("artifacts/checkActivation.zip")

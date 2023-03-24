@@ -1,6 +1,6 @@
 # ============= EXPORT ALL INVOKABLE =============
 resource "aws_lambda_function" "exportAllInvokableLambda" {
-  function_name = "export-invokable"
+  function_name = "export-invokable${var.env_identifier}"
 
   filename         = "artifacts/exportAllPassInvokable.zip"
   source_code_hash = filebase64sha256("artifacts/exportAllPassInvokable.zip")
@@ -34,7 +34,7 @@ resource "aws_lambda_alias" "export_invokable_latest" {
 
 # ============= EXPORT ALL GET =============
 resource "aws_lambda_function" "exportAllPassLambda" {
-  function_name = "exportAllPass"
+  function_name = "exportAllPass${var.env_identifier}"
 
   filename         = "artifacts/exportAllPassGet.zip"
   source_code_hash = filebase64sha256("artifacts/exportAllPassGet.zip")
