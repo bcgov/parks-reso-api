@@ -123,6 +123,12 @@ functions:
           cors: true
 
   ###########
+  # Stream
+  ###########
+  streamHandler:
+    handler: lambda/stream/index.handler
+
+  ###########
   # Modifiers
   ###########
   writeModifier:

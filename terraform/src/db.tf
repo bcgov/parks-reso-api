@@ -4,6 +4,9 @@ resource "aws_dynamodb_table" "park_dup_table" {
   range_key      = "sk"
   billing_mode   = "PAY_PER_REQUEST"
 
+  stream_view_type = "NEW_IMAGE"
+  stream_enabled   = true
+
   point_in_time_recovery {
     enabled = true
   }
