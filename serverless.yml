@@ -188,7 +188,7 @@ functions:
           cors: true
 
   ###########
-  # Metric
+  # Metric TODO -delete
   ###########
   metric:
     handler: lambda/metric/index.handler
@@ -196,6 +196,17 @@ functions:
       - http:
           method: GET
           path: /metric
+          cors: true
+
+  ###########
+  # Metrics
+  ###########
+  readMetrics:
+    handler: lambda/readMetrics/index.handler
+    events:
+      - http:
+          method: GET
+          path: /metrics
           cors: true
 
   ###########
@@ -218,6 +229,10 @@ functions:
   # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-sendSurvey
   sendSurvey:
     handler: lambda/sendSurvey/index.handler
+  # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-writeMetrics
+  writeMetrics:
+    handler: lambda/writeMetrics/index.handler
+
 
 custom:
   dynamodb:

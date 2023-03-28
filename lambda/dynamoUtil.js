@@ -4,6 +4,7 @@ const { DateTime } = require('luxon');
 
 const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 const META_TABLE_NAME = process.env.META_TABLE_NAME || 'parksreso-meta';
+const METRICS_TABLE_NAME = process.env.METRICS_TABLE_NAME || 'parksreso-metrics';
 const options = {
   region: 'ca-central-1'
 };
@@ -79,7 +80,7 @@ async function getOne(pk, sk) {
   logger.info(`getItem: { pk: ${pk}, sk: ${sk} }`);
   const params = {
     TableName: TABLE_NAME,
-    Key: AWS.DynamoDB.Converter.marshall({pk, sk})
+    Key: AWS.DynamoDB.Converter.marshall({ pk, sk })
   };
   let item = await dynamodb.getItem(params).promise();
   return item?.Item || {};
@@ -185,7 +186,7 @@ async function getParks() {
 
 // get a single facility by park name & facility sk.
 // if not authenticated, invisible facilities will not be returned.
-async function getFacility(parkSk, sk, authenticated = false){
+async function getFacility(parkSk, sk, authenticated = false) {
   const facility = await getOne(`facility::${parkSk}`, sk);
   if (!authenticated && !facility.visible.BOOL) {
     return {};
@@ -272,6 +273,7 @@ module.exports = {
   TIMEZONE,
   TABLE_NAME,
   META_TABLE_NAME,
+  METRICS_TABLE_NAME,
   dynamodb,
   setStatus,
   runQuery,

@@ -1,3 +1,4 @@
+// TODO - remove metric
 resource "aws_lambda_function" "metricLambda" {
   function_name = "metric${var.env_identifier}"
 
