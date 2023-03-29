@@ -563,7 +563,7 @@ resource "aws_iam_role_policy" "dynamoDBMetricsWriteRole" {
         "Effect": "Allow",
         "Action": [
             "dynamodb:Query",
-            "dynamodb:Get*",
+            "dynamodb:Get*"
         ],
         "Resource": "${aws_dynamodb_table.park_dup_table.arn}/index/*"
       }
