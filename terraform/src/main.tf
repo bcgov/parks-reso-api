@@ -177,7 +177,8 @@ resource "aws_api_gateway_deployment" "apideploy" {
     aws_api_gateway_integration.captchaVerifyIntegration,
     aws_api_gateway_integration.captchaAudioIntegration,
     aws_api_gateway_integration.readReservationIntegration,
-    aws_api_gateway_integration.putModifierIntegration
+    aws_api_gateway_integration.putModifierIntegration,
+    aws_api_gateway_integration.metricsIntegration
   ]
 
   rest_api_id = aws_api_gateway_rest_api.apiLambda.id
@@ -318,8 +319,14 @@ resource "aws_iam_role_policy_attachment" "lambda_sendReminder_cloudwatch_logs" 
   policy_arn = aws_iam_policy.lambda_logging.arn
 }
 
+// TODO - remove metric
 resource "aws_iam_role_policy_attachment" "lambda_metric_cloudwatch_logs" {
   role       = aws_iam_role.metricRole.name
+  policy_arn = aws_iam_policy.lambda_logging.arn
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_metrics_cloudwatch_logs" {
+  role       = aws_iam_role.metricsRole.name
   policy_arn = aws_iam_policy.lambda_logging.arn
 }
 

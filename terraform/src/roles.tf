@@ -122,6 +122,7 @@ resource "aws_s3_bucket" "bcgov-parks-dup-data" {
   }
 }
 
+// TODO - remove metric
 resource "aws_iam_role" "metricRole" {
   name = "lambdaMetricRole${var.env_identifier}"
 
@@ -187,6 +188,27 @@ EOF
 
 resource "aws_iam_role" "metaWriteRole" {
   name = "lambdaMetaWriteRole${var.env_identifier}"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+
+}
+
+resource "aws_iam_role" "metricsRole" {
+  name = "lambdaMetricsRole${var.env_identifier}"
 
   assume_role_policy = <<EOF
 {
@@ -356,6 +378,7 @@ resource "aws_iam_role_policy" "exportAllPassRolePolicy" {
   EOF
 }
 
+// TODO - remove metric
 resource "aws_iam_role_policy" "park_reso_dynamodb_metric" {
   name = "park_reso_dynamodb_metric${var.env_identifier}"
   role = aws_iam_role.metricRole.id
@@ -487,6 +510,60 @@ resource "aws_iam_role_policy" "dynamoDBMetaWriteRole" {
         "Effect": "Allow",
         "Action": [
             "dynamodb:Query"
+        ],
+        "Resource": "${aws_dynamodb_table.park_dup_table.arn}/index/*"
+      }
+    ]
+  }
+  EOF
+}
+
+// Allow reading main table and read/writing to metrics table
+resource "aws_iam_role_policy" "dynamoDBMetricsWriteRole" {
+  name = "park_reso_dynamodb_metrics${var.env_identifier}"
+  role = aws_iam_role.metricsRole.id
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+            "dynamodb:BatchGet*",
+            "dynamodb:DescribeStream",
+            "dynamodb:DescribeTable",
+            "dynamodb:Get*",
+            "dynamodb:Query",
+            "dynamodb:Scan",
+            "dynamodb:CreateTable",
+            "dynamodb:ConditionCheckItem"
+        ],
+        "Resource": "${aws_dynamodb_table.park_dup_table.arn}"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+            "dynamodb:BatchGet*",
+            "dynamodb:DescribeStream",
+            "dynamodb:DescribeTable",
+            "dynamodb:Get*",
+            "dynamodb:Query",
+            "dynamodb:Scan",
+            "dynamodb:BatchWrite*",
+            "dynamodb:CreateTable",
+            "dynamodb:Delete*",
+            "dynamodb:Update*",
+            "dynamodb:PutItem",
+            "dynamodb:ConditionCheckItem"
+        ],
+        "Resource": "${aws_dynamodb_table.park_dup_metrics_table.arn}"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+            "dynamodb:Query",
+            "dynamodb:Get*",
         ],
         "Resource": "${aws_dynamodb_table.park_dup_table.arn}/index/*"
       }
