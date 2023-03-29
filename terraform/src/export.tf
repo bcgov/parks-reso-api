@@ -13,7 +13,7 @@ resource "aws_lambda_function" "exportPassLambda" {
 
   environment {
     variables = {
-      TABLE_NAME                   = data.aws_ssm_parameter.db_name.value,
+      TABLE_NAME                   = aws_dynamodb_table.park_dup_table.name,
       JWT_SECRET                   = local.jwtSecret.jwtSecret,
       PUBLIC_FRONTEND              = data.aws_ssm_parameter.public_url.value,
       GC_NOTIFY_API_PATH           = data.aws_ssm_parameter.gc_notify_api_path.value,

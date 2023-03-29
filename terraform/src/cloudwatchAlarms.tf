@@ -52,7 +52,7 @@ data "aws_iam_policy_document" "sns-topic-policy" {
 
     principals {
       type        = "AWS"
-      identifiers = ["*"]
+      identifiers = [aws_iam_role.readRole.arn]
     }
 
     resources = [aws_sns_topic.cloudwatch_error_alarm.arn]
@@ -122,7 +122,9 @@ resource "aws_sqs_queue_policy" "sqs_queue_policy" {
     {
       "Sid": "First",
       "Effect": "Allow",
-      "Principal": "*",
+      "Principal": {
+        "AWS": "${aws_iam_role.readRole.arn}"
+      },
       "Action": [
          "sqs:DeleteMessage",
          "sqs:GetQueueAttributes",

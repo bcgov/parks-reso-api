@@ -11,7 +11,7 @@ resource "aws_lambda_function" "send_reminder" {
 
   environment {
     variables = {
-      TABLE_NAME                     = data.aws_ssm_parameter.db_name.value,
+      TABLE_NAME                     = aws_dynamodb_table.park_dup_table.name,
       META_TABLE_NAME                = data.aws_ssm_parameter.meta_db_name.value,
       PUBLIC_FRONTEND                = data.aws_ssm_parameter.public_url.value,
       PASS_CANCELLATION_ROUTE        = data.aws_ssm_parameter.pass_cancellation_route.value,

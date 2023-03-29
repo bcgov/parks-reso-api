@@ -11,7 +11,7 @@ resource "aws_lambda_function" "send_survey_cronjob_target" {
 
   environment {
     variables = {
-      TABLE_NAME                     = data.aws_ssm_parameter.db_name.value,
+      TABLE_NAME                     = aws_dynamodb_table.park_dup_table.name,
       META_TABLE_NAME                = data.aws_ssm_parameter.meta_db_name.value,
       PASS_SHORTDATE_INDEX           = data.aws_ssm_parameter.pass_shortdate_index.value, 
       GC_NOTIFY_API_BULK_PATH        = data.aws_ssm_parameter.gc_notify_api_bulk_path.value, 

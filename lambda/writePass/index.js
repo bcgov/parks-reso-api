@@ -1,5 +1,4 @@
 const AWS = require('aws-sdk');
-const axios = require('axios');
 const { verifyJWT } = require('../captchaUtil');
 const { dynamodb, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE, getFacility, getPark, getConfig } = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
@@ -8,6 +7,7 @@ const { DateTime } = require('luxon');
 const { logger } = require('../logger');
 const { createNewReservationsObj } = require('../writeReservation');
 const { getPersonalizationAttachment, getAdminLinkToPass } = require('../passUtils');
+const { sendSQSMessage } = require('../sqsUtils')
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
@@ -514,18 +514,11 @@ exports.handler = async (event, context) => {
           template_id: gcNotifyTemplate,
           personalisation: personalisation
         };
-        logger.debug(JSON.stringify(gcnData));
 
-        await axios({
-          method: 'post',
-          url: process.env.GC_NOTIFY_API_PATH,
-          headers: {
-            Authorization: process.env.GC_NOTIFY_API_KEY,
-            'Content-Type': 'application/json'
-          },
-          data: gcnData
-        });
-        logger.info('GCNotify email sent.');
+        // Push this email job onto the queue so we can return quickly to the front-end
+        logger.info('Sending to SQS');
+        await sendSQSMessage('GCN', gcnData);
+        logger.info('Sent');
 
         // Prune audit
         delete passObject.Item['audit'];
