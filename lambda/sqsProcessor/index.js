@@ -21,7 +21,6 @@ exports.handler = async (event) => {
 
 const handleGCNRecord = async function (record) {
   logger.info('Handling GCN Record');
-  logger.debug(record);
   const gcnData = {
     email_address: record.messageAttributes.email_address.stringValue,
     template_id: record.messageAttributes.template_id.stringValue,
