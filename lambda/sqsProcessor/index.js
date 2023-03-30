@@ -27,7 +27,7 @@ const handleGCNRecord = async function (record) {
     template_id: record.messageAttributes.template_id.stringValue,
     personalisation: JSON.parse(record.messageAttributes.personalisation.stringValue)
   };
-  logger.debug('gcnData:', gcnData);
+  logger.info('Sending payload to GCN');
   // Email this using GCNotify.  Allow this to throw without a catch as it will push it back
   // into the SQS queue.
   await axios({
