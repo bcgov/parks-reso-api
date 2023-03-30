@@ -30,7 +30,7 @@ exports.sendSQSMessage = async function (service, payload) {
         }
       }
     }
-    logger.debug("Sending SQS:", params);
+    logger.info("Sending SQS");
     await sqs.sendMessage(params).promise();
   } catch (e) {
     logger.error(e);
