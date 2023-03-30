@@ -14,7 +14,7 @@ resource "aws_lambda_function" "exportAllInvokableLambda" {
 
   environment {
     variables = {
-      TABLE_NAME                   = data.aws_ssm_parameter.db_name.value,
+      TABLE_NAME                   = aws_dynamodb_table.park_dup_table.name,
       FILE_NAME                    = "DUP_Export",
       SSO_ISSUER                   = data.aws_ssm_parameter.sso_issuer.value,
       SSO_JWKSURI                  = data.aws_ssm_parameter.sso_jwksuri.value,
@@ -48,7 +48,7 @@ resource "aws_lambda_function" "exportAllPassLambda" {
 
   environment {
     variables = {
-      TABLE_NAME                   = data.aws_ssm_parameter.db_name.value,
+      TABLE_NAME                   = aws_dynamodb_table.park_dup_table.name,
       JWT_SECRET                   = local.jwtSecret.jwtSecret,
       PUBLIC_FRONTEND              = data.aws_ssm_parameter.public_url.value,
       GC_NOTIFY_API_PATH           = data.aws_ssm_parameter.gc_notify_api_path.value,

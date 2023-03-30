@@ -28,7 +28,7 @@ resource "aws_lambda_function" "readParkLambda" {
 
   environment {
     variables = {
-      TABLE_NAME  = data.aws_ssm_parameter.db_name.value,
+      TABLE_NAME  = aws_dynamodb_table.park_dup_table.name,
       SSO_ISSUER  = data.aws_ssm_parameter.sso_issuer.value,
       SSO_JWKSURI = data.aws_ssm_parameter.sso_jwksuri.value,
       LOG_LEVEL   = "info"
@@ -76,7 +76,7 @@ resource "aws_lambda_function" "writeParkLambda" {
 
   environment {
     variables = {
-      TABLE_NAME  = data.aws_ssm_parameter.db_name.value,
+      TABLE_NAME  = aws_dynamodb_table.park_dup_table.name,
       SSO_ISSUER  = data.aws_ssm_parameter.sso_issuer.value,
       SSO_JWKSURI = data.aws_ssm_parameter.sso_jwksuri.value,
       LOG_LEVEL   = "info"
@@ -94,7 +94,7 @@ resource "aws_lambda_alias" "writeParkLambdaLatest" {
 
 resource "aws_api_gateway_rest_api" "apiLambda" {
   name        = "ParksDayUsePassAPI"
-  description = "BC Parks DUP API"
+  description = "BC Parks DUP API - ${var.env_identifier}"
 }
 
 resource "aws_api_gateway_resource" "readResource" {

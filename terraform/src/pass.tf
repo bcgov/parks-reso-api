@@ -24,7 +24,7 @@ resource "aws_lambda_function" "readPassLambda" {
 
   environment {
     variables = {
-      TABLE_NAME                   = data.aws_ssm_parameter.db_name.value,
+      TABLE_NAME                   = aws_dynamodb_table.park_dup_table.name,
       JWT_SECRET                   = local.jwtSecret.jwtSecret,
       PUBLIC_FRONTEND              = data.aws_ssm_parameter.public_url.value,
       GC_NOTIFY_API_PATH           = data.aws_ssm_parameter.gc_notify_api_path.value,
@@ -61,13 +61,12 @@ resource "aws_lambda_function" "writePassLambda" {
 
   environment {
     variables = {
-      TABLE_NAME                            = data.aws_ssm_parameter.db_name.value,
+      TABLE_NAME                            = aws_dynamodb_table.park_dup_table.name,
+      SQSQUEUENAME                          = aws_sqs_queue.gcn_email_queue.url,
       JWT_SECRET                            = local.jwtSecret.jwtSecret,
       PUBLIC_FRONTEND                       = data.aws_ssm_parameter.public_url.value,
       ADMIN_FRONTEND                        = data.aws_ssm_parameter.admin_url.value,
       PASS_MANAGEMENT_ROUTE                 = data.aws_ssm_parameter.pass_manage_path.value,
-      GC_NOTIFY_API_PATH                    = data.aws_ssm_parameter.gc_notify_api_path.value,
-      GC_NOTIFY_API_KEY                     = data.aws_ssm_parameter.gc_notify_api_key.value,
       GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID = data.aws_ssm_parameter.gc_notify_parking_receipt_template_id.value,
       GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID   = data.aws_ssm_parameter.gc_notify_trail_receipt_template_id.value,
       PASS_CANCELLATION_ROUTE               = data.aws_ssm_parameter.pass_cancellation_route.value,
@@ -117,7 +116,7 @@ resource "aws_lambda_function" "deletePassLambda" {
 
   environment {
     variables = {
-      TABLE_NAME  = data.aws_ssm_parameter.db_name.value,
+      TABLE_NAME  = aws_dynamodb_table.park_dup_table.name,
       JWT_SECRET  = local.jwtSecret.jwtSecret,
       SSO_ISSUER  = data.aws_ssm_parameter.sso_issuer.value,
       SSO_JWKSURI = data.aws_ssm_parameter.sso_jwksuri.value,

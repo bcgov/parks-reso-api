@@ -1,4 +1,3 @@
-const AWS = require('aws-sdk');
 const { DocumentClient } = require('aws-sdk/clients/dynamodb');
 
 const { REGION, ENDPOINT, TABLE_NAME } = require('./global/settings');
@@ -358,7 +357,7 @@ describe('Pass Successes', () => {
     expect(response.statusCode).toEqual(400);
   });
 
-  test('Handler - 200 Email Failed to Send, but pass has been created for a Trail.', async () => {
+  test('Handler - 200 pass has been created for a Trail.', async () => {
     const writePassHandler = require('../lambda/writePass/index');
     process.env.ADMIN_FRONTEND = "http://localhost:4300";
     process.env.PASS_MANAGEMENT_ROUTE="/pass-management";
@@ -397,13 +396,12 @@ describe('Pass Successes', () => {
     expect(['reserved', 'active']).toContain(body.passStatus);
     expect(body.phoneNumber).toEqual('2505555555');
     expect(body.facilityType).toEqual('Trail');
-    expect(typeof body.err).toBe('string');
     expect(body.adminPassLink).toContain(
       `${process.env.ADMIN_FRONTEND}${process.env.PASS_MANAGEMENT_ROUTE}?park=0015`
     );
   });
 
-  test('Handler - 200 Email Failed to Send, but pass has been created for a Parking Pass.', async () => {
+  test('Handler - 200 pass has been created for a Parking Pass.', async () => {
     const writePassHandler = require('../lambda/writePass/index');
     const event = {
       headers: {
@@ -441,7 +439,6 @@ describe('Pass Successes', () => {
     expect(['reserved', 'active']).toContain(body.passStatus);
     expect(body.phoneNumber).toEqual('2505555555');
     expect(body.facilityType).toEqual('Parking');
-    expect(typeof body.err).toBe('string');
   });
 
   test('Handler - 400 Number of guests cannot be less than 1.', async () => {

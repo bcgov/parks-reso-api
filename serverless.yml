@@ -166,6 +166,12 @@ functions:
           cors: true
 
   ###########
+  # SQS Processor
+  ###########
+  sqsProcessor:
+    handler: lambda/sqsProcessor/index.handler
+
+  ###########
   # Export
   ###########
   exportPass:

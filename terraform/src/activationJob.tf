@@ -11,7 +11,7 @@ resource "aws_lambda_function" "check_activation" {
 
   environment {
     variables = {
-      TABLE_NAME = data.aws_ssm_parameter.db_name.value,
+      TABLE_NAME = aws_dynamodb_table.park_dup_table.name,
       LOG_LEVEL  = "info"
     }
   }
