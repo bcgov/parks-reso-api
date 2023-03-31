@@ -39,37 +39,37 @@ resource "aws_cloudwatch_event_target" "warm_up_every_morning" {
       "configArray": [{
           "funcName": "readConfig",
           "funcVersion": "latest",
-          "concurrency": "10"
+          "concurrency": "3"
         },
         {
           "funcName": "readPark",
           "funcVersion": "latest",
-          "concurrency": "10"
+          "concurrency": "3"
         },
         {
           "funcName": "readFacility",
           "funcVersion": "latest",
-          "concurrency": "10"
+          "concurrency": "3"
         },
         {
           "funcName": "readReservation",
           "funcVersion": "latest",
-          "concurrency": "10"
+          "concurrency": "3"
         },
         {
           "funcName": "generateCaptcha",
           "funcVersion": "latest",
-          "concurrency": "5"
+          "concurrency": "2"
         },
         {
           "funcName": "verifyCaptcha",
           "funcVersion": "latest",
-          "concurrency": "5"
+          "concurrency": "2"
         },
         {
           "funcName": "writePass",
           "funcVersion": "latest",
-          "concurrency": "5"
+          "concurrency": "2"
         }
       ]
     }
