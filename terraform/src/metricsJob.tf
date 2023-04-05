@@ -11,9 +11,9 @@ resource "aws_lambda_function" "write_metrics" {
 
   environment {
     variables = {
-      TABLE_NAME                     = data.aws_ssm_parameter.db_name.value,
-      METRICS_TABLE_NAME             = data.aws_ssm_parameter.metrics_db_name.value
-      LOG_LEVEL                      = "info"
+      TABLE_NAME         = data.aws_ssm_parameter.db_name.value,
+      METRICS_TABLE_NAME = data.aws_ssm_parameter.metrics_db_name.value,
+      LOG_LEVEL          = "info"
     }
   }
   role = aws_iam_role.metricsRole.arn
