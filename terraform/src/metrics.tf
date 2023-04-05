@@ -13,8 +13,10 @@ resource "aws_lambda_function" "metricsLambda" {
 
   environment {
     variables = {
-      METRICS_TABLE_NAME  = data.aws_ssm_parameter.metrics_db_name.value,
-      LOG_LEVEL   = "info"
+      METRICS_TABLE_NAME = data.aws_ssm_parameter.metrics_db_name.value,
+      SSO_ISSUER         = data.aws_ssm_parameter.sso_issuer.value,
+      SSO_JWKSURI        = data.aws_ssm_parameter.sso_jwksuri.value,
+      LOG_LEVEL          = "info"
     }
   }
 
