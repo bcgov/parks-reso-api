@@ -26,12 +26,12 @@ resource "aws_lambda_alias" "sqs_processor_latest" {
 }
 
 resource "aws_sqs_queue" "gcn_email_queue" {
-  name = "gcn-email-queue"
+  name = "gcn-email-queue${var.env_identifier}"
   visibility_timeout_seconds = 60
 }
 
 resource "aws_sns_topic" "gcn_email_topic" {
-  name = "gcn-email-topic"
+  name = "gcn-email-topic${var.env_identifier}"
 }
 
 data "aws_iam_policy_document" "sns-email-topic-policy" {
