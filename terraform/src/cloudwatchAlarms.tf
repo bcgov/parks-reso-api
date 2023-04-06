@@ -94,7 +94,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_alert" {
 }
 
 resource "aws_sqs_queue" "alarm_queue" {
-  name                      = "cloudwatch-alarm-queue"
+  name                      = "cloudwatch-alarm-queue${var.env_identifier}"
   message_retention_seconds = 86400
 }
 

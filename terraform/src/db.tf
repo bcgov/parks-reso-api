@@ -147,7 +147,7 @@ resource "aws_backup_plan" "parksreso_backup" {
   name = "parksreso_backup_plan${var.env_identifier}"
 
   rule {
-    rule_name         = "parksreso_backup_rule"
+    rule_name         = "parksreso_backup_rule${var.env_identifier}"
     target_vault_name = aws_backup_vault.parksreso_backup_vault.name
     schedule          = "cron(0 12 * * ? *)"
 
