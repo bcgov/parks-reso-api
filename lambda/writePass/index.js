@@ -11,7 +11,7 @@ const { sendSQSMessage } = require('../sqsUtils')
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
-const DEFAULT_PM_OPENING_HOUR = 12;
+const DEFAULT_PM_OPENING_HOUR = 13;
 
 async function modifyPassCheckInStatus(pk, sk, checkedIn) {
   let updateParams = {
