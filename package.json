@@ -7,7 +7,6 @@
     "csvjson": "^5.1.0",
     "csvtojson": "^2.0.10",
     "date-fns": "^2.28.0",
-    "date-fns-tz": "^1.1.6",
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.0",
     "jwks-rsa": "^3.0.0",
@@ -28,7 +27,7 @@
     "mockdate": "^3.0.5",
     "read-excel-file": "^5.3.4",
     "serverless": "^3.18.1",
-    "serverless-dotenv-plugin": "^4.0.2",
+    "serverless-dotenv-plugin": "^6.0.0",
     "serverless-offline": "^12.0.4",
     "serverless-plugin-include-dependencies": "^5.0.0"
   },
