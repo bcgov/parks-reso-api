@@ -2,7 +2,7 @@ const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions, getParkAccess } = require('../permissionUtil');
 const { logger } = require('../logger');
 const { setFacilityLock, unlockFacility } = require('../facilityUtils');
-const { createNewReservationsObj } = require('../writeReservation');
+const { createNewReservationsObj } = require('../reservationObjUtils');
 const { processReservationObjects, getReservationObject } = require('../reservationObjUtils');
 const { DateTime } = require('luxon');
 

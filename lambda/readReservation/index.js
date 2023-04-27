@@ -1,5 +1,5 @@
 const { runQuery, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE, getPark, getFacility } = require('../dynamoUtil');
-const { formatPublicReservationObject } = require('../writeReservation')
+const { formatPublicReservationObject } = require('../reservationObjUtils')
 const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions, roleFilter } = require('../permissionUtil');
 const { logger } = require('../logger');

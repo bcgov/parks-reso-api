@@ -5,7 +5,7 @@ const { sendResponse, checkWarmup } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
-const { createNewReservationsObj } = require('../writeReservation');
+const { createNewReservationsObj } = require('../reservationObjUtils');
 const { getPersonalizationAttachment, getAdminLinkToPass } = require('../passUtils');
 const { sendSQSMessage } = require('../sqsUtils')
 
