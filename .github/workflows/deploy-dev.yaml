@@ -43,7 +43,11 @@ jobs:
           key: ${{ github.sha }}-artifacts
       - name: Run Build
         if: steps.cache-build.outputs.cache-hit != 'true'
-        run: yarn build-ci
+        run: |
+          sudo prlimit --pid $$ --nofile=1048576:1048576
+          sudo sysctl fs.inotify.max_user_instances=1280
+          sudo sysctl fs.inotify.max_user_watches=655360
+          yarn build-ci
 
       ### Get environment variables from AWS Parameter Store ###
       - name: Configure AWS credentials
