@@ -13,7 +13,6 @@ package:
   patterns:
     - '!./**'
     - 'lambda/*'
-    - 'node_modules/**'
 
 plugins:
   - serverless-offline
