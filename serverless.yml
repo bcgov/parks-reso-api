@@ -7,12 +7,13 @@ provider:
   runtime: nodejs14.x
   stage: api
   region: ca-central-1
-  lambdaHashingVersion: 20201221
 
 package:
   individually: true
-  exclude:
-    - './*' # This causes Serverless to only package referenced source files
+  patterns:
+    - '!./**'
+    - 'lambda/*'
+    - 'node_modules/**'
 
 plugins:
   - serverless-offline
