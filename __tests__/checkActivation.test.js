@@ -185,6 +185,7 @@ describe('checkActivationHandler', () => {
         }
       })
       .promise();
+    console.log("Result:", result)
     expect(result.Item.passStatus).toBe('active');
   });
 
