@@ -40,11 +40,11 @@ exports.handler = async (event, context) => {
 
       // Get all the passes for a specific facility
       if (event.queryStringParameters.date) {
-        // Use GSI on shortPassDate if date is provided
+        // Use GSI on manualLookupif date is provided
         const shortDate = DateTime.fromISO(event.queryStringParameters.date).toISODate();
 
         queryObj.ExpressionAttributeValues = {};
-        queryObj.IndexName = 'shortPassDate-index';
+        queryObj.IndexName = 'manualLookup-index';
         queryObj.ExpressionAttributeValues[':shortPassDate'] = { S: shortDate };
         queryObj.ExpressionAttributeValues[':facilityName'] = { S: event.queryStringParameters.facilityName };
         queryObj.KeyConditionExpression = 'shortPassDate =:shortPassDate AND facilityName =:facilityName';
