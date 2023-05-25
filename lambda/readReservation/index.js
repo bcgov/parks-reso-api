@@ -118,20 +118,11 @@ exports.handler = async (event, context) => {
     } else {
       // Inject overbooked data if any exists
       if (date && reservations.length > 0) {
-        let resObj = reservations[0];
-        // AM
-        if (resObj.capacities.AM) {
-          resObj.capacities.AM['overbooked'] = overbookedData.AM;
+        for (let reservation of reservations) {
+          for (const time in reservation.capacities) {
+            reservation.capacities[time]['overbooked'] = overbookedData?.[time] || 0;
+          };
         }
-        // PM
-        if (resObj.capacities.PM) {
-          resObj.capacities.PM['overbooked'] = overbookedData.PM;
-        }
-        // DAY
-        if (resObj.capacities.DAY) {
-          resObj.capacities.DAY['overbooked'] = overbookedData.DAY;
-        }
-        reservations = [resObj];
       }
     }
 
