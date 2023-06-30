@@ -1,11 +1,19 @@
 # Parks Reservation - API
 ![Lifecycle:Maturing](https://img.shields.io/badge/Lifecycle-Maturing-007EC6)
 
+# Introduction
+
+This repository consists of the back end API code for the Parks Services Administration. 
+
 Associated repos:
 
 - https://github.com/bcgov/parks-reso-public
 - https://github.com/bcgov/parks-reso-admin
 - https://github.com/bcgov/parks-reso-api
+
+## Contribuition Guidelines
+
+To contribute to this code, follow the steps through this link: https://bcgov.github.io/bcparks/collaborate 
 
 # Local Development
 
