@@ -390,14 +390,14 @@ exports.handler = async (event, context) => {
           if (existingItems.Count === 0) {
             logger.debug('No existing pass found. Creating new pass...');
           } else {
-            logger.info("email account already has a reservation");
+            logger.info("email account already has a reservation. Registration number:", registrationNumber);
             return sendResponse(400, {
               title: 'This email account already has a reservation for this booking time.',
               msg: 'A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>'
             });
           }
         } catch (err) {
-          logger.info('Error on check existing pass for the same facility, email, type and date');
+          logger.info('Error on check existing pass for the same facility, email, type and date. Registration number:', registrationNumber);
           logger.error(err);
           return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
         }
