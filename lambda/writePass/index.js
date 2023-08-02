@@ -397,7 +397,7 @@ exports.handler = async (event, context) => {
             });
           }
         } catch (err) {
-          logger.info('Error on check existing pass for the same facility, email, type and date. Registration number:', existingItems?.Items[0]?.registrationNumber);
+          logger.info('Error on check existing pass for the same facility, email, type and date. Registration number:', registrationNumber);
           logger.error(err);
           return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
         }
