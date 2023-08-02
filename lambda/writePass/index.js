@@ -522,9 +522,10 @@ exports.handler = async (event, context) => {
 
         // Prune audit
         delete passObject.Item['audit'];
+        logger.info('Pass successfully created. Registration number:', passObject?.Item['registrationNumber']);
         return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
       } catch (err) {
-        logger.info('GCNotify error, return 200 anyway.');
+        logger.info('GCNotify error, return 200 anyway. Registration number:', passObject?.Item['registrationNumber']);
         logger.error(err.response?.data || err);
         let errRes = AWS.DynamoDB.Converter.unmarshall(passObject.Item);
         errRes['err'] = 'Email Failed to Send';
