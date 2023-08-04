@@ -390,7 +390,7 @@ exports.handler = async (event, context) => {
           if (existingItems.Count === 0) {
             logger.debug('No existing pass found. Creating new pass...');
           } else {
-            logger.info(`email account already has a reservation. Registration number: ${existingItems?.Items[0]?.registrationNumber}, Orcs: ${parkData.sk}`);
+            logger.info(`email account already has a reservation. Registration number: ${JSON.stringify(existingItems?.Items[0]?.registrationNumber)}, Orcs: ${parkData.sk}`);
             return sendResponse(400, {
               title: 'This email account already has a reservation for this booking time.',
               msg: 'A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>'
@@ -522,10 +522,10 @@ exports.handler = async (event, context) => {
 
         // Prune audit
         delete passObject.Item['audit'];
-        logger.info(`Pass successfully created. Registration number: ${passObject?.Item['registrationNumber']}, Orcs: ${parkData.sk}`);
+        logger.info(`Pass successfully created. Registration number: ${JSON.stringify(passObject?.Item['registrationNumber'])}, Orcs: ${parkData.sk}`);
         return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
       } catch (err) {
-        logger.info('GCNotify error, return 200 anyway. Registration number:', passObject?.Item['registrationNumber']);
+        logger.info(`GCNotify error, return 200 anyway. Registration number: ${JSON.stringify(passObject?.Item['registrationNumber'])}`);
         logger.error(err.response?.data || err);
         let errRes = AWS.DynamoDB.Converter.unmarshall(passObject.Item);
         errRes['err'] = 'Email Failed to Send';
