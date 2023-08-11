@@ -19,9 +19,9 @@ const { logger } = require('./logger');
 
 const AWS_REGION = process.env.AWS_DEFAULT_REGION || 'ca-central-1';
 
-const ALGORITHM = process.env.ALGORITHM || "HS384";
+const ALGORITHM = process.env.ALGORITHM || 'HS384';
 
-async function getCaptcha(options) {
+async function getCaptcha(options, facility, orcs) {
   const captcha = svgCaptcha.create({
     ...{
       size: 6, // size of random string
@@ -31,8 +31,9 @@ async function getCaptcha(options) {
     ...options
   });
 
-  if (!captcha || (captcha && !captcha.data)) {
+  if (!captcha || (captcha && !captcha.data) || !facility || !orcs) {
     // Something bad happened with Captcha.
+    // Or facility or ORCs was not provided
     return {
       valid: false
     };
@@ -41,7 +42,9 @@ async function getCaptcha(options) {
   // add answer, and expiry to body
   const body = {
     answer: captcha.text,
-    expiry: Date.now() + CAPTCHA_SIGN_EXPIRY * 60000
+    expiry: Date.now() + CAPTCHA_SIGN_EXPIRY * 60000,
+    facility: facility,
+    orcs: orcs
   };
   try {
     const validation = await encrypt(body);
@@ -101,20 +104,29 @@ async function verifyCaptcha(payload) {
   const validation = payload.validation;
   const answer = payload.answer;
 
-  const token = jwt.sign(
-    {
-      data: 'verified'
-    },
-    SECRET,
-    {
-      expiresIn: JWT_SIGN_EXPIRY + 'm',
-      algorithm: ALGORITHM
-    }
-  );
-
   // Normal mode, decrypt token
   const body = await decrypt(validation, PRIVATE_KEY);
+  if (!body.facility || !body.orcs) {
+    return {
+      valid: false
+    };
+  }
+
   if (body?.answer.toLowerCase() === answer.toLowerCase() && body?.expiry > Date.now()) {
+    // Add generated registration number and facility to data
+    const token = jwt.sign(
+      {
+        data: 'verified',
+        registrationNumber: generateRegistrationNumber(10),
+        facility: body.facility,
+        orcs: body.orcs
+      },
+      SECRET,
+      {
+        expiresIn: JWT_SIGN_EXPIRY + 'm',
+        algorithm: ALGORITHM
+      }
+    );
     return {
       valid: true,
       jwt: token
@@ -127,14 +139,16 @@ async function verifyCaptcha(payload) {
   }
 }
 
-
 function verifyJWT(token) {
   try {
     const decoded = jwt.verify(token, SECRET, { algorithm: ALGORITHM });
     // A256GCM
     if (decoded.data) {
       return {
-        valid: true
+        valid: true,
+        registrationNumber: decoded.registrationNumber,
+        facility: decoded.facility,
+        orcs: decoded.orcs
       };
     } else {
       return {
@@ -172,10 +186,16 @@ async function decrypt(body, private_key) {
   }
 }
 
+function generateRegistrationNumber(count) {
+  // TODO: Make this better
+  return Math.random().toString().substr(count);
+}
+
 module.exports = {
   getCaptcha,
   verifyCaptcha,
   verifyJWT,
   getCaptchaAudio,
-  encrypt
+  encrypt,
+  generateRegistrationNumber
 };

@@ -1,13 +1,23 @@
 const AWS = require('aws-sdk');
 const { verifyJWT } = require('../captchaUtil');
-const { dynamodb, TABLE_NAME, DEFAULT_BOOKING_DAYS_AHEAD, TIMEZONE, getFacility, getPark, getConfig } = require('../dynamoUtil');
+const {
+  dynamodb,
+  TABLE_NAME,
+  DEFAULT_BOOKING_DAYS_AHEAD,
+  TIMEZONE,
+  getFacility,
+  getPark,
+  getConfig
+} = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
 const { createNewReservationsObj } = require('../reservationObjUtils');
 const { getPersonalizationAttachment, getAdminLinkToPass } = require('../passUtils');
-const { sendSQSMessage } = require('../sqsUtils')
+const { sendSQSMessage } = require('../sqsUtils');
+const { checkIfPassExists } = require('../passUtils');
+const { generateRegistrationNumber } = require('../captchaUtil');
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
@@ -20,7 +30,7 @@ async function modifyPassCheckInStatus(pk, sk, checkedIn) {
       sk: { S: sk }
     },
     ExpressionAttributeValues: {
-      ":checkedIn": { "BOOL": checkedIn }
+      ':checkedIn': { BOOL: checkedIn }
     },
     UpdateExpression: 'set checkedIn =:checkedIn',
     ReturnValues: 'ALL_NEW',
@@ -29,7 +39,7 @@ async function modifyPassCheckInStatus(pk, sk, checkedIn) {
   };
 
   if (checkedIn) {
-    updateParams.ExpressionAttributeValues[':checkedInTime'] = { "S": DateTime.now().setZone(TIMEZONE).toISO() }
+    updateParams.ExpressionAttributeValues[':checkedInTime'] = { S: DateTime.now().setZone(TIMEZONE).toISO() };
     updateParams.UpdateExpression += ', checkedInTime =:checkedInTime';
   } else {
     // Remove time as it's irrelevant now
@@ -43,13 +53,10 @@ async function modifyPassCheckInStatus(pk, sk, checkedIn) {
 async function putPassHandler(event, context, permissionObject, passObj) {
   try {
     if (!permissionObject.isAuthenticated) {
-      return sendResponse(
-        403,
-        {
-          msg: 'You are not authorized to perform this operation.',
-          title: 'Unauthorized'
-        }
-      )
+      return sendResponse(403, {
+        msg: 'You are not authorized to perform this operation.',
+        title: 'Unauthorized'
+      });
     }
 
     // Only support check-in
@@ -60,8 +67,8 @@ async function putPassHandler(event, context, permissionObject, passObj) {
     } else {
       throw 'Bad Request - invalid query string parameters';
     }
-  } catch(e) {
-    logger.info("There was an error in putPassHandler");
+  } catch (e) {
+    logger.info('There was an error in putPassHandler');
     logger.error(e);
     return sendResponse(
       400,
@@ -75,14 +82,14 @@ async function putPassHandler(event, context, permissionObject, passObj) {
 }
 
 exports.handler = async (event, context) => {
-  logger.debug("WritePass:", event);
+  logger.debug('WritePass:', event);
   let passObject = {
     TableName: TABLE_NAME,
     ConditionExpression: 'attribute_not_exists(sk)'
   };
 
   if (!event) {
-    logger.info("There was an error in your submission:");
+    logger.info('There was an error in your submission:');
     return sendResponse(
       400,
       {
@@ -115,8 +122,6 @@ exports.handler = async (event, context) => {
     }
 
     // http POST (new)
-    const registrationNumber = generate(10);
-
     let {
       parkOrcs,
       firstName,
@@ -131,7 +136,7 @@ exports.handler = async (event, context) => {
       ...otherProps
     } = newObject;
 
-    logger.info("GetFacility");
+    logger.info('GetFacility');
     logger.debug(permissionObject.roles);
     const parkData = await getPark(parkOrcs);
     const facilityData = await getFacility(parkOrcs, facilityName, permissionObject.isAdmin);
@@ -140,10 +145,11 @@ exports.handler = async (event, context) => {
       throw 'Facility not found.';
     }
 
+    let registrationNumber;
     if (!permissionObject.isAdmin) {
       // Do extra checks if user is not sysadmin.
       if (!captchaJwt || !captchaJwt.length) {
-        logger.info("Missing CAPTCHA verification");
+        logger.info('Missing CAPTCHA verification');
         return sendResponse(400, {
           msg: 'Missing CAPTCHA verification.',
           title: 'Missing CAPTCHA verification'
@@ -151,17 +157,31 @@ exports.handler = async (event, context) => {
       }
 
       const verification = verifyJWT(captchaJwt);
-      if (!verification.valid) {
-        logger.info("CAPTCHA verification failed");
+      if (!verification.valid || !verification.registrationNumber || !verification.orcs || !verification.facility) {
+        logger.info('CAPTCHA verification failed');
         return sendResponse(400, {
           msg: 'CAPTCHA verification failed.',
           title: 'CAPTCHA verification failed'
         });
       }
-
+      // Check if pass already exists
+      const passExists = await checkIfPassExists(
+        verification.orcs,
+        verification.registrationNumber,
+        verification.facility
+      );
+      if (passExists) {
+        logger.info('Pass already exists');
+        return sendResponse(400, {
+          msg: 'This pass already exsits.',
+          title: 'Pass exists'
+        });
+      } else {
+        registrationNumber = verification.registrationNumber;
+      }
       // Enforce maximum limit per pass
       if (facilityData.type === 'Trail' && numberOfGuests > 4) {
-        logger.info("Too many guests");
+        logger.info('Too many guests');
         return sendResponse(400, {
           msg: 'You cannot have more than 4 guests on a trail.',
           title: 'Too many guests'
@@ -171,11 +191,14 @@ exports.handler = async (event, context) => {
       if (facilityData.type === 'Parking') {
         numberOfGuests = 1;
       }
+    } else {
+      // If the user is an Admin, generate a reg number
+      registrationNumber = generateRegistrationNumber(10);
     }
 
     // numberOfGuests cannot be less than 1.
     if (numberOfGuests < 1) {
-      logger.info("Invalid number of guests:", numberOfGuests);
+      logger.info('Invalid number of guests:', numberOfGuests);
       return sendResponse(400, {
         msg: 'Passes must have at least 1 guest.',
         title: 'Invalid number of guests'
@@ -201,13 +224,13 @@ exports.handler = async (event, context) => {
     const bookingPSTShortDate = bookingPSTDateTime.toISODate();
 
     const bookingPSTDayOfWeek = bookingPSTDateTime.setLocale('en-CA').weekday;
-    
+
     // check if passes are required on the booking weekday
     if (facilityData.bookingDays[bookingPSTDayOfWeek] === false) {
       // passes are not required, unless it is a holiday listed within the facility.
       // check if it is a holiday
       if (facilityData.bookableHolidays.indexOf(bookingPSTShortDate) === -1) {
-        logger.info("Booking not required");
+        logger.info('Booking not required');
         return sendResponse(400, {
           msg: 'Passes are not required at this facility on the requested date.',
           title: 'Booking not required.'
@@ -218,7 +241,7 @@ exports.handler = async (event, context) => {
     // check if booking date in the past
     const currentPSTDateStart = currentPSTDateTime.startOf('day');
     if (currentPSTDateStart.toISO() > bookingPSTDateTime.toISO()) {
-      logger.info("Booking date in the past");
+      logger.info('Booking date in the past');
       return sendResponse(400, {
         msg: 'You cannot book for a date in the past.',
         title: 'Booking date in the past'
@@ -230,7 +253,7 @@ exports.handler = async (event, context) => {
       facilityData.bookingDaysAhead === null ? DEFAULT_BOOKING_DAYS_AHEAD : facilityData.bookingDaysAhead;
     const futurePSTDateTimeMax = currentPSTDateTime.plus({ days: bookingDaysAhead });
     if (bookingPSTDateTime.startOf('day') > futurePSTDateTimeMax.startOf('day') && !permissionObject.isAdmin) {
-      logger.info("Booking date in the future invalid");
+      logger.info('Booking date in the future invalid');
       return sendResponse(400, {
         msg: 'You cannot book for a date that far ahead.',
         title: 'Booking date in the future invalid'
@@ -251,7 +274,7 @@ exports.handler = async (event, context) => {
         // it is beyond AM closing time
         const openTime = to12hTimeString(openingHour);
         const closeTime = to12hTimeString(closingHour);
-        logger.info("late to book an AM pass on this day");
+        logger.info('late to book an AM pass on this day');
         logger.debug(type, currentPSTHour, openTime, closeTime);
         return sendResponse(400, {
           msg:
@@ -274,7 +297,7 @@ exports.handler = async (event, context) => {
     passObject.Item = {};
     passObject.Item['pk'] = { S: 'pass::' + parkData.sk };
     passObject.Item['sk'] = { S: registrationNumber };
-    passObject.Item['parkName'] = {S: parkData.name};
+    passObject.Item['parkName'] = { S: parkData.name };
     passObject.Item['firstName'] = { S: firstName };
     passObject.Item['searchFirstName'] = { S: firstName.toLowerCase() };
     passObject.Item['lastName'] = { S: lastName };
@@ -294,23 +317,22 @@ exports.handler = async (event, context) => {
     passObject.Item['creationDate'] = { S: currentPSTDateTime.toUTC().toISO() };
     passObject.Item['dateUpdated'] = { S: currentPSTDateTime.toUTC().toISO() };
     passObject.Item['audit'] = {
-      "L": [
+      L: [
         {
-          "M": {
-            "by": {
-              "S": "system"
+          M: {
+            by: {
+              S: 'system'
             },
-            "passStatus": {
-              "S": status
-            }
-            ,
-            "dateUpdated": {
-              "S": currentPSTDateTime.toUTC().toISO()
+            passStatus: {
+              S: status
+            },
+            dateUpdated: {
+              S: currentPSTDateTime.toUTC().toISO()
             }
           }
         }
       ]
-    }
+    };
 
     const cancellationLink =
       process.env.PUBLIC_FRONTEND +
@@ -363,10 +385,9 @@ exports.handler = async (event, context) => {
             TableName: TABLE_NAME,
             IndexName: 'shortPassDate-index',
             KeyConditionExpression: 'shortPassDate = :shortPassDate AND facilityName = :facilityName',
-            FilterExpression:
-              'email = :email AND #type = :type AND passStatus IN (:reserved, :active)',
+            FilterExpression: 'email = :email AND #type = :type AND passStatus IN (:reserved, :active)',
             ExpressionAttributeNames: {
-              '#type': 'type',
+              '#type': 'type'
             },
             ExpressionAttributeValues: {
               ':facilityName': { S: facilityName },
@@ -379,7 +400,7 @@ exports.handler = async (event, context) => {
           };
           let existingItems;
           try {
-            logger.info("Running existingPassCheckObject");
+            logger.info('Running existingPassCheckObject');
             existingItems = await dynamodb.query(existingPassCheckObject).promise();
           } catch (error) {
             logger.info('Error while running query for existingPassCheckObject');
@@ -390,14 +411,20 @@ exports.handler = async (event, context) => {
           if (existingItems.Count === 0) {
             logger.debug('No existing pass found. Creating new pass...');
           } else {
-            logger.info(`email account already has a reservation. Registration number: ${JSON.stringify(existingItems?.Items[0]?.registrationNumber)}, Orcs: ${parkData.sk}`);
+            logger.info(
+              `email account already has a reservation. Registration number: ${JSON.stringify(
+                existingItems?.Items[0]?.registrationNumber
+              )}, Orcs: ${parkData.sk}`
+            );
             return sendResponse(400, {
               title: 'This email account already has a reservation for this booking time.',
               msg: 'A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>'
             });
           }
         } catch (err) {
-          logger.info(`Error on check existing pass for the same facility, email, type and date. Registration number: ${registrationNumber}, Orcs: ${parkData.sk}`);
+          logger.info(
+            `Error on check existing pass for the same facility, email, type and date. Registration number: ${registrationNumber}, Orcs: ${parkData.sk}`
+          );
           logger.error(err);
           return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
         }
@@ -504,7 +531,7 @@ exports.handler = async (event, context) => {
       }
       // Temporarily assign the QRCode Link for the front end not to guess at it.
       if (facilityData.qrcode === true) {
-        passObject.Item['adminPassLink'] = { "S": getAdminLinkToPass(parkData.sk, registrationNumber.toString()) }
+        passObject.Item['adminPassLink'] = { S: getAdminLinkToPass(parkData.sk, registrationNumber.toString()) };
       }
 
       try {
@@ -522,10 +549,18 @@ exports.handler = async (event, context) => {
 
         // Prune audit
         delete passObject.Item['audit'];
-        logger.info(`Pass successfully created. Registration number: ${JSON.stringify(passObject?.Item['registrationNumber'])}, Orcs: ${parkData.sk}`);
+        logger.info(
+          `Pass successfully created. Registration number: ${JSON.stringify(
+            passObject?.Item['registrationNumber']
+          )}, Orcs: ${parkData.sk}`
+        );
         return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
       } catch (err) {
-        logger.info(`GCNotify error, return 200 anyway. Registration number: ${JSON.stringify(passObject?.Item['registrationNumber'])}`);
+        logger.info(
+          `GCNotify error, return 200 anyway. Registration number: ${JSON.stringify(
+            passObject?.Item['registrationNumber']
+          )}`
+        );
         logger.error(err.response?.data || err);
         let errRes = AWS.DynamoDB.Converter.unmarshall(passObject.Item);
         errRes['err'] = 'Email Failed to Send';

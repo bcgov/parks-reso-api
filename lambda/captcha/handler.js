@@ -4,14 +4,17 @@ const { logger } = require('../logger');
 
 async function generateCaptcha(event, context) {
   if (checkWarmup(event)) {
-    logger.info("checkWarmup");
+    logger.info('checkWarmup');
     return sendResponse(200, {});
   }
-
-  const captcha = await getCaptcha({ fontSize: 76, width: 190, height: 70 });
+  const postBody = JSON.parse(event.body);
+  if (!postBody.facility || !postBody.orcs) {
+    return sendResponse(400, { msg: 'Failed to generate captcha' }, context);
+  }
+  const captcha = await getCaptcha({ fontSize: 76, width: 190, height: 70 }, postBody.facility, postBody.orcs);
 
   if (captcha?.valid === false) {
-    logger.info("Failed to generate captcha");
+    logger.info('Failed to generate captcha');
     logger.debug(captcha);
     return sendResponse(400, { msg: 'Failed to generate captcha' }, context);
   }
@@ -28,7 +31,7 @@ async function verifyAnswer(event, context) {
   const result = await verifyCaptcha(postBody);
 
   if (result?.valid !== true) {
-    logger.info("Failed to verify captcha");
+    logger.info('Failed to verify captcha');
     logger.debug(result);
     return sendResponse(400, { msg: 'Failed to verify captcha' }, context);
   }
