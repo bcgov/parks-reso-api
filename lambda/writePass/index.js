@@ -213,9 +213,15 @@ exports.handler = async (event, context) => {
       `(${DateTime.now().toISO()})`
     );
 
+    // the timestamp this script was run
     const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
+
+    // the hour of day the next future day opens for booking (AM slot)
+    let openingHour = facilityData.bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
+    let closingHour = DEFAULT_PM_OPENING_HOUR;
+    
     const bookingPSTDateTime = DateTime.fromISO(date).setZone(TIMEZONE).set({
-      hour: 12,
+      hour: openingHour,
       minutes: 0,
       seconds: 0,
       milliseconds: 0
@@ -249,20 +255,20 @@ exports.handler = async (event, context) => {
     }
 
     // Check bookingDaysAhead
+    // get the number of days the facility allows you to book in advance
     const bookingDaysAhead =
       facilityData.bookingDaysAhead === null ? DEFAULT_BOOKING_DAYS_AHEAD : facilityData.bookingDaysAhead;
+    // the latest you can book is the current timestamp + number of advance booking days
+    // eg1 current time is 11:30am 2023/01/01 PST, opening hour 7, bookingDaysAhead 3. Latest day you can book is 2023/01/04.
+    // eg2 current time is 6:59am 2023/01/01 PST, opening hour 7, bookingDaysAhead 3. Latest day you can book is 2023/01/03.
     const futurePSTDateTimeMax = currentPSTDateTime.plus({ days: bookingDaysAhead });
-    if (bookingPSTDateTime.startOf('day') > futurePSTDateTimeMax.startOf('day') && !permissionObject.isAdmin) {
-      logger.info('Booking date in the future invalid');
+    if (bookingPSTDateTime > futurePSTDateTimeMax && !permissionObject.isAdmin) {
+      logger.info("Booking date in the future invalid");
       return sendResponse(400, {
         msg: 'You cannot book for a date that far ahead.',
         title: 'Booking date in the future invalid'
       });
     }
-
-    // There should only be 1 facility.
-    let openingHour = facilityData.bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
-    let closingHour = DEFAULT_PM_OPENING_HOUR;
 
     let status = 'reserved';
 
