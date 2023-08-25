@@ -164,6 +164,23 @@ exports.handler = async (event, context) => {
           title: 'CAPTCHA verification failed'
         });
       }
+
+      // Check if park is open
+      if (parkData?.status !== 'open') {
+        return sendResponse(400, {
+          msg: 'Park is closed.',
+          title: 'Park closed.'
+        });
+      }
+
+      // Check if park is open
+      if (facilityData?.status?.state !== 'open') {
+        return sendResponse(400, {
+          msg: 'Facility is closed.',
+          title: 'Facility closed.'
+        });
+      }
+
       // Check if pass already exists
       const passExists = await checkIfPassExists(
         verification.orcs,
