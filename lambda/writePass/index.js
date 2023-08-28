@@ -3,7 +3,6 @@ const { verifyJWT } = require('../captchaUtil');
 const {
   dynamodb,
   TABLE_NAME,
-  DEFAULT_BOOKING_DAYS_AHEAD,
   TIMEZONE,
   getFacility,
   getPark,
@@ -14,7 +13,7 @@ const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
 const { createNewReservationsObj } = require('../reservationObjUtils');
-const { getPersonalizationAttachment, getAdminLinkToPass } = require('../passUtils');
+const { getPersonalizationAttachment, getAdminLinkToPass, isBookingAllowed } = require('../passUtils');
 const { sendSQSMessage } = require('../sqsUtils');
 const { checkIfPassExists } = require('../passUtils');
 const { generateRegistrationNumber } = require('../captchaUtil');
@@ -157,27 +156,17 @@ exports.handler = async (event, context) => {
       }
 
       const verification = verifyJWT(captchaJwt);
-      if (!verification.valid || !verification.registrationNumber || !verification.orcs || !verification.facility) {
+      if (!verification.valid
+          || !verification.registrationNumber
+          || !verification.orcs
+          || !verification.facility
+          || !verification.bookingDate
+          || !verification.passType)
+      {
         logger.info('CAPTCHA verification failed');
         return sendResponse(400, {
           msg: 'CAPTCHA verification failed.',
           title: 'CAPTCHA verification failed'
-        });
-      }
-
-      // Check if park is open
-      if (parkData?.status !== 'open') {
-        return sendResponse(400, {
-          msg: 'Park is closed.',
-          title: 'Park closed.'
-        });
-      }
-
-      // Check if park is open
-      if (facilityData?.status?.state !== 'open') {
-        return sendResponse(400, {
-          msg: 'Facility is closed.',
-          title: 'Facility closed.'
         });
       }
 
@@ -222,97 +211,37 @@ exports.handler = async (event, context) => {
       });
     }
 
-    // Get current time vs booking time information
-    // Log server DateTime
-    logger.debug(
-      'Server Time Zone:',
-      Intl.DateTimeFormat().resolvedOptions().timeZone || 'undefined',
-      `(${DateTime.now().toISO()})`
-    );
+    // check if valid booking attempt
+    const isBookingAttemptValid = await isBookingAllowed(parkOrcs, facilityName, date, type);
+    if (!isBookingAttemptValid || !isBookingAttemptValid.valid) {
+      return sendResponse(400, {
+        msg: isBookingAttemptValid.reason || 'Booking failed.',
+        title: 'Invalid booking.'
+      })
+    }
 
     // the timestamp this script was run
     const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
-
-    // the hour of day the next future day opens for booking (AM slot)
+    // the date of booking
     let openingHour = facilityData.bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
-    let closingHour = DEFAULT_PM_OPENING_HOUR;
-    
     const bookingPSTDateTime = DateTime.fromISO(date).setZone(TIMEZONE).set({
       hour: openingHour,
       minutes: 0,
       seconds: 0,
       milliseconds: 0
     });
-
     const bookingPSTShortDate = bookingPSTDateTime.toISODate();
 
-    const bookingPSTDayOfWeek = bookingPSTDateTime.setLocale('en-CA').weekday;
-
-    // check if passes are required on the booking weekday
-    if (facilityData.bookingDays[bookingPSTDayOfWeek] === false) {
-      // passes are not required, unless it is a holiday listed within the facility.
-      // check if it is a holiday
-      if (facilityData.bookableHolidays.indexOf(bookingPSTShortDate) === -1) {
-        logger.info('Booking not required');
-        return sendResponse(400, {
-          msg: 'Passes are not required at this facility on the requested date.',
-          title: 'Booking not required.'
-        });
-      }
-    }
-
-    // check if booking date in the past
-    const currentPSTDateStart = currentPSTDateTime.startOf('day');
-    if (currentPSTDateStart.toISO() > bookingPSTDateTime.toISO()) {
-      logger.info('Booking date in the past');
-      return sendResponse(400, {
-        msg: 'You cannot book for a date in the past.',
-        title: 'Booking date in the past'
-      });
-    }
-
-    // Check bookingDaysAhead
-    // get the number of days the facility allows you to book in advance
-    const bookingDaysAhead =
-      facilityData.bookingDaysAhead === null ? DEFAULT_BOOKING_DAYS_AHEAD : facilityData.bookingDaysAhead;
-    // the latest you can book is the current timestamp + number of advance booking days
-    // eg1 current time is 11:30am 2023/01/01 PST, opening hour 7, bookingDaysAhead 3. Latest day you can book is 2023/01/04.
-    // eg2 current time is 6:59am 2023/01/01 PST, opening hour 7, bookingDaysAhead 3. Latest day you can book is 2023/01/03.
-    const futurePSTDateTimeMax = currentPSTDateTime.plus({ days: bookingDaysAhead });
-    if (bookingPSTDateTime > futurePSTDateTimeMax && !permissionObject.isAdmin) {
-      logger.info("Booking date in the future invalid");
-      return sendResponse(400, {
-        msg: 'You cannot book for a date that far ahead.',
-        title: 'Booking date in the future invalid'
-      });
-    }
-
+    // set pass status
     let status = 'reserved';
 
+    // if the window is already active, activate the pass.
     // check if booking same-day
     if (currentPSTDateTime.get('day') === bookingPSTDateTime.get('day')) {
-      // check if AM/PM/DAY is currently open
-      const currentPSTHour = currentPSTDateTime.get('hour');
-      if (type === 'AM' && currentPSTHour >= DEFAULT_PM_OPENING_HOUR) {
-        // it is beyond AM closing time
-        const openTime = to12hTimeString(openingHour);
-        const closeTime = to12hTimeString(closingHour);
-        logger.info('late to book an AM pass on this day');
-        logger.debug(type, currentPSTHour, openTime, closeTime);
-        return sendResponse(400, {
-          msg:
-            'It is too late to book an AM pass on this day (AM time slot is from ' +
-            openTime +
-            ' to ' +
-            closeTime +
-            ').',
-          title: 'AM time slot has expired'
-        });
-      }
       if (type === 'PM') {
         openingHour = DEFAULT_PM_OPENING_HOUR;
       }
-      if (currentPSTHour >= openingHour) {
+      if (currentPSTDateTime.get('hour') >= openingHour) {
         status = 'active';
       }
     }
@@ -600,20 +529,3 @@ exports.handler = async (event, context) => {
     return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
   }
 };
-
-function to12hTimeString(hour) {
-  let period = 'am';
-  if (hour > 11) {
-    period = 'pm';
-    if (hour > 12) {
-      hour -= 12;
-    }
-  }
-  let hourStr = hour === 0 ? '12' : hour.toString();
-  return hourStr + period;
-}
-
-function generate(count) {
-  // TODO: Make this better
-  return Math.random().toString().substr(count);
-}

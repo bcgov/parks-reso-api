@@ -11,7 +11,11 @@ async function generateCaptcha(event, context) {
   if (!postBody.facility || !postBody.orcs) {
     return sendResponse(400, { msg: 'Failed to generate captcha' }, context);
   }
-  const captcha = await getCaptcha({ fontSize: 76, width: 190, height: 70 }, postBody.facility, postBody.orcs);
+  const captcha= await getCaptcha({ fontSize: 76, width: 190, height: 70 },
+                                  postBody.facility,
+                                  postBody.orcs,
+                                  postBody.bookingDate,
+                                  postBody.passType);
 
   if (captcha?.valid === false) {
     logger.info('Failed to generate captcha');

@@ -5,24 +5,25 @@ const jwt = require('jsonwebtoken');
 
 const SECRET = process.env.JWT_SECRET || 'defaultSecret';
 const JWT_SIGN_EXPIRY = process.env.JWT_SIGN_EXPIRY || '5'; // In minutes
-const CAPTCHA_SIGN_EXPIRY = (process.env.CAPTCHA_SIGN_EXPIRY && +process.env.CAPTCHA_SIGN_EXPIRY) || 30; // In minutes
 const PRIVATE_KEY = process.env.PRIVATE_KEY
   ? JSON.parse(process.env.PRIVATE_KEY)
   : {
-      kty: 'oct',
-      kid: 'gBdaS-G8RLax2qObTD94w',
-      use: 'enc',
-      alg: 'A256GCM',
-      k: 'FK3d8WvSRdxlUHs4Fs_xxYO3-6dCiUarBwiYNFw5hv8'
-    };
+    kty: 'oct',
+    kid: 'gBdaS-G8RLax2qObTD94w',
+    use: 'enc',
+    alg: 'A256GCM',
+    k: 'FK3d8WvSRdxlUHs4Fs_xxYO3-6dCiUarBwiYNFw5hv8'
+  };
 const { logger } = require('./logger');
+const { isBookingAllowed } = require('./passUtils');
 
 const AWS_REGION = process.env.AWS_DEFAULT_REGION || 'ca-central-1';
 
 const ALGORITHM = process.env.ALGORITHM || 'HS384';
 
-async function getCaptcha(options, facility, orcs) {
-  const captcha = svgCaptcha.create({
+// provide date of booking 
+async function getCaptcha(options, facility, orcs, bookingDate, passType) {
+  let captcha = svgCaptcha.create({
     ...{
       size: 6, // size of random string
       ignoreChars: '0o1il', // filter out some characters like 0o1i
@@ -31,20 +32,36 @@ async function getCaptcha(options, facility, orcs) {
     ...options
   });
 
-  if (!captcha || (captcha && !captcha.data) || !facility || !orcs) {
-    // Something bad happened with Captcha.
-    // Or facility or ORCs was not provided
+  if (!captcha || (captcha && !captcha.data) || !facility || !orcs || !bookingDate || !passType) {
+    // Something bad happened with Captcha or specific parameters were not set
     return {
       valid: false
     };
   }
 
+  const isValidBooking = await isBookingAllowed(orcs, facility, bookingDate, passType);
+
+  // if you cant currently book a pass for the facility, dont bother creating the captcha.
+  if (!isValidBooking || !isValidBooking.valid) {
+    return isValidBooking;
+  }
+
   // add answer, and expiry to body
   const body = {
     answer: captcha.text,
-    expiry: Date.now() + CAPTCHA_SIGN_EXPIRY * 60000,
-    facility: facility,
-    orcs: orcs
+    jwt: jwt.sign(
+      {
+        facility: facility,
+        orcs: orcs,
+        bookingDate: bookingDate,
+        passType: passType
+      },
+      SECRET,
+      {
+        expiresIn: JWT_SIGN_EXPIRY + 'm',
+        algorithm: ALGORITHM
+      }
+    ),
   };
   try {
     const validation = await encrypt(body);
@@ -81,6 +98,16 @@ async function getCaptchaAudio(payload) {
     const validation = payload.validation;
     const decryptedBody = await decrypt(validation, PRIVATE_KEY);
 
+    try {
+      const decryptedJWT = jwt.verify(body.jwt, SECRET, { algorithm: ALGORITHM });
+      logger.debug('Decrypted JWT:', decryptedJWT)
+      if (!decryptedJWT || !decryptedJWT.orcs || !decryptedJWT.facility || !decryptedJWT.bookingDate || !decryptedJWT.passType) {
+        throw 'Malformed JWT';
+      }
+    } catch (error) {
+      throw error;
+    }
+
     const captchaText = decryptedBody.answer.toString().split('').join(', ');
 
     const params = {
@@ -106,20 +133,30 @@ async function verifyCaptcha(payload) {
 
   // Normal mode, decrypt token
   const body = await decrypt(validation, PRIVATE_KEY);
-  if (!body.facility || !body.orcs) {
+  let decryptedJWT = null;
+  try {
+    decryptedJWT = jwt.verify(body.jwt, SECRET, {algorithm: ALGORITHM});
+    logger.debug('Decrypted JWT:', decryptedJWT);
+    if (!decryptedJWT || !decryptedJWT.orcs || !decryptedJWT.facility || !decryptedJWT.bookingDate || !decryptedJWT.passType) {
+      throw 'Malformed JWT';
+    }
+  } catch (error) {
+    logger.error(error);
     return {
       valid: false
-    };
+    }
   }
 
-  if (body?.answer.toLowerCase() === answer.toLowerCase() && body?.expiry > Date.now()) {
+  if (body?.answer.toLowerCase() === answer.toLowerCase()) {
     // Add generated registration number and facility to data
     const token = jwt.sign(
       {
         data: 'verified',
         registrationNumber: generateRegistrationNumber(10),
-        facility: body.facility,
-        orcs: body.orcs
+        facility: decryptedJWT.facility,
+        orcs: decryptedJWT.orcs,
+        bookingDate: decryptedJWT.bookingDate,
+        passType: decryptedJWT.passType,
       },
       SECRET,
       {
@@ -127,6 +164,7 @@ async function verifyCaptcha(payload) {
         algorithm: ALGORITHM
       }
     );
+    logger.debug('Captcha verified.');
     return {
       valid: true,
       jwt: token
@@ -142,13 +180,16 @@ async function verifyCaptcha(payload) {
 function verifyJWT(token) {
   try {
     const decoded = jwt.verify(token, SECRET, { algorithm: ALGORITHM });
+    logger.info('JWT decoded.')
     // A256GCM
     if (decoded.data) {
       return {
         valid: true,
         registrationNumber: decoded.registrationNumber,
         facility: decoded.facility,
-        orcs: decoded.orcs
+        orcs: decoded.orcs,
+        bookingDate: decoded.bookingDate,
+        passType: decoded.passType
       };
     } else {
       return {
