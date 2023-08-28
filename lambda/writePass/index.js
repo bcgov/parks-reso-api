@@ -216,7 +216,7 @@ exports.handler = async (event, context) => {
     if (!isBookingAttemptValid || !isBookingAttemptValid.valid) {
       return sendResponse(400, {
         msg: isBookingAttemptValid.reason || 'Booking failed.',
-        title: 'Invalid booking.'
+        title: 'Booking date in the past'
       })
     }
 

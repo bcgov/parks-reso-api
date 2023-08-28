@@ -98,16 +98,6 @@ async function getCaptchaAudio(payload) {
     const validation = payload.validation;
     const decryptedBody = await decrypt(validation, PRIVATE_KEY);
 
-    try {
-      const decryptedJWT = jwt.verify(body.jwt, SECRET, { algorithm: ALGORITHM });
-      logger.debug('Decrypted JWT:', decryptedJWT)
-      if (!decryptedJWT || !decryptedJWT.orcs || !decryptedJWT.facility || !decryptedJWT.bookingDate || !decryptedJWT.passType) {
-        throw 'Malformed JWT';
-      }
-    } catch (error) {
-      throw error;
-    }
-
     const captchaText = decryptedBody.answer.toString().split('').join(', ');
 
     const params = {

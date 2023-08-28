@@ -65,7 +65,6 @@ function getAdminPortalURL() {
 
 // checks to see if booking is currently allowed at a particular facility on a particular date
 async function isBookingAllowed(orcs, facilitySk, date, type) {
-
   try {
     // Get current time vs booking time information.
     // Log server DateTime.
@@ -111,7 +110,7 @@ async function isBookingAllowed(orcs, facilitySk, date, type) {
     // if booking date in the past, deny.
     if (currentPSTDateTime.startOf('day') > bookingPSTDateTime.startOf('day')) {
       // Date is definitely in the past.
-      throw 'Cannot book for a date in the past'
+      throw 'You cannot book for a date in the past.'
     }
 
     // if booking AM pass after AM closing hour on same day, deny.
@@ -133,7 +132,6 @@ async function isBookingAllowed(orcs, facilitySk, date, type) {
         ').';
       }
     }
-
     // If park is closed, deny
     if (park?.status !== 'open') {
       throw 'Park is closed.';

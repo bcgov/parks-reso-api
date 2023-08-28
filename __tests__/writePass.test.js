@@ -113,6 +113,8 @@ describe('Pass Fails', () => {
         data: 'verified',
         registrationNumber: '1111111111',
         facility: 'Trail B',
+        bookingDate: '2022-01-01',
+        passType: 'DAY',
         orcs: 'Test Park 1'
       },
       'defaultSecret',
@@ -156,7 +158,9 @@ describe('Pass Fails', () => {
         data: 'verified',
         registrationNumber: '1111111112',
         facility: 'Trail B',
-        orcs: 'Test Park 1'
+        orcs: 'Test Park 1',
+        bookingDate: '2022-01-01',
+        passType: 'DAY',
       },
       'defaultSecret',
       {
@@ -202,7 +206,9 @@ describe('Pass Fails', () => {
         data: 'verified',
         registrationNumber: '1111111113',
         facility: 'Parking lot A',
-        orcs: 'Test Park 1'
+        orcs: 'Test Park 1',
+        bookingDate: '1970-01-01',
+        passType: 'DAY'
       },
       'defaultSecret',
       {
@@ -220,7 +226,7 @@ describe('Pass Fails', () => {
         facilityName: 'Parking lot A',
         email: '',
         date: '1970-01-01T00:00:00.758Z',
-        type: '',
+        type: 'DAY',
         numberOfGuests: 1,
         phoneNumber: '',
         captchaJwt: token
@@ -248,7 +254,9 @@ describe('Pass Fails', () => {
         data: 'verified',
         registrationNumber: '1111111114',
         facility: 'Trail B',
-        orcs: 'Test Park 1'
+        orcs: 'Test Park 1',
+        bookingDate: '2022-01-01',
+        passType: 'DAY',
       },
       'defaultSecret',
       {
@@ -733,7 +741,9 @@ describe('Pass Successes', () => {
         data: 'verified',
         registrationNumber: '1111111119',
         facility: 'Parking lot A',
-        orcs: 'Test Park 1'
+        orcs: 'Test Park 1',
+        bookingDate: '2022-01-01',
+        passType: 'DAY'
       },
       'defaultSecret',
       {
