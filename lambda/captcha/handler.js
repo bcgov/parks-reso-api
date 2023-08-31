@@ -3,6 +3,8 @@ const { sendResponse, checkWarmup } = require('../responseUtil');
 const { logger } = require('../logger');
 
 async function generateCaptcha(event, context) {
+  logger.info('generateCaptcha');
+  logger.debug(JSON.stringify(event));
   if (checkWarmup(event)) {
     logger.info('checkWarmup');
     return sendResponse(200, {});
@@ -11,12 +13,15 @@ async function generateCaptcha(event, context) {
   if (!postBody.facility || !postBody.orcs) {
     return sendResponse(400, { msg: 'Failed to generate captcha' }, context);
   }
-
+  logger.info('Post Body');
+  logger.debug(JSON.stringify(postBody));
   const captcha = await getCaptcha({ fontSize: 76, width: 190, height: 70 },
                                     postBody.facility,
                                     postBody.orcs,
                                     postBody.bookingDate,
                                     postBody.passType);
+
+  logger.debug(JSON.stringify(captcha));
 
   if (captcha?.valid === false) {
     logger.info('Failed to generate captcha');
