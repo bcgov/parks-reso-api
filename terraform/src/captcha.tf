@@ -25,7 +25,7 @@ resource "aws_lambda_function" "generateCaptchaLambda" {
     }
   }
 
-  role = aws_iam_role.basicExecutionRole.arn
+  role = aws_iam_role.readRole.arn
 }
 
 resource "aws_lambda_alias" "generateCaptchaLambdaLatest" {
@@ -80,7 +80,7 @@ resource "aws_lambda_function" "verifyCaptchaLambda" {
     }
   }
 
-  role = aws_iam_role.basicExecutionRole.arn
+  role = aws_iam_role.readRole.arn
 }
 
 resource "aws_lambda_alias" "verifyCaptchaLambdaLatest" {
