@@ -72,7 +72,7 @@ resource "aws_lambda_function" "writePassLambda" {
       PASS_CANCELLATION_ROUTE               = data.aws_ssm_parameter.pass_cancellation_route.value,
       SSO_ISSUER                            = data.aws_ssm_parameter.sso_issuer.value,
       SSO_JWKSURI                           = data.aws_ssm_parameter.sso_jwksuri.value,
-      LOG_LEVEL                             = "info"
+      LOG_LEVEL                             = "debug"
     }
   }
 
