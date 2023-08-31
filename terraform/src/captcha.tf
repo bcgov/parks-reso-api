@@ -21,6 +21,7 @@ resource "aws_lambda_function" "generateCaptchaLambda" {
   environment {
     variables = {
       PRIVATE_KEY = local.privateKey,
+      JWT_SECRET  = local.jwtSecret.jwtSecret,
       LOG_LEVEL   = "info"
     }
   }
