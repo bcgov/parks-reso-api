@@ -125,8 +125,10 @@ async function verifyCaptcha(payload) {
   const body = await decrypt(validation, PRIVATE_KEY);
   let decryptedJWT = null;
   try {
+    logger.debug('answer:', payload.answer);
+    logger.debug('body:', JSON.stringify(body));
     decryptedJWT = jwt.verify(body.jwt, SECRET, {algorithm: ALGORITHM});
-    logger.debug('Decrypted JWT:', decryptedJWT);
+    logger.debug('Decrypted JWT:', JSON.stringify(decryptedJWT));
     if (!decryptedJWT || !decryptedJWT.orcs || !decryptedJWT.facility || !decryptedJWT.bookingDate || !decryptedJWT.passType) {
       throw 'Malformed JWT';
     }
