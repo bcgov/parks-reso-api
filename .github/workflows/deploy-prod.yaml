@@ -38,17 +38,33 @@ jobs:
           echo "::error::Git Tag not found, please double check input"
           exit 1
 
-      # Get artifacts from cache
-      - name: Restore cached artifacts
-        uses: actions/cache/restore@v3
+      ### Install if no cache exists ###
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
+      - run: yarn install --silent --frozen-lockfile
+
+      ### Build if no cache exists ###
+      - name: Cache Build
+        id: cache-build
+        uses: actions/cache@v3
         with:
           path: |
             **/terraform/src/artifacts
           key: ${{ github.sha }}-artifacts
+      - name: Run Build
+        if: steps.cache-build.outputs.cache-hit != 'true'
+        run: |
+          sudo prlimit --pid $$ --nofile=1048576:1048576
+          sudo sysctl fs.inotify.max_user_instances=1280
+          sudo sysctl fs.inotify.max_user_watches=655360
+          yarn build-ci
 
       ### Get environment variables from AWS Parameter Store ###
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ vars.AWS_ROLE_ARN_TO_USE }}
