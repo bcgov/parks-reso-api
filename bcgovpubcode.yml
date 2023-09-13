@@ -1,0 +1,43 @@
+---
+data_management_roles:
+  data_custodian: Jessica Wade
+  product_owner: Jessica Wade
+product_external_dependencies:
+  identity_authorization:
+    - IDIR
+    - Business-BceId
+    - BC-Services-Card
+  notification_standard:
+    - GCNotify
+product_information:
+  api_specifications: []
+  ministry:
+    - Environment and Climate Change Strategy
+  product_acronym: DUP
+  product_description: Service for managing access to specific parks and trails in BC
+  product_name: BC Parks Day Use Pass reservation system
+  product_urls:
+    - https://reserve-admin.bcparks.ca/dayuse/
+    - https://reserve.bcparks.ca/dayuse/
+  program_area: Conservation and Recreation Division
+product_technology_information:
+  backend_frameworks:
+    - name: Node.js
+      version: 18.x
+  backend_languages_version:
+    - name: JavaScript
+      version: ES6
+  ci_cd_tools:
+    - GitHub-Actions
+    - Terragrunt
+  data_storage_platforms:
+    - Dynamodb
+  frontend_frameworks:
+    - name: Angular
+      version: 15.x
+  frontend_languages:
+    - name: TypeScript
+      version: 4.x
+  hosting_platforms:
+    - Amazon-Web-Services
+version: 1
