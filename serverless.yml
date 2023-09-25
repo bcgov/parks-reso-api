@@ -237,6 +237,9 @@ functions:
   # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-writeMetrics
   writeMetrics:
     handler: lambda/writeMetrics/index.handler
+  # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-updateParkName
+  updateParkName:
+    handler: lambda/updateParkName/index.handler
 
 
 custom:
