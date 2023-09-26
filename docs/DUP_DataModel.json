@@ -1,0 +1,2178 @@
+{
+  "ModelName": "Day Use Pass",
+  "ModelMetadata": {
+    "Author": "Cameron Pettit",
+    "DateCreated": "Sep 21, 2023, 08:34 AM",
+    "DateLastModified": "Sep 21, 2023, 03:39 PM",
+    "Description": "",
+    "AWSService": "Amazon DynamoDB",
+    "Version": "3.0"
+  },
+  "DataModel": [
+    {
+      "TableName": "parksreso",
+      "KeyAttributes": {
+        "PartitionKey": {
+          "AttributeName": "pk",
+          "AttributeType": "S"
+        },
+        "SortKey": {
+          "AttributeName": "sk",
+          "AttributeType": "S"
+        }
+      },
+      "NonKeyAttributes": [
+        {
+          "AttributeName": "shortPassDate",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "passStatus",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "facilityName",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "date",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "type",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "phoneNumber",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "parkName",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "facilityType",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "lastName",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "creationDate",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "email",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "searchLastName",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "firstName",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "numberOfGuests",
+          "AttributeType": "N"
+        },
+        {
+          "AttributeName": "license",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "searchFirstName",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "registrationNumber",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "isOverbooked",
+          "AttributeType": "BOOL"
+        },
+        {
+          "AttributeName": "bcParksLink",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "capacity",
+          "AttributeType": "N"
+        },
+        {
+          "AttributeName": "description",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "mapLink",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "name",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "orcs",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "roles",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "status",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "visible",
+          "AttributeType": "BOOL"
+        },
+        {
+          "AttributeName": "winterWarning",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "bookableHolidays",
+          "AttributeType": "L"
+        },
+        {
+          "AttributeName": "bookingDays",
+          "AttributeType": "M"
+        },
+        {
+          "AttributeName": "bookingDaysAhead",
+          "AttributeType": "N"
+        },
+        {
+          "AttributeName": "bookingDaysRichText",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "bookingOpeningHour",
+          "AttributeType": "N"
+        },
+        {
+          "AttributeName": "bookingTimes",
+          "AttributeType": "M"
+        },
+        {
+          "AttributeName": "isUpdating",
+          "AttributeType": "BOOL"
+        },
+        {
+          "AttributeName": "qrcode",
+          "AttributeType": "BOOL"
+        },
+        {
+          "AttributeName": "audit",
+          "AttributeType": "L"
+        },
+        {
+          "AttributeName": "capacities",
+          "AttributeType": "M"
+        }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "manualLookup-index",
+          "KeyAttributes": {
+            "PartitionKey": {
+              "AttributeName": "shortPassDate",
+              "AttributeType": "S"
+            },
+            "SortKey": {
+              "AttributeName": "facilityName",
+              "AttributeType": "S"
+            }
+          },
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        },
+        {
+          "IndexName": "passStatus-index",
+          "KeyAttributes": {
+            "PartitionKey": {
+              "AttributeName": "passStatus",
+              "AttributeType": "S"
+            }
+          },
+          "Projection": {
+            "ProjectionType": "INCLUDE",
+            "NonKeyAttributes": [
+              "pk",
+              "sk",
+              "date",
+              "type"
+            ]
+          }
+        },
+        {
+          "IndexName": "shortPassDate-index",
+          "KeyAttributes": {
+            "PartitionKey": {
+              "AttributeName": "shortPassDate",
+              "AttributeType": "S"
+            },
+            "SortKey": {
+              "AttributeName": "facilityName",
+              "AttributeType": "S"
+            }
+          },
+          "Projection": {
+            "ProjectionType": "INCLUDE",
+            "NonKeyAttributes": [
+              "phoneNumber",
+              "facilityType",
+              "parkName",
+              "lastName",
+              "creationDate",
+              "email",
+              "searchLastName",
+              "firstName",
+              "numberOfGuests",
+              "license",
+              "searchFirstName",
+              "registrationNumber",
+              "isOverbooked",
+              "passStatus",
+              "date",
+              "type"
+            ]
+          }
+        }
+      ],
+      "TableData": [
+        {
+          "pk": {
+            "S": "park"
+          },
+          "sk": {
+            "S": "0007"
+          },
+          "bcParksLink": {
+            "S": "https://bcparks.ca/explore/parkpgs/garibaldi/"
+          },
+          "description": {
+            "S": "<p><span data-contrast=\"auto\">Day-use passes are required before entering Garibaldi Park at Diamond Head, Rubble Creek, and Cheakamus.&nbsp;</span><span data-ccp-props=\"{&quot;201341983&quot;:0,&quot;335559739&quot;:160,&quot;335559740&quot;:259}\"> <span lang=\"EN-US\" style=\"font-size: 11.0pt; font-family: 'BC Sans'; mso-fareast-font-family: 'Times New Roman'; mso-bidi-font-family: Calibri; mso-ligatures: standardcontextual; mso-ansi-language: EN-US; mso-fareast-language: EN-CA; mso-bidi-language: AR-SA;\">As of September 5, passes are only required on weekends and holidays to visit Garibaldi Park.</span></span></p> <p><span data-contrast=\"auto\">Familiarizing yourself with the park through this <a href=\"https://www.youtube.com/watch?v=JZc5qt5il-c\">in-depth trail walk-through</a> will help you better prepare for your trip</span><span data-contrast=\"auto\">. </span><span data-ccp-props=\"{&quot;201341983&quot;:0,&quot;335559739&quot;:160,&quot;335559740&quot;:259}\">&nbsp;</span></p> <p><span data-contrast=\"auto\">Detailed program information and history can be found on the <a href=\"https://bcparks.ca/reserve/day-use/\">Day-Use Pass information page</a>. </span><span data-ccp-props=\"{&quot;201341983&quot;:0,&quot;335559739&quot;:160,&quot;335559740&quot;:259}\">&nbsp;</span></p>"
+          },
+          "mapLink": {
+            "S": "null"
+          },
+          "name": {
+            "S": "Garibaldi Provincial Park"
+          },
+          "orcs": {
+            "S": "0007"
+          },
+          "roles": {
+            "S": "[ { \"S\" : \"sysadmin\" }, { \"S\" : \"0007\" } ]"
+          },
+          "status": {
+            "S": "open"
+          },
+          "visible": {
+            "BOOL": true
+          },
+          "winterWarning": {
+            "S": "false"
+          }
+        },
+        {
+          "pk": {
+            "S": "park"
+          },
+          "sk": {
+            "S": "0015"
+          },
+          "bcParksLink": {
+            "S": "https://bcparks.ca/explore/parkpgs/mt_seymour/"
+          },
+          "description": {
+            "S": "<p>The road to Mount Seymour is provincially designated as a <a href=\"https://www2.gov.bc.ca/gov/content/transportation/driving-and-cycling/traveller-information/seasonal/winter-driving/winter-tire-and-chain-up-routes\" target=\"_blank\" rel=\"noopener\">Winter Tire &amp; Chain Route</a>&nbsp;from Oct 1 to March 31. Mount Seymour staff reserve the right to enforce this requirement, ensuring vehicles have tires with the M+S symbol or, in extreme weather conditions, the peaked mount/snowflake symbol.</p> <p>If your vehicle is not equipped with adequate tires and you still wish to access the park, the resort offers a <a href=\"https://mtseymour.ca/?promocode=backcountryshuttle\" target=\"_blank\" rel=\"noopener\">shuttle service.</a> If you are using the shuttle bus, you&nbsp;<strong>do not&nbsp;</strong>require a day-use pass.</p> <p><span class=\"TextRun SCXW53964763 BCX0\" lang=\"EN-US\" xml:lang=\"EN-US\" data-contrast=\"auto\"><span class=\"NormalTextRun SCXW53964763 BCX0\">The South Coast region covers </span><span class=\"NormalTextRun SCXW53964763 BCX0\">Avalanche Canada&rsquo;s</span><span class=\"NormalTextRun SCXW53964763 BCX0\"> Mount Seymour Park</span><span class=\"NormalTextRun SCXW53964763 BCX0\">&nbsp;</span></span><a class=\"Hyperlink SCXW53964763 BCX0\" href=\"https://avalanche.ca/map/forecasts/9115d426-7872-4b62-bdd8-234a94ae0ab9_fc022cc076b5327b78b2e1d6fbfd8d1d49dec6a1260f070359a9704acaa9fdaa?panel=null\" target=\"_blank\" rel=\"noreferrer noopener\"><span class=\"TextRun Underlined SCXW53964763 BCX0\" lang=\"EN-US\" xml:lang=\"EN-US\" data-contrast=\"none\"><span class=\"NormalTextRun SCXW53964763 BCX0\" data-ccp-charstyle=\"Hyperlink\">avalanche hazard rating.</span></span></a><span class=\"EOP SCXW53964763 BCX0\" data-ccp-props=\"{&quot;201341983&quot;:0,&quot;335559739&quot;:160,&quot;335559740&quot;:257}\">&nbsp;</span></p> <div class=\"OutlineElement Ltr SCXW266378373 BCX0\"> <p class=\"Paragraph SCXW266378373 BCX0\"><span class=\"TextRun SCXW266378373 BCX0\" lang=\"EN-US\" xml:lang=\"EN-US\" data-contrast=\"auto\"><span class=\"NormalTextRun SCXW266378373 BCX0\">Before your trip, please check sunset times to ensure you depart with enough time to complete your intended hike.&nbsp;</span></span><span class=\"EOP SCXW266378373 BCX0\" data-ccp-props=\"{&quot;201341983&quot;:0,&quot;335559739&quot;:160,&quot;335559740&quot;:259}\">&nbsp;</span></p> </div> <div class=\"OutlineElement Ltr SCXW266378373 BCX0\"> <p class=\"Paragraph SCXW266378373 BCX0\"><span class=\"TextRun SCXW266378373 BCX0\" lang=\"EN-US\" xml:lang=\"EN-US\" data-contrast=\"auto\"><span class=\"NormalTextRun SCXW266378373 BCX0\">Understanding the importance of </span></span><a class=\"Hyperlink SCXW266378373 BCX0\" href=\"https://www.youtube.com/watch?v=Qm3U9eKha74&amp;list=TLGG4vjqjYWDkSowNzA2MjAyMg\" target=\"_blank\" rel=\"noreferrer noopener\"><span class=\"TextRun Underlined SCXW266378373 BCX0\" lang=\"EN-US\" xml:lang=\"EN-US\" data-contrast=\"auto\"><span class=\"NormalTextRun SCXW266378373 BCX0\" data-ccp-charstyle=\"Hyperlink\">#LeaveNoTrace</span></span></a><span class=\"TextRun SCXW266378373 BCX0\" lang=\"EN-US\" xml:lang=\"EN-US\" data-contrast=\"auto\"><span class=\"NormalTextRun SCXW266378373 BCX0\"> may help you better understand how to prepare for your trip.&nbsp;&nbsp;</span></span><span class=\"EOP SCXW266378373 BCX0\" data-ccp-props=\"{&quot;201341983&quot;:0,&quot;335559739&quot;:160,&quot;335559740&quot;:259}\">&nbsp;</span></p> </div>"
+          },
+          "mapLink": {
+            "S": "https://nrs.objectstore.gov.bc.ca/kuwyyf/mount_seymour_parking_map_62573de964.pdf"
+          },
+          "name": {
+            "S": "Mount Seymour Provincial Park"
+          },
+          "orcs": {
+            "S": "0015"
+          },
+          "roles": {
+            "S": "[ { \"S\" : \"sysadmin\" }, { \"S\" : \"0015\" } ]"
+          },
+          "status": {
+            "S": "closed"
+          },
+          "visible": {
+            "BOOL": true
+          },
+          "winterWarning": {
+            "S": "true"
+          }
+        },
+        {
+          "pk": {
+            "S": "facility::0007"
+          },
+          "sk": {
+            "S": "Cheakamus"
+          },
+          "type": {
+            "S": "Parking"
+          },
+          "name": {
+            "S": "Cheakamus"
+          },
+          "status": {
+            "S": "{ \"stateReason\" : { \"NULL\" : true }, \"state\" : { \"S\" : \"open\" } }"
+          },
+          "visible": {
+            "BOOL": true
+          },
+          "bookableHolidays": {
+            "L": []
+          },
+          "bookingDays": {
+            "M": {
+              "1": {
+                "BOOL": false
+              },
+              "2": {
+                "BOOL": false
+              },
+              "3": {
+                "BOOL": false
+              },
+              "4": {
+                "BOOL": false
+              },
+              "5": {
+                "BOOL": false
+              },
+              "6": {
+                "BOOL": true
+              },
+              "7": {
+                "BOOL": true
+              }
+            }
+          },
+          "bookingDaysAhead": {
+            "N": "2"
+          },
+          "bookingDaysRichText": {
+            "S": "<p><span lang=\"EN-US\" style=\"font-size: 11.0pt; font-family: 'BC Sans'; mso-fareast-font-family: 'Times New Roman'; mso-bidi-font-family: Calibri; mso-ligatures: standardcontextual; mso-ansi-language: EN-US; mso-fareast-language: EN-CA; mso-bidi-language: AR-SA;\">As of September 5, passes are only required on weekends and holidays to visit Garibaldi Park</span></p>"
+          },
+          "bookingOpeningHour": {
+            "N": "7"
+          },
+          "bookingTimes": {
+            "M": {
+              "AM": {
+                "M": {
+                  "max": {
+                    "N": "49"
+                  }
+                }
+              },
+              "PM": {
+                "M": {
+                  "max": {
+                    "N": "39"
+                  }
+                }
+              }
+            }
+          },
+          "isUpdating": {
+            "BOOL": false
+          },
+          "qrcode": {
+            "BOOL": false
+          }
+        },
+        {
+          "pk": {
+            "S": "pass::0007"
+          },
+          "sk": {
+            "S": "11111"
+          },
+          "shortPassDate": {
+            "S": "2023-09-21"
+          },
+          "passStatus": {
+            "S": "active"
+          },
+          "facilityName": {
+            "S": "Cheakamus"
+          },
+          "date": {
+            "S": "2023-09-21T19:00:00.000Z"
+          },
+          "type": {
+            "S": "AM"
+          },
+          "phoneNumber": {
+            "S": "111-1111"
+          },
+          "parkName": {
+            "S": "Garibaldi Provincial Park"
+          },
+          "facilityType": {
+            "S": "Parking"
+          },
+          "lastName": {
+            "S": "lastName1"
+          },
+          "creationDate": {
+            "S": "2023-09-21T14:00:00.000Z"
+          },
+          "email": {
+            "S": "email1@test.test"
+          },
+          "searchLastName": {
+            "S": "last1"
+          },
+          "firstName": {
+            "S": "first1"
+          },
+          "numberOfGuests": {
+            "N": "1"
+          },
+          "searchFirstName": {
+            "S": "first1"
+          },
+          "registrationNumber": {
+            "S": "11111"
+          },
+          "isOverbooked": {
+            "BOOL": false
+          }
+        },
+        {
+          "pk": {
+            "S": "pass:::0007"
+          },
+          "sk": {
+            "S": "22222"
+          },
+          "shortPassDate": {
+            "S": "2023-09-21"
+          },
+          "passStatus": {
+            "S": "reserved"
+          },
+          "facilityName": {
+            "S": "Cheakamus"
+          },
+          "date": {
+            "S": "2023-09-21T19:00:00.000Z"
+          },
+          "type": {
+            "S": "PM"
+          },
+          "phoneNumber": {
+            "S": "222-2222"
+          },
+          "parkName": {
+            "S": "Garibaldi Provincial Park"
+          },
+          "facilityType": {
+            "S": "Parking"
+          },
+          "lastName": {
+            "S": "lastName2"
+          },
+          "creationDate": {
+            "S": "2023-09-21T14:00:00.000Z"
+          },
+          "email": {
+            "S": "email2@test.test"
+          },
+          "searchLastName": {
+            "S": "last2"
+          },
+          "firstName": {
+            "S": "first2"
+          },
+          "numberOfGuests": {
+            "N": "1"
+          },
+          "searchFirstName": {
+            "S": "first2"
+          },
+          "registrationNumber": {
+            "S": "22222"
+          },
+          "isOverbooked": {
+            "BOOL": false
+          }
+        },
+        {
+          "pk": {
+            "S": "pass::0007"
+          },
+          "sk": {
+            "S": "33333"
+          },
+          "shortPassDate": {
+            "S": "2023-09-22"
+          },
+          "passStatus": {
+            "S": "reserved"
+          },
+          "facilityName": {
+            "S": "Cheakamus"
+          },
+          "date": {
+            "S": "2023-09-22T19:00:00.000Z"
+          },
+          "type": {
+            "S": "AM"
+          },
+          "phoneNumber": {
+            "S": "333-3333"
+          },
+          "parkName": {
+            "S": "Garibaldi Provincial Park"
+          },
+          "facilityType": {
+            "S": "Parking"
+          },
+          "lastName": {
+            "S": "lastName3"
+          },
+          "creationDate": {
+            "S": "2023-09-21T14:00:00.000Z"
+          },
+          "email": {
+            "S": "email3@test.test"
+          },
+          "searchLastName": {
+            "S": "last3"
+          },
+          "firstName": {
+            "S": "first3"
+          },
+          "numberOfGuests": {
+            "N": "1"
+          },
+          "searchFirstName": {
+            "S": "first3"
+          },
+          "registrationNumber": {
+            "S": "33333"
+          },
+          "isOverbooked": {
+            "BOOL": false
+          }
+        },
+        {
+          "pk": {
+            "S": "pass::0007"
+          },
+          "sk": {
+            "S": "4444"
+          },
+          "shortPassDate": {
+            "S": "2023-09-20"
+          },
+          "passStatus": {
+            "S": "expired"
+          },
+          "facilityName": {
+            "S": "Cheakamus"
+          },
+          "date": {
+            "S": "2023-09-20T19:00:00.000Z"
+          },
+          "type": {
+            "S": "AM"
+          },
+          "phoneNumber": {
+            "S": "444-4444"
+          },
+          "parkName": {
+            "S": "Garibaldi Provincial Park"
+          },
+          "facilityType": {
+            "S": "Parking"
+          },
+          "lastName": {
+            "S": "lastName4"
+          },
+          "creationDate": {
+            "S": "2023-09-21T14:00:00.000Z"
+          },
+          "email": {
+            "S": "email4@test.test"
+          },
+          "searchLastName": {
+            "S": "last4"
+          },
+          "firstName": {
+            "S": "first4"
+          },
+          "numberOfGuests": {
+            "N": "1"
+          },
+          "searchFirstName": {
+            "S": "first4"
+          },
+          "registrationNumber": {
+            "S": "44444"
+          },
+          "isOverbooked": {
+            "BOOL": false
+          }
+        },
+        {
+          "pk": {
+            "S": "pass::0007"
+          },
+          "sk": {
+            "S": "55555"
+          },
+          "shortPassDate": {
+            "S": "2023-09-22"
+          },
+          "passStatus": {
+            "S": "cancelled"
+          },
+          "facilityName": {
+            "S": "Cheakamus"
+          },
+          "date": {
+            "S": "2023-09-22T19:00:00.000Z"
+          },
+          "type": {
+            "S": "AM"
+          },
+          "phoneNumber": {
+            "S": "555-5555"
+          },
+          "parkName": {
+            "S": "Garibaldi Provincial Park"
+          },
+          "facilityType": {
+            "S": "Parking"
+          },
+          "lastName": {
+            "S": "lastName5"
+          },
+          "creationDate": {
+            "S": "2023-09-21T14:00:00.000Z"
+          },
+          "email": {
+            "S": "email5@test.test"
+          },
+          "searchLastName": {
+            "S": "last5"
+          },
+          "firstName": {
+            "S": "first5"
+          },
+          "numberOfGuests": {
+            "N": "1"
+          },
+          "searchFirstName": {
+            "S": "first5"
+          },
+          "registrationNumber": {
+            "S": "55555"
+          },
+          "isOverbooked": {
+            "BOOL": false
+          }
+        },
+        {
+          "pk": {
+            "S": "pass::0007"
+          },
+          "sk": {
+            "S": "66666"
+          },
+          "shortPassDate": {
+            "S": "2023-09-21"
+          },
+          "passStatus": {
+            "S": "cancelled"
+          },
+          "facilityName": {
+            "S": "Cheakamus"
+          },
+          "date": {
+            "S": "2023-09-21T19:00:00.000Z"
+          },
+          "type": {
+            "S": "AM"
+          },
+          "phoneNumber": {
+            "S": "666-6666"
+          },
+          "parkName": {
+            "S": "Garibaldi Provincial Park"
+          },
+          "facilityType": {
+            "S": "Parking"
+          },
+          "lastName": {
+            "S": "lastName6"
+          },
+          "creationDate": {
+            "S": "2023-09-21T14:00:00.000Z"
+          },
+          "email": {
+            "S": "email6@test.test"
+          },
+          "searchLastName": {
+            "S": "last6"
+          },
+          "firstName": {
+            "S": "first6"
+          },
+          "numberOfGuests": {
+            "N": "1"
+          },
+          "searchFirstName": {
+            "S": "first6"
+          },
+          "registrationNumber": {
+            "S": "66666"
+          },
+          "isOverbooked": {
+            "BOOL": false
+          }
+        },
+        {
+          "pk": {
+            "S": "reservations::0007::Cheakamus"
+          },
+          "sk": {
+            "S": "2023-09-20"
+          },
+          "status": {
+            "S": "open"
+          },
+          "capacities": {
+            "M": {
+              "AM": {
+                "M": {
+                  "baseCapacity": {
+                    "N": "49"
+                  },
+                  "capacityModifier": {
+                    "N": "0"
+                  },
+                  "availablePasses": {
+                    "N": "48"
+                  }
+                }
+              },
+              "PM": {
+                "M": {
+                  "baseCapacity": {
+                    "N": "39"
+                  },
+                  "capacityModifier": {
+                    "N": "0"
+                  },
+                  "availablePasses": {
+                    "N": "38"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "pk": {
+            "S": "reservations::0007::Cheakamus"
+          },
+          "sk": {
+            "S": "2023-09-21"
+          },
+          "status": {
+            "S": "open"
+          },
+          "capacities": {
+            "M": {
+              "AM": {
+                "M": {
+                  "baseCapacity": {
+                    "N": "49"
+                  },
+                  "capacityModifier": {
+                    "N": "0"
+                  },
+                  "availablePasses": {
+                    "N": "48"
+                  }
+                }
+              },
+              "PM": {
+                "M": {
+                  "baseCapacity": {
+                    "N": "39"
+                  },
+                  "capacityModifier": {
+                    "N": "0"
+                  },
+                  "availablePasses": {
+                    "N": "37"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "pk": {
+            "S": "reservations::0007::Cheakamus"
+          },
+          "sk": {
+            "S": "2023-09-22"
+          },
+          "status": {
+            "S": "open"
+          },
+          "capacities": {
+            "M": {
+              "AM": {
+                "M": {
+                  "baseCapacity": {
+                    "N": "49"
+                  },
+                  "capacityModifier": {
+                    "N": "0"
+                  },
+                  "availablePasses": {
+                    "N": "48"
+                  }
+                }
+              },
+              "PM": {
+                "M": {
+                  "baseCapacity": {
+                    "N": "39"
+                  },
+                  "capacityModifier": {
+                    "N": "0"
+                  },
+                  "availablePasses": {
+                    "N": "38"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "DataAccess": {
+        "MySql": {}
+      },
+      "BillingMode": "PROVISIONED",
+      "ProvisionedCapacitySettings": {
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        },
+        "AutoScalingRead": {
+          "ScalableTargetRequest": {
+            "MinCapacity": 1,
+            "MaxCapacity": 10,
+            "ServiceRole": "AWSServiceRoleForApplicationAutoScaling_DynamoDBTable"
+          },
+          "ScalingPolicyConfiguration": {
+            "TargetValue": 70
+          }
+        },
+        "AutoScalingWrite": {
+          "ScalableTargetRequest": {
+            "MinCapacity": 1,
+            "MaxCapacity": 10,
+            "ServiceRole": "AWSServiceRoleForApplicationAutoScaling_DynamoDBTable"
+          },
+          "ScalingPolicyConfiguration": {
+            "TargetValue": 70
+          }
+        }
+      }
+    },
+    {
+      "TableName": "parksreso-meta",
+      "KeyAttributes": {
+        "PartitionKey": {
+          "AttributeName": "pk",
+          "AttributeType": "S"
+        },
+        "SortKey": {
+          "AttributeName": "sk",
+          "AttributeType": "S"
+        }
+      },
+      "NonKeyAttributes": [
+        {
+          "AttributeName": "passes",
+          "AttributeType": "L"
+        },
+        {
+          "AttributeName": "response",
+          "AttributeType": "M"
+        },
+        {
+          "AttributeName": "status",
+          "AttributeType": "S"
+        }
+      ],
+      "TableData": [
+        {
+          "pk": {
+            "S": "feedbackSurveySummary"
+          },
+          "sk": {
+            "S": "2023-02-23T20:00:14.407Z"
+          },
+          "passes": {
+            "L": []
+          },
+          "response": {
+            "M": {
+              "template": {
+                "S": "ec2e908d-15f8-41ac-b980-8cc28fb1fdc1"
+              },
+              "template_version": {
+                "N": "1"
+              },
+              "service_name": {
+                "M": {
+                  "name": {
+                    "S": "bc-parks-reservations"
+                  }
+                }
+              },
+              "created_at": {
+                "S": "2023-02-23T20:00:14.267668+00:00"
+              },
+              "scheduled_for": {
+                "NULL": true
+              },
+              "notification_count": {
+                "N": "51"
+              },
+              "created_by": {
+                "M": {
+                  "name": {
+                    "S": "Notify service user"
+                  },
+                  "id": {
+                    "S": "6af522d0-2915-4e52-83a3-3690455a5fe6"
+                  }
+                }
+              },
+              "sender_id": {
+                "NULL": true
+              },
+              "processing_started": {
+                "NULL": true
+              },
+              "archived": {
+                "BOOL": false
+              },
+              "job_status": {
+                "S": "pending"
+              },
+              "processing_finished": {
+                "NULL": true
+              },
+              "updated_at": {
+                "NULL": true
+              },
+              "api_key": {
+                "M": {
+                  "key_type": {
+                    "S": "normal"
+                  },
+                  "name": {
+                    "S": "live"
+                  },
+                  "id": {
+                    "S": "f2876d82-578a-4ee0-9130-9ad766e23c08"
+                  }
+                }
+              },
+              "service": {
+                "S": "0ce94d17-34d4-45c2-b705-59695233b29d"
+              },
+              "original_file_name": {
+                "S": "DUP bulk feedback survey emails: sent 2023-02-23T20:00:13.528Z."
+              },
+              "id": {
+                "S": "70ce5d84-4ec7-4444-946f-05e8fa6c103a"
+              }
+            }
+          },
+          "status": {
+            "S": "success"
+          }
+        },
+        {
+          "pk": {
+            "S": "sendReminderSummary"
+          },
+          "sk": {
+            "S": "2022-12-16T00:00:06.214Z"
+          },
+          "passes": {
+            "L": []
+          },
+          "response": {
+            "M": {
+              "template": {
+                "S": "5e6a04f9-f3a8-4959-94f8-e06de270aa5a"
+              },
+              "template_version": {
+                "N": "3"
+              },
+              "service_name": {
+                "M": {
+                  "name": {
+                    "S": "bc-parks-reservations"
+                  }
+                }
+              },
+              "created_at": {
+                "S": "2022-12-16T00:00:05.759707+00:00"
+              },
+              "scheduled_for": {
+                "NULL": true
+              },
+              "notification_count": {
+                "N": "114"
+              },
+              "created_by": {
+                "M": {
+                  "name": {
+                    "S": "Notify service user"
+                  },
+                  "id": {
+                    "S": "6af522d0-2915-4e52-83a3-3690455a5fe6"
+                  }
+                }
+              },
+              "sender_id": {
+                "NULL": true
+              },
+              "processing_started": {
+                "NULL": true
+              },
+              "archived": {
+                "BOOL": false
+              },
+              "job_status": {
+                "S": "pending"
+              },
+              "processing_finished": {
+                "NULL": true
+              },
+              "updated_at": {
+                "NULL": true
+              },
+              "api_key": {
+                "M": {
+                  "key_type": {
+                    "S": "normal"
+                  },
+                  "name": {
+                    "S": "live"
+                  },
+                  "id": {
+                    "S": "f2876d82-578a-4ee0-9130-9ad766e23c08"
+                  }
+                }
+              },
+              "service": {
+                "S": "0ce94d17-34d4-45c2-b705-59695233b29d"
+              },
+              "original_file_name": {
+                "S": "DUP bulk reminders: sent 2022-12-16T00:00:05.099Z."
+              },
+              "id": {
+                "S": "0edea2f8-d01a-47f6-acdb-784540e62421"
+              }
+            }
+          },
+          "status": {
+            "S": "success"
+          }
+        }
+      ],
+      "DataAccess": {
+        "MySql": {}
+      },
+      "BillingMode": "PROVISIONED",
+      "ProvisionedCapacitySettings": {
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        },
+        "AutoScalingRead": {
+          "ScalableTargetRequest": {
+            "MinCapacity": 1,
+            "MaxCapacity": 10,
+            "ServiceRole": "AWSServiceRoleForApplicationAutoScaling_DynamoDBTable"
+          },
+          "ScalingPolicyConfiguration": {
+            "TargetValue": 70
+          }
+        },
+        "AutoScalingWrite": {
+          "ScalableTargetRequest": {
+            "MinCapacity": 1,
+            "MaxCapacity": 10,
+            "ServiceRole": "AWSServiceRoleForApplicationAutoScaling_DynamoDBTable"
+          },
+          "ScalingPolicyConfiguration": {
+            "TargetValue": 70
+          }
+        }
+      }
+    },
+    {
+      "TableName": "parksreso-metrics",
+      "KeyAttributes": {
+        "PartitionKey": {
+          "AttributeName": "pk",
+          "AttributeType": "S"
+        },
+        "SortKey": {
+          "AttributeName": "sk",
+          "AttributeType": "S"
+        }
+      },
+      "NonKeyAttributes": [
+        {
+          "AttributeName": "cancelled",
+          "AttributeType": "N"
+        },
+        {
+          "AttributeName": "capacities",
+          "AttributeType": "M"
+        },
+        {
+          "AttributeName": "fullyBooked",
+          "AttributeType": "BOOL"
+        },
+        {
+          "AttributeName": "hourlyData",
+          "AttributeType": "L"
+        },
+        {
+          "AttributeName": "lastUpdated",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "totalPasses",
+          "AttributeType": "N"
+        }
+      ],
+      "TableData": [
+        {
+          "pk": {
+            "S": "metrics::0007::Cheakamus"
+          },
+          "sk": {
+            "S": "2023-09-20"
+          },
+          "cancelled": {
+            "N": "0"
+          },
+          "capacities": {
+            "M": {
+              "AM": {
+                "M": {
+                  "baseCapacity": {
+                    "N": "49"
+                  },
+                  "capacityModifier": {
+                    "N": "0"
+                  },
+                  "checkedIn": {
+                    "N": "1"
+                  },
+                  "passStatuses": {
+                    "M": {
+                      "expired": {
+                        "N": "1"
+                      }
+                    }
+                  },
+                  "availablePasses": {
+                    "N": "49"
+                  },
+                  "overbooked": {
+                    "N": "0"
+                  }
+                }
+              },
+              "PM": {
+                "M": {
+                  "baseCapacity": {
+                    "N": "39"
+                  },
+                  "capacityModifier": {
+                    "N": "0"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  },
+                  "passStatuses": {
+                    "M": {}
+                  },
+                  "availablePasses": {
+                    "N": "39"
+                  },
+                  "overbooked": {
+                    "N": "0"
+                  }
+                }
+              }
+            }
+          },
+          "fullyBooked": {
+            "BOOL": false
+          },
+          "hourlyData": {
+            "L": [
+              {
+                "M": {
+                  "hour": {
+                    "N": "0"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "1"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "2"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "3"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "4"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "5"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "6"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "7"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "8"
+                  },
+                  "checkedIn": {
+                    "N": "1"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "9"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "10"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "11"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "12"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "13"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "14"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "15"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "16"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "17"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "18"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "19"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "20"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "21"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "22"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "23"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              }
+            ]
+          },
+          "lastUpdated": {
+            "S": "2023-09-21T11:39:50.843-07:00"
+          },
+          "totalPasses": {
+            "N": "1"
+          }
+        },
+        {
+          "pk": {
+            "S": "metrics::0007::Cheakamus"
+          },
+          "sk": {
+            "S": "2023-09-21"
+          },
+          "cancelled": {
+            "N": "1"
+          },
+          "capacities": {
+            "M": {
+              "AM": {
+                "M": {
+                  "baseCapacity": {
+                    "N": "49"
+                  },
+                  "capacityModifier": {
+                    "N": "0"
+                  },
+                  "checkedIn": {
+                    "N": "1"
+                  },
+                  "passStatuses": {
+                    "M": {
+                      "active": {
+                        "N": "1"
+                      },
+                      "cancelled": {
+                        "N": "1"
+                      }
+                    }
+                  },
+                  "availablePasses": {
+                    "N": "48"
+                  },
+                  "overbooked": {
+                    "N": "0"
+                  }
+                }
+              },
+              "PM": {
+                "M": {
+                  "baseCapacity": {
+                    "N": "39"
+                  },
+                  "capacityModifier": {
+                    "N": "0"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  },
+                  "passStatuses": {
+                    "M": {
+                      "reserved": {
+                        "N": "1"
+                      }
+                    }
+                  },
+                  "availablePasses": {
+                    "N": "38"
+                  },
+                  "overbooked": {
+                    "N": "0"
+                  }
+                }
+              }
+            }
+          },
+          "fullyBooked": {
+            "BOOL": false
+          },
+          "hourlyData": {
+            "L": [
+              {
+                "M": {
+                  "hour": {
+                    "N": "0"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "1"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "2"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "3"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "4"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "5"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "6"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "7"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "8"
+                  },
+                  "checkedIn": {
+                    "N": "1"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "9"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "10"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "11"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "12"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "13"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "14"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "15"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "16"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "17"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "18"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "19"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "20"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "21"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "22"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "23"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              }
+            ]
+          },
+          "lastUpdated": {
+            "S": "2023-09-21T11:39:50.843-07:00"
+          },
+          "totalPasses": {
+            "N": "2"
+          }
+        },
+        {
+          "pk": {
+            "S": "metrics::0007::Cheakamus"
+          },
+          "sk": {
+            "S": "2023-09-22"
+          },
+          "cancelled": {
+            "N": "1"
+          },
+          "capacities": {
+            "M": {
+              "AM": {
+                "M": {
+                  "baseCapacity": {
+                    "N": "49"
+                  },
+                  "capacityModifier": {
+                    "N": "0"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  },
+                  "passStatuses": {
+                    "M": {
+                      "reserved": {
+                        "N": "1"
+                      },
+                      "cancelled": {
+                        "N": "1"
+                      }
+                    }
+                  },
+                  "availablePasses": {
+                    "N": "48"
+                  },
+                  "overbooked": {
+                    "N": "0"
+                  }
+                }
+              },
+              "PM": {
+                "M": {
+                  "baseCapacity": {
+                    "N": "39"
+                  },
+                  "capacityModifier": {
+                    "N": "0"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  },
+                  "passStatuses": {
+                    "M": {}
+                  },
+                  "availablePasses": {
+                    "N": "39"
+                  },
+                  "overbooked": {
+                    "N": "0"
+                  }
+                }
+              }
+            }
+          },
+          "fullyBooked": {
+            "BOOL": false
+          },
+          "hourlyData": {
+            "L": [
+              {
+                "M": {
+                  "hour": {
+                    "N": "0"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "1"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "2"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "3"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "4"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "5"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "6"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "7"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "8"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "9"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "10"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "11"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "12"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "13"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "14"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "15"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "16"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "17"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "18"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "19"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "20"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "21"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "22"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "hour": {
+                    "N": "23"
+                  },
+                  "checkedIn": {
+                    "N": "0"
+                  }
+                }
+              }
+            ]
+          },
+          "lastUpdated": {
+            "S": "2023-09-21T11:39:50.843-07:00"
+          },
+          "totalPasses": {
+            "N": "1"
+          }
+        }
+      ],
+      "DataAccess": {
+        "MySql": {}
+      },
+      "BillingMode": "PROVISIONED",
+      "ProvisionedCapacitySettings": {
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        },
+        "AutoScalingRead": {
+          "ScalableTargetRequest": {
+            "MinCapacity": 1,
+            "MaxCapacity": 10,
+            "ServiceRole": "AWSServiceRoleForApplicationAutoScaling_DynamoDBTable"
+          },
+          "ScalingPolicyConfiguration": {
+            "TargetValue": 70
+          }
+        },
+        "AutoScalingWrite": {
+          "ScalableTargetRequest": {
+            "MinCapacity": 1,
+            "MaxCapacity": 10,
+            "ServiceRole": "AWSServiceRoleForApplicationAutoScaling_DynamoDBTable"
+          },
+          "ScalingPolicyConfiguration": {
+            "TargetValue": 70
+          }
+        }
+      }
+    }
+  ]
+}
