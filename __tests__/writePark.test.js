@@ -9,7 +9,7 @@ test('Handler - 403 Unauthorized - nothing passed in', async () => {
     {
       "body": "{\"msg\":\"Unauthorized\"}",
       "headers": {
-        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version",
         "Access-Control-Allow-Methods": "OPTIONS,GET",
         "Access-Control-Allow-Origin": "*",
         "Content-Type": "application/json"
@@ -30,7 +30,7 @@ test('Handler - 403 Unauthorized - invalid token', async () => {
     {
       "body": "{\"msg\":\"Unauthorized\"}",
       "headers": {
-        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version",
         "Access-Control-Allow-Methods": "OPTIONS,GET",
         "Access-Control-Allow-Origin": "*",
         "Content-Type": "application/json"
@@ -51,7 +51,7 @@ test('GET fails - 405 - Not Implemented', async () => {
     {
       "body": "{\"msg\":\"Not Implemented\"}",
       "headers": {
-        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version",
         "Access-Control-Allow-Methods": "OPTIONS,GET",
         "Access-Control-Allow-Origin": "*",
         "Content-Type": "application/json"
@@ -72,7 +72,7 @@ test('POST operation TODO', async () => {
     {
       "body": "{\"msg\":\"Unauthorized\"}",
       "headers": {
-        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version",
         "Access-Control-Allow-Methods": "OPTIONS,GET",
         "Access-Control-Allow-Origin": "*",
         "Content-Type": "application/json"
@@ -94,7 +94,7 @@ test('PUT operation TODO', async () => {
     {
       "body": "{\"msg\":\"Unauthorized\"}",
       "headers": {
-        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version",
         "Access-Control-Allow-Methods": "OPTIONS,GET",
         "Access-Control-Allow-Origin": "*",
         "Content-Type": "application/json"

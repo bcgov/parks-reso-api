@@ -29,7 +29,7 @@ describe('Pass Fails', () => {
         title: 'Bad Request'
       }),
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
@@ -63,7 +63,7 @@ describe('Pass Fails', () => {
         title: 'Missing CAPTCHA verification'
       }),
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
@@ -97,7 +97,7 @@ describe('Pass Fails', () => {
         title: 'CAPTCHA verification failed'
       }),
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
@@ -142,7 +142,7 @@ describe('Pass Fails', () => {
     expect(await writePassHandler.handler(event, null)).toMatchObject({
       body: '{"msg":"You cannot have more than 4 guests on a trail.","title":"Too many guests"}',
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
@@ -190,7 +190,7 @@ describe('Pass Fails', () => {
         title: 'Operation Failed'
       }),
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
@@ -238,7 +238,7 @@ describe('Pass Fails', () => {
         title: 'Booking date in the past'
       }),
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
@@ -286,7 +286,7 @@ describe('Pass Fails', () => {
         title: 'Operation Failed'
       }),
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
