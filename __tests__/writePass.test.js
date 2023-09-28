@@ -2,6 +2,8 @@ const { DocumentClient } = require('aws-sdk/clients/dynamodb');
 
 const { REGION, ENDPOINT, TABLE_NAME } = require('./global/settings');
 
+const ALLOWED_HEADERS = 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version';
+
 const ALGORITHM = process.env.ALGORITHM || 'HS384';
 
 const ddb = new DocumentClient({
@@ -29,7 +31,7 @@ describe('Pass Fails', () => {
         title: 'Bad Request'
       }),
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
+        'Access-Control-Allow-Headers': ALLOWED_HEADERS,
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
@@ -63,7 +65,7 @@ describe('Pass Fails', () => {
         title: 'Missing CAPTCHA verification'
       }),
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
+        'Access-Control-Allow-Headers': ALLOWED_HEADERS,
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
@@ -97,7 +99,7 @@ describe('Pass Fails', () => {
         title: 'CAPTCHA verification failed'
       }),
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
+        'Access-Control-Allow-Headers': ALLOWED_HEADERS,
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
@@ -142,7 +144,7 @@ describe('Pass Fails', () => {
     expect(await writePassHandler.handler(event, null)).toMatchObject({
       body: '{"msg":"You cannot have more than 4 guests on a trail.","title":"Too many guests"}',
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
+        'Access-Control-Allow-Headers': ALLOWED_HEADERS,
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
@@ -190,7 +192,7 @@ describe('Pass Fails', () => {
         title: 'Operation Failed'
       }),
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
+        'Access-Control-Allow-Headers': ALLOWED_HEADERS,
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
@@ -238,7 +240,7 @@ describe('Pass Fails', () => {
         title: 'Booking date in the past'
       }),
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
+        'Access-Control-Allow-Headers': ALLOWED_HEADERS,
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
@@ -286,7 +288,7 @@ describe('Pass Fails', () => {
         title: 'Operation Failed'
       }),
       headers: {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version',
+        'Access-Control-Allow-Headers': ALLOWED_HEADERS,
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
