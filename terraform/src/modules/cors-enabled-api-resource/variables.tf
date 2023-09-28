@@ -12,7 +12,7 @@ variable "resource_path_part" {
 
 variable "allowed_headers" {
   description = "Allowed CORS headers"
-  default     = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  default     = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-App-Version'"
 }
 
 variable "allowed_methods" {
