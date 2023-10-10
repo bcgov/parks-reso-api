@@ -5,7 +5,7 @@ resource "aws_lambda_function" "update_park_names" {
   source_code_hash = filebase64sha256("artifacts/updateParkName.zip")
 
   handler = "lambda/updateParkName/index.handler"
-  runtime = "nodejs18.x"
+  runtime = "nodejs14.x"
   timeout = 300
   publish = "true"
 
