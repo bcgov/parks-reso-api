@@ -1,11 +1,11 @@
 resource "aws_lambda_function" "update_park_names" {
-  function_name = "updateParkNames${var.env_identifier}"
+  function_name = "updateParkName${var.env_identifier}"
 
-  filename         = "artifacts/updateParkNames.zip"
-  source_code_hash = filebase64sha256("artifacts/updateParkNames.zip")
+  filename         = "artifacts/updateParkName.zip"
+  source_code_hash = filebase64sha256("artifacts/updateParkName.zip")
 
-  handler = "lambda/updateParkNames/index.handler"
-  runtime = "nodejs18.x"
+  handler = "lambda/updateParkName/index.handler"
+  runtime = "nodejs14.x"
   timeout = 300
   publish = "true"
 
@@ -16,7 +16,7 @@ resource "aws_lambda_function" "update_park_names" {
       LOG_LEVEL                      = "info"
     }
   }
-  role = aws_iam_role.metaWriteRole.arn
+  role = aws_iam_role.writeRole.arn
 }
 
 resource "aws_lambda_alias" "update_park_names_latest" {
