@@ -190,6 +190,19 @@ async function updateItem(obj, context) {
     };
   }
 
+  updateParams.UpdateExpression = updateParams.UpdateExpression + ' videoLink =:videoLink,';
+  if (obj?.park?.videoLink) {
+    updateParams.ExpressionAttributeValues = {
+      ...updateParams.ExpressionAttributeValues,
+      ':videoLink': AWS.DynamoDB.Converter.input(obj.park.videoLink)
+    };
+  } else {
+    updateParams.ExpressionAttributeValues = {
+      ...updateParams.ExpressionAttributeValues,
+      ':videoLink': { NULL: true }
+    };
+  }
+
   // Trim the last , from the updateExpression
   updateParams.UpdateExpression = updateParams.UpdateExpression.slice(0, -1);
 
