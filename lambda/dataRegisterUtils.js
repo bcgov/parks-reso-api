@@ -10,7 +10,8 @@ async function getCurrentNameData(identifier) {
       method: 'get',
       url: url,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': 'None'
       }
     })
     return data;
