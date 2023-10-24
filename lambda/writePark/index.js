@@ -131,16 +131,6 @@ async function updateItem(obj, context) {
     ...('winterWarning' in obj && { ':winterWarning': AWS.DynamoDB.Converter.input(obj.winterWarning) })
   };
   // Reserved Words
-  if (obj?.park?.name) {
-    updateParams.UpdateExpression = updateParams.UpdateExpression + ' #up_name =:name,';
-    updateParams.ExpressionAttributeValues = {
-      ...updateParams.ExpressionAttributeValues,
-      ':name': AWS.DynamoDB.Converter.input(obj.park.name)
-    };
-    updateParams.ExpressionAttributeNames = {
-      '#up_name': 'name'
-    };
-  }
   if (obj?.park?.capacity) {
     updateParams.UpdateExpression = updateParams.UpdateExpression + ' #up_capacity =:capacity,';
     updateParams.ExpressionAttributeValues = {
