@@ -12,7 +12,7 @@ variable "target_env" {
 }
 
 data "aws_ssm_parameter" "data_register_name_api_key" {
-  name = "/parks-ar-api/data-register-name-api-key"
+  name = "/parks-reso-api/data-register-name-api-key"
 }
 
 variable "captcha_sign_expiry" {
