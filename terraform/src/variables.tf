@@ -11,6 +11,10 @@ variable "target_env" {
   description = "target environment"
 }
 
+data "aws_ssm_parameter" "data_register_name_api_key" {
+  name = "/parks-ar-api/data-register-name-api-key"
+}
+
 variable "captcha_sign_expiry" {
   default = "5"
   description = "CAPTCHA JWT signature expiry duration in minutes"
