@@ -2,6 +2,7 @@ const axios = require('axios');
 const { logger } = require('./logger');
 
 const DATA_REGISTRY_URL = process.env.DATA_REGISTRY_URL;
+const DATA_REGISTER_NAME_API_KEY = process.env.DATA_REGISTER_NAME_API_KEY;
 
 async function getCurrentNameData(identifier) {
   const url = DATA_REGISTRY_URL + `/parks/${identifier}/name?status=current`
@@ -11,7 +12,8 @@ async function getCurrentNameData(identifier) {
       url: url,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'None'
+        'Authorization': 'None',
+        'x-api-key': DATA_REGISTER_NAME_API_KEY
       }
     })
     return data;

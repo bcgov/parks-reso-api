@@ -13,6 +13,7 @@ resource "aws_lambda_function" "update_park_names" {
     variables = {
       TABLE_NAME                     = aws_dynamodb_table.park_dup_table.name,
       DATA_REGISTRY_URL              = data.aws_ssm_parameter.data_registry_url.value,
+      DATA_REGISTER_NAME_API_KEY     = data.aws_ssm_parameter.data_register_name_api_key.value,
       LOG_LEVEL                      = "info"
     }
   }
