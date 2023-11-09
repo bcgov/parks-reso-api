@@ -6,7 +6,7 @@ const AWS = require('aws-sdk');
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
-const DEFAULT_PM_OPENING_HOUR = 13;
+const DEFAULT_PM_OPENING_HOUR = 12;
 
 async function getPersonalizationAttachment(parkIdentifier, registrationNumber, qrCode = false) {
   if (qrCode) {
