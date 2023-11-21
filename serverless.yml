@@ -10,8 +10,6 @@ provider:
 
 package:
   individually: true
-  include:
-    - '!./**'
 
 plugins:
   - serverless-offline
