@@ -6,16 +6,16 @@ const { logger } = require('./logger');
 
 exports.sendSMSMessage = async function (payload, cancellationLink){
     try {
-       let gcnSendObj = {
+      const gcnSendObj = {
         "phone_number": `1${payload.phoneNumber}`,
         "template_id": process.env.GC_NOTIFY_SMS_TEMPLATE_ID,
         "personalisation": {
-            "name": `${payload.firstName} ${payload.lastName}`,
-            "parkName": payload.parkName,
-            "facilityName": payload.facilityName,
-            "npassType": payload.type,
-            "cancellationLink": cancellationLink
-          }
+          "name": `${payload.firstName} ${payload.lastName}`,
+          "parkName": payload.parkName,
+          "facilityName": payload.facilityName,
+          "npassType": payload.type,
+          "cancellationLink": cancellationLink
+        }
       };
       const res = await gcnSend(process.env.GC_NOTIFY_API_SMS_PATH, process.env.GC_NOTIFY_API_KEY, gcnSendObj);
       if (res.errors) {
@@ -27,8 +27,7 @@ exports.sendSMSMessage = async function (payload, cancellationLink){
         resData = res?.data?.data?.data;
       }
       logger.info(resData);
-  
-    return sendResponse(200, { msg: 'All works?', title: 'Completed actions' })
+      return sendResponse(200, { msg: 'All works?', title: 'Completed actions' })
     } catch (e) {
       logger.error(e)
       return sendResponse(400, { msg: 'SMS notification failed.', title: 'Operation Failed' });
