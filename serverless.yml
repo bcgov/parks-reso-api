@@ -10,8 +10,8 @@ provider:
 
 package:
   individually: true
-  patterns:
-    - '!./**'
+  exclude:
+    - '**/*'
 
 plugins:
   - serverless-offline
@@ -24,6 +24,11 @@ functions:
   ###########
   generateCaptcha:
     handler: lambda/captcha/handler.generateCaptcha
+    package:
+      include:
+        - lambda/captcha/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: POST
@@ -31,28 +36,46 @@ functions:
           cors: true
   verifyCaptcha:
     handler: lambda/captcha/handler.verifyAnswer
+    package:
+      include:
+        - lambda/captcha/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: POST
           path: /captcha/verify
           cors: true
-
   generateCaptchaAudio:
     handler: lambda/captcha/handler.generateAudio
+    package:
+      include:
+        - lambda/captcha/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: POST
           path: /captcha/audio
           cors: true
-
   cloudwatchAlarm:
     handler: lambda/cloudwatchAlarm/index.handler
+    package:
+      include:
+        - lambda/cloudwatchAlarm/**
+        - node_modules/**
+        - lambda/*.js
 
   ###########
   # config
   ###########
   readConfig:
     handler: lambda/readConfig/index.handler
+    package:
+      include:
+        - lambda/readConfig/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: GET
@@ -60,6 +83,11 @@ functions:
           cors: true
   writeConfig:
     handler: lambda/writeConfig/index.handler
+    package:
+      include:
+        - lambda/writeConfig/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: POST
@@ -71,6 +99,11 @@ functions:
   ###########
   readPark:
     handler: lambda/readPark/index.handler
+    package:
+      include:
+        - lambda/readPark/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: GET
@@ -78,6 +111,11 @@ functions:
           cors: true
   writePark:
     handler: lambda/writePark/index.handler
+    package:
+      include:
+        - lambda/writePark/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: POST
@@ -93,6 +131,11 @@ functions:
   ###########
   readFacility:
     handler: lambda/readFacility/index.handler
+    package:
+      include:
+        - lambda/readFacility/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: GET
@@ -100,6 +143,11 @@ functions:
           cors: true
   writeFacility:
     handler: lambda/writeFacility/index.handler
+    package:
+      include:
+        - lambda/writeFacility/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: POST
@@ -115,6 +163,11 @@ functions:
   ###########
   readReservation:
     handler: lambda/readReservation/index.handler
+    package:
+      include:
+        - lambda/readReservation/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: GET
@@ -126,6 +179,11 @@ functions:
   ###########
   writeModifier:
     handler: lambda/writeModifier/index.handler
+    package:
+      include:
+        - lambda/writeModifier/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: PUT
@@ -137,6 +195,11 @@ functions:
   ###########
   readPass:
     handler: lambda/readPass/index.handler
+    package:
+      include:
+        - lambda/readPass/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: GET
@@ -144,6 +207,11 @@ functions:
           cors: true
   writePass:
     handler: lambda/writePass/index.handler
+    package:
+      include:
+        - lambda/writePass/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: POST
@@ -151,6 +219,11 @@ functions:
           cors: true
   putPass:
     handler: lambda/writePass/index.handler
+    package:
+      include:
+        - lambda/writePass/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: PUT
@@ -158,6 +231,11 @@ functions:
           cors: true
   deletePass:
     handler: lambda/deletePass/index.handler
+    package:
+      include:
+        - lambda/deletePass/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: DELETE
@@ -169,12 +247,22 @@ functions:
   ###########
   sqsProcessor:
     handler: lambda/sqsProcessor/index.handler
+    package:
+      include:
+        - lambda/sqsProcessor/**
+        - node_modules/**
+        - lambda/*.js
 
   ###########
   # Export
   ###########
   exportPass:
     handler: lambda/exportPass/index.handler
+    package:
+      include:
+        - lambda/exportPass/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: GET
@@ -183,9 +271,19 @@ functions:
 
   exportAllPassInvokable:
     handler: lambda/exportAllPass/invokable/index.handler
+    package:
+      include:
+        - lambda/exportAllPass/**
+        - node_modules/**
+        - lambda/*.js
 
   exportAllPassGet:
     handler: lambda/exportAllPass/GET/index.handler
+    package:
+      include:
+        - lambda/exportAllPass/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: GET
@@ -197,6 +295,11 @@ functions:
   ###########
   metric:
     handler: lambda/metric/index.handler
+    package:
+      include:
+        - lambda/metric/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: GET
@@ -208,6 +311,11 @@ functions:
   ###########
   readMetrics:
     handler: lambda/readMetrics/index.handler
+    package:
+      include:
+        - lambda/readMetrics/**
+        - node_modules/**
+        - lambda/*.js
     events:
       - http:
           method: GET
@@ -220,27 +328,58 @@ functions:
   # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-checkActivation
   checkActivation:
     handler: lambda/checkActivation/index.handler
+    package:
+      include:
+        - lambda/checkActivation/**
+        - node_modules/**
+        - lambda/*.js
   # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-checkExpiry
   checkExpiry:
     handler: lambda/checkExpiry/index.handler
+    package:
+      include:
+        - lambda/checkExpiry/**
+        - node_modules/**
+        - lambda/*.js
   warmUp:
     handler: lambda/warmUp/index.handler
     package:
       patterns:
         - lambda/warmUp/worker.js
+        - node_modules/**
+        - lambda/*.js
   # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-sendReminder
   sendReminder:
     handler: lambda/sendReminder/index.handler
+    package:
+      include:
+        - lambda/sendReminder/**
+        - node_modules/**
+        - lambda/*.js
   # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-sendSurvey
   sendSurvey:
     handler: lambda/sendSurvey/index.handler
+    package:
+      include:
+        - lambda/sendSurvey/**
+        - node_modules/**
+        - lambda/*.js
   # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-writeMetrics
   writeMetrics:
     handler: lambda/writeMetrics/index.handler
+    package:
+      include:
+        - lambda/writeMetrics/**
+        - node_modules/**
+        - lambda/*.js
   # aws lambda invoke /dev/null --endpoint-url http://localhost:3002 --function-name parks-reso-api-api-updateParkName
   updateParkName:
     handler: lambda/updateParkName/index.handler
-
+    package:
+      include:
+        - lambda/updateParkName/**
+        - node_modules/**
+        - lambda/*.js
 
 custom:
   dynamodb:
