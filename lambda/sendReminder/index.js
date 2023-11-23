@@ -5,7 +5,7 @@ const { rcPost } = require('../rocketChatUtils');
 const { sendResponse } = require('../responseUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
-const { sendSMSMessage } = require('../smsUtil')
+const { sendSMSMessage } = require('../smsUtil');
 
 // Default look-ahead days.
 const LOOK_AHEAD_DAYS = 1;

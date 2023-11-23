@@ -19,6 +19,7 @@ resource "aws_lambda_function" "send_reminder" {
       GC_NOTIFY_API_BULK_PATH        = data.aws_ssm_parameter.gc_notify_api_bulk_path.value, 
       GC_NOTIFY_API_KEY              = data.aws_ssm_parameter.gc_notify_api_key.value, 
       GC_NOTIFY_SMS_TEMPLATE_ID      = data.aws_ssm_parameter.gc_notify_sms_template_id.value,
+      GC_NOTIFY_API_SMS_PATH         = data.aws_ssm_parameter.gc_notify_api_sms_path.value,
       GC_NOTIFY_REMINDER_TEMPLATE_ID = data.aws_ssm_parameter.gc_notify_reminder_template_id.value, 
       GC_NOTIFY_IS_SENDING_REMINDERS = data.aws_ssm_parameter.gc_notify_is_sending_reminders.value,
       RC_ALERT_WEBHOOK_URL           = data.aws_ssm_parameter.rc_alert_webhook_url.value,

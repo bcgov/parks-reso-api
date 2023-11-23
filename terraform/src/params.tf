@@ -113,3 +113,7 @@ data "aws_ssm_parameter" "sso_jwksuri" {
 data "aws_ssm_parameter" "gc_notify_sms_template_id" {
   name = "/parks-reso-api/gc-notify-sms-template-id"
 }
+
+data "aws_ssm_parameter" "gc_notify_api_sms_path" {
+  name = "/parks-reso-api/gc-notify-api-sms-path"
+}
