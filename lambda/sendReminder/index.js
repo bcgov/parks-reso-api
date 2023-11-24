@@ -5,6 +5,7 @@ const { rcPost } = require('../rocketChatUtils');
 const { sendResponse } = require('../responseUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
+const { sendSMSMessage } = require('../smsUtil');
 
 // Default look-ahead days.
 const LOOK_AHEAD_DAYS = 1;
@@ -95,7 +96,13 @@ exports.handler = async (event, context) => {
         bulkReminderObject.push(bulkReminderChunk);
       }
     }
-
+    if (passData){
+      for (let pass of passData){
+        if (pass.phoneNumber != null){
+          await sendSMSMessage(pass, buildCancellationLink(pass));
+        }
+      }
+    }
     bulkJobSuccesses = 0;
     bulkJobFailures = 0;
 
