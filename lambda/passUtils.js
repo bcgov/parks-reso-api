@@ -1,12 +1,12 @@
 const qrcode = require('qrcode');
-const { runQuery, TABLE_NAME, TIMEZONE, getOne, DEFAULT_BOOKING_DAYS_AHEAD } = require('./dynamoUtil');
+const { runQuery, TABLE_NAME, TIMEZONE, getOne, DEFAULT_BOOKING_DAYS_AHEAD, DEFAULT_PM_OPENING_HOUR } = require('./dynamoUtil');
 const { logger } = require('./logger');
 const { DateTime } = require('luxon');
 const AWS = require('aws-sdk');
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
-const DEFAULT_PM_OPENING_HOUR = 12;
+
 
 async function getPersonalizationAttachment(parkIdentifier, registrationNumber, qrCode = false) {
   if (qrCode) {
@@ -95,7 +95,7 @@ async function isBookingAllowed(orcs, facilitySk, date, type) {
 
     // the hour of day the next future day opens for booking (AM slot)
     let openingHour = facility.bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
-    let closingHour = DEFAULT_PM_OPENING_HOUR;
+    let closingHour = DEFAULT_PM_OPENING_HOUR
 
     // the timestamp this script was run
     const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
