@@ -95,7 +95,7 @@ async function isBookingAllowed(orcs, facilitySk, date, type) {
 
     // the hour of day the next future day opens for booking (AM slot)
     let openingHour = facility.bookingOpeningHour || DEFAULT_AM_OPENING_HOUR;
-    let closingHour = DEFAULT_PM_OPENING_HOUR
+    let closingHour = DEFAULT_PM_OPENING_HOUR;
 
     // the timestamp this script was run
     const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
