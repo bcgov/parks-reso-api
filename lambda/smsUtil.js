@@ -11,9 +11,9 @@ exports.sendSMSMessage = async function (payload, cancellationLink){
         "template_id": process.env.GC_NOTIFY_SMS_TEMPLATE_ID,
         "personalisation": {
           "name": `${payload.firstName} ${payload.lastName}`,
+          "passType": payload.type,
           "parkName": payload.parkName,
           "facilityName": payload.facilityName,
-          "npassType": payload.type,
           "cancellationLink": cancellationLink
         }
       };
