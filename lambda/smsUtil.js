@@ -35,14 +35,16 @@ exports.sendSMSMessage = async function (payload, cancellationLink){
     }
   }
 
-  function convertPassType(passType){
-    const passTimeOptions = ["am","pm","all-day"];
-    if(passType === "AM"){
-      return passTimeOptions[0];
-    }else if(passType === "PM"){
-      return passTimeOptions[1];
-    }else if (passType === "DAY"){
-      return passTimeOptions[2];
+function convertPassType(passType) {
+  const passTimeOptions = ["am", "pm", "all-day"];
+  switch (passType) {
+      case "AM":
+          return passTimeOptions[0];
+      case "PM":
+          return passTimeOptions[1];
+      case "DAY":
+          return passTimeOptions[2];
+      default:
+          return passType;
     }
-    return passType;
-  }
+} 
