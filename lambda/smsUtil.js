@@ -5,6 +5,7 @@ const { logger } = require('./logger');
 
 
 exports.sendSMSMessage = async function (payload, cancellationLink){
+    payload.type = convertPassType(payload.type);
     try {
       const gcnSendObj = {
         "phone_number": `1${payload.phoneNumber}`,
@@ -32,4 +33,16 @@ exports.sendSMSMessage = async function (payload, cancellationLink){
       logger.error(e)
       return sendResponse(400, { msg: 'SMS notification failed.', title: 'Operation Failed' });
     }
+  }
+
+  function convertPassType(passType){
+    const passTimeOptions = ["am","pm","all-day"];
+    if(passType === "AM"){
+      return passTimeOptions[0];
+    }else if(passType === "PM"){
+      return passTimeOptions[1];
+    }else if (passType === "DAY"){
+      return passTimeOptions[2];
+    }
+    return passType;
   }
