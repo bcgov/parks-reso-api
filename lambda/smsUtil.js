@@ -8,7 +8,7 @@ exports.sendSMSMessage = async function (payload, cancellationLink){
     payload.type = convertPassType(payload.type);
     try {
       const gcnSendObj = {
-        "phone_number": `1${payload.phoneNumber}`,
+        "phone_number": `${payload.phoneNumber}`,
         "template_id": process.env.GC_NOTIFY_SMS_TEMPLATE_ID,
         "personalisation": {
           "name": `${payload.firstName} ${payload.lastName}`,
@@ -36,7 +36,7 @@ exports.sendSMSMessage = async function (payload, cancellationLink){
   }
 
 function convertPassType(passType) {
-  const passTimeOptions = ["am", "pm", "all-day"];
+  const passTimeOptions = ["an AM", "a PM", "an ALL-DAY"];
   switch (passType) {
       case "AM":
           return passTimeOptions[0];
