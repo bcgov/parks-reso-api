@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const { runQuery, TABLE_NAME, META_TABLE_NAME, TIMEZONE, dynamodb, getParks, getFacilities, getPark } = require('../dynamoUtil');
 const { gcnSend } = require('../gcNotifyUtils');
-const { rcPost } = require('../rocketChatUtils');
+const { webhookPost } = require('../webhookUtils');
 const { sendResponse } = require('../responseUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
@@ -132,8 +132,10 @@ exports.handler = async (event, context) => {
           // Post a summary of job success/failure to db.
           let jobObj = await postBulkReminderSummary(resData, jobError, chunk);
           if (jobError) {
-            // Post alert to RocketChat channel if job fails.
-            sendRocketChatAlert(
+            // Post alert to webhook if job fails.
+            await webhookPost(
+              process.env.WEBHOOK_URL,
+              "Day Use Pass - Bulk Email Service",
               `A bulk email reminder job has failed: ${jobError}`,
               [
                 {
@@ -160,16 +162,23 @@ exports.handler = async (event, context) => {
     logger.info(`${totalJobs} job(s) run (${bulkJobSuccesses} succeeded, ${bulkJobFailures} failed).`)
   } catch (err) {
     // Something unknown went wrong.
-    sendRocketChatAlert(
-      `A bulk email reminder job has failed: An unknown error occurred.`,
-      [
-        {
-          title: 'Error:',
-          value: `${err}`,
-          short: false
-        }
-      ]
-    );
+    try {
+      await webhookPost(
+        process.env.WEBHOOK_URL,
+        "Day Use Pass - Bulk Email Service",
+        `A bulk email reminder job has failed: An unknown error occurred.`,
+        [
+          {
+            title: 'Error:',
+            value: `${err}`,
+            short: false
+          }
+        ]
+      );
+    } catch (e) {
+      // Catch and fall through
+      logger.debug(e);
+    }
     return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
   }
 }
@@ -224,35 +233,29 @@ async function postBulkReminderSummary(data, jobError, passArray) {
     logger.debug('Posted bulkReminderSummary to database:', postItem);
     return postItem;
   } catch (err) {
-    sendRocketChatAlert(
-      `A bulk email reminder job has failed: The system was unable to save a record of the bulk email job to DynamoDB.`,
-      [
-        {
-          title: 'Error:',
-          value: `${err}`,
-          short: true
-        },
-        {
-          title: 'Number of users affected:',
-          value: `${passArray?.length - 1}`,
-          short: true
-        }
-      ]
-    );
+    try {
+      await webhookPost(
+        process.env.WEBHOOK_URL,
+        "Day Use Pass - Bulk Email Service",
+        `A bulk email reminder job has failed: The system was unable to save a record of the bulk email job to DynamoDB.`,
+        [
+          {
+            title: 'Error:',
+            value: `${err}`,
+            short: true
+          },
+          {
+            title: 'Number of users affected:',
+            value: `${passArray?.length - 1}`,
+            short: true
+          }
+        ]
+      );
+    } catch (e) {
+      // Catch and fall through.
+      logger.debug(e);
+    }
     logger.error('Failed to save bulkReminderSummary to database:', err);
     return postItem;
   }
-}
-
-function sendRocketChatAlert(text, fields) {
-  // Post alert to RocketChat channel if job fails.
-  request = {
-    postTitle: '@all **Day Use Pass - Bulk Email Service**',
-    postText: text,
-    author_name: 'Day Use Pass',
-    author_icon: 'https://bcparks.ca/_shared/images/logos/logo-bcparks-v-200.png',
-    color: '#2D834F',
-    fields: fields
-  }
-  rcPost(process.env.RC_ALERT_WEBHOOK_URL, process.env.RC_ALERT_WEBHOOK_TOKEN, request);
 }

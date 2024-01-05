@@ -14,8 +14,7 @@ resource "aws_lambda_function" "cloudwatch_alarm" {
   environment {
     variables = {
       AWS_ACCOUNT_LIST        = data.aws_ssm_parameter.aws_account_list.value,
-      ROCKETCHAT_URL          = data.aws_ssm_parameter.rocketchat_url.value,
-      ROCKETCHAT_BEARER_TOKEN = data.aws_ssm_parameter.rocketchat_bearer_token.value,
+      WEBHOOK_URL             = data.aws_ssm_parameter.webhook_url.value,
       LOG_LEVEL               = "debug"
     }
   }
