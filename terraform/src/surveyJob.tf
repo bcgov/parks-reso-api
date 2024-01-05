@@ -19,8 +19,7 @@ resource "aws_lambda_function" "send_survey_cronjob_target" {
       GC_NOTIFY_SURVEY_TEMPLATE_ID   = data.aws_ssm_parameter.gc_notify_survey_template_id.value, 
       GC_NOTIFY_IS_SENDING_SURVEYS   = data.aws_ssm_parameter.gc_notify_is_sending_surveys.value,
       FEEDBACK_SURVEY_URL            = data.aws_ssm_parameter.feedback_survey_url.value,
-      RC_ALERT_WEBHOOK_URL           = data.aws_ssm_parameter.rc_alert_webhook_url.value,
-      RC_ALERT_WEBHOOK_TOKEN         = data.aws_ssm_parameter.rc_alert_webhook_token.value,
+      WEBHOOK_URL                    = data.aws_ssm_parameter.webhook_url.value,
       LOG_LEVEL                      = "info"
     }
   }

@@ -14,14 +14,6 @@ data "aws_ssm_parameter" "pass_shortdate_index" {
   name = "/parks-reso-api/pass-shortdate-index"
 }
 
-data "aws_ssm_parameter" "rc_alert_webhook_url" {
-  name = "/parks-reso-api/rc-alert-webhook-url"
-}
-
-data "aws_ssm_parameter" "rc_alert_webhook_token" {
-  name = "/parks-reso-api/rc-alert-webhook-token"
-}
-
 data "aws_ssm_parameter" "gc_notify_api_bulk_path" {
   name = "/parks-reso-api/gc-notify-api-bulk-path"
 }
@@ -90,12 +82,8 @@ data "aws_ssm_parameter" "aws_account_list" {
   name = "/parks-reso-api/aws_account_list"
 }
 
-data "aws_ssm_parameter" "rocketchat_url" {
-  name = "/parks-reso-api/rocketchat_url"
-}
-
-data "aws_ssm_parameter" "rocketchat_bearer_token" {
-  name = "/parks-reso-api/rocketchat_bearer_token"
+data "aws_ssm_parameter" "webhook_url" {
+  name = "/parks-reso-api/webhook_url"
 }
 
 data "aws_ssm_parameter" "data_registry_url" {

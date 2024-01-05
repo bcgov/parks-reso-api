@@ -613,103 +613,6 @@
 					"response": []
 				}
 			]
-		},
-		{
-			"name": "Other",
-			"item": [
-				{
-					"name": "RocketChat Bulk Email",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{rocketchat_token_email_service}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"postTitle\": \"Day Use Pass - Bulk Email Service\",\r\n    \"productName\": \"Day Use Pass\",\r\n    \"postText\": \"A bulk email reminder job has failed.\",\r\n    \"field1Title\": \"Job key:\",\r\n    \"field1Text\": \"pk: sendReminderSummary\\nsk: 2022-11-24T00:10:30.106Z\",\r\n    \"field2Title\": \"Number of users affected\",\r\n    \"field2Text\": \"2\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "https://chat.developer.gov.bc.ca/hooks/637eb87bbe5cf300071ee6b1/94DpAXeeHriyXNnEEkmYfpoZRdk7uiGLhZD2Ys2v4SQDq6Px",
-							"protocol": "https",
-							"host": [
-								"chat",
-								"developer",
-								"gov",
-								"bc",
-								"ca"
-							],
-							"path": [
-								"hooks",
-								"637eb87bbe5cf300071ee6b1",
-								"94DpAXeeHriyXNnEEkmYfpoZRdk7uiGLhZD2Ys2v4SQDq6Px"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "RocketChat Bulk Email (sandbox)",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{rocketchat_token_email_service}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"postTitle\": \"@all **Day Use Pass - Bulk Email Service**\",\r\n    \"productName\": \"Day Use Pass\",\r\n    \"postText\": \"A bulk email reminder job has failed.\",\r\n    \"author_name\": \"Day Use Pass\",\r\n    \"author_icon\": \"https://bcparks.ca/_shared/images/logos/logo-bcparks-v-200.png\",\r\n    \"author_link\": \"https://chat.developer.gov.bc.ca/avatar/room/9H6zPKhZxD4AY4Jzx?etag=9WbsNytiHm4prt3aH\",\r\n    \"alias\": \"sPARKy McTestFace\",\r\n    \"avatar\": \"https://chat.developer.gov.bc.ca/avatar/room/9H6zPKhZxD4AY4Jzx?etag=9WbsNytiHm4prt3aH\",\r\n    \"color\": \"#2D834F\",\r\n    \"fields\": [\r\n        {\r\n            \"title\": \"Job key\",\r\n            \"value\": \"pk: sendReminderSummary\\nsk: 2022-11-24T00:10:30.106Z\",\r\n            \"short\": true\r\n        },\r\n                {\r\n            \"title\": \"Number of users affected\",\r\n            \"value\": \"156\",\r\n            \"short\": true\r\n        }\r\n    ]\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "https://chat.developer.gov.bc.ca/hooks/637eb87bbe5cf300071ee6b1/94DpAXeeHriyXNnEEkmYfpoZRdk7uiGLhZD2Ys2v4SQDq6Px",
-							"protocol": "https",
-							"host": [
-								"chat",
-								"developer",
-								"gov",
-								"bc",
-								"ca"
-							],
-							"path": [
-								"hooks",
-								"637eb87bbe5cf300071ee6b1",
-								"94DpAXeeHriyXNnEEkmYfpoZRdk7uiGLhZD2Ys2v4SQDq6Px"
-							]
-						}
-					},
-					"response": []
-				}
-			]
 		}
 	],
 	"auth": {
@@ -780,13 +683,6 @@
 					""
 				]
 			}
-		}
-	],
-	"variable": [
-		{
-			"key": "rocketchat_email_alert_token",
-			"value": "637eb87bbe5cf300071ee6b1/94DpAXeeHriyXNnEEkmYfpoZRdk7uiGLhZD2Ys2v4SQDq6Px",
-			"type": "string"
 		}
 	]
 }
