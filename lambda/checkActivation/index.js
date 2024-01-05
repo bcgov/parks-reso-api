@@ -7,7 +7,7 @@ const { setStatus,
   RESERVED_STATUS,
   ACTIVE_STATUS,
   EXPIRED_STATUS,
-  PM_ACTIVATION_HOUR,
+  DEFAULT_PM_OPENING_HOUR,
   PASS_TYPE_PM,
   TIMEZONE } = require('../dynamoUtil');
 const { sendResponse } = require('../responseUtil');
@@ -44,15 +44,15 @@ exports.handler = async (event, context) => {
     // NB: Filter on date <= endOfToday for fixing previous bad data.
     // What period are we in? AM/PM?
     const startPMHourPSTDateTime = currentPSTDateTime.set({
-      hour: PM_ACTIVATION_HOUR,
+      hour: DEFAULT_PM_OPENING_HOUR,
       minute: 0,
       second: 0,
       millisecond: 0
     });
     const startDayPSTDateTime = currentPSTDateTime.startOf('day');
 
-    // 1. If currentTimeLocal < PM_ACTIVATION_HOUR => AM
-    // 2. If currentTimeLocal >= PM_ACTIVATION_HOUR => PM
+    // 1. If currentTimeLocal < DEFAULT_PM_OPENING_HOUR => AM
+    // 2. If currentTimeLocal >= DEFAULT_PM_OPENING_HOUR => PM
     const isAM = currentPSTDateTime < startPMHourPSTDateTime ? true : false;
     // const isAM = compareAsc(currentTime, noonTime) <= 0 ? true : false;
 

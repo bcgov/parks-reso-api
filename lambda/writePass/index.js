@@ -6,7 +6,8 @@ const {
   TIMEZONE,
   getFacility,
   getPark,
-  getConfig
+  getConfig,
+  DEFAULT_PM_OPENING_HOUR
 } = require('../dynamoUtil');
 const { sendResponse, checkWarmup } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
@@ -20,7 +21,6 @@ const { generateRegistrationNumber } = require('../captchaUtil');
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
-const DEFAULT_PM_OPENING_HOUR = 13;
 
 async function modifyPassCheckInStatus(pk, sk, checkedIn) {
   let updateParams = {
