@@ -306,7 +306,6 @@ async function processReservationObjects(resObjs, timesToUpdate, timesToRemove, 
 
 // Can be populated with more metadata fields in the future if necessary
 async function updateReservationsObjectMeta(pk, sk, status) {
-  console.log('status');
   const updateReservationsObject = {
     TableName: TABLE_NAME,
     Key: {
