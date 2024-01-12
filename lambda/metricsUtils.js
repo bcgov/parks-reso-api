@@ -1,6 +1,7 @@
 const AWS = require('aws-sdk');
 const { DateTime } = require("luxon");
 const { METRICS_TABLE_NAME, TABLE_NAME, TIMEZONE, runQuery, dynamodb, getOne } = require("./dynamoUtil");
+const { checkPassesRequired } = require("./reservationObjUtils");
 const { logger } = require("./logger");
 
 const MAX_TRANSACTION_SIZE = 25;
@@ -94,7 +95,9 @@ async function createMetric(park, facility, date) {
     totalPasses: totalUsedPasses,
     cancelled: totalCancelledPasses,
     fullyBooked: totalUsedPasses >= totalCapacity ? true : false,
-    capacities: capacities
+    capacities: capacities,
+    status: resObj?.status || facility.status.state || null,
+    passesRequired: resObj?.passesRequired || checkPassesRequired(facility, date) || null
   }
 
   if (hourlyData.length) {
