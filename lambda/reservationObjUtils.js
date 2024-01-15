@@ -87,7 +87,8 @@ async function createNewReservationsObj(
     pk: reservationsObjectPK,
     sk: bookingPSTShortDate,
     capacities: {},
-    status: facility.status.state
+    status: facility.status.state,
+    passesRequired: checkPassesRequired(facility, bookingPSTShortDate)
   };
 
   // We are initing capacities
@@ -119,6 +120,28 @@ async function createNewReservationsObj(
   }
   return res;
 };
+
+// check if passes are required on the date
+function checkPassesRequired(facility, shortDate) {
+  if (Object.keys(facility?.bookingDays).find((e) => facility.bookingDays.e === false)) {
+    // there is at least 1 day of the week where passes are not required.
+    const date = DateTime.fromFormat(shortDate, 'yyyy-LL-dd').setZone(TIMEZONE);
+    const day = date.toFormat('c');
+    // luxon days of the week are 1-indexed starting on Monday
+    if (facility?.bookingDays[day]) {
+      // passes are required
+      return true;
+    }
+    // if here, passes are not required. Check if bookableHolidays override the day
+    if (facility?.bookableHolidays.find((e) => e === shortDate)) {
+      // passes are required
+      return true;
+    }
+    // passes are not required.
+    return false;
+  }
+  return true;
+}
 
 async function getFutureReservationObjects(parkSk, facilityName) {
   let futureResObjects = [];
@@ -503,5 +526,6 @@ module.exports = {
   getFutureReservationObjects,
   processReservationObjects,
   formatPublicReservationObject,
-  createNewReservationsObj
+  createNewReservationsObj,
+  checkPassesRequired
 };
