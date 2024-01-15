@@ -17,7 +17,6 @@ exports.handler = async (event, context) => {
   try {
     
     const token = await decodeJWT(event);
-    const permissionObject = resolvePermissions(token);
     queryObj.ExpressionAttributeValues = {};
     queryObj.ExpressionAttributeValues[':pk'] = { S: 'faq' };
     queryObj.ExpressionAttributeValues[':sk'] = { S: 'faq' };

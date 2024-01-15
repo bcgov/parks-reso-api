@@ -6,7 +6,7 @@ const { decodeJWT, resolvePermissions, getParkAccess } = require('../permissionU
 const { logger } = require('../logger');
 
 exports.handler = async (event, context) => {
-  if (!event || !event.headers) {
+  if (!event?.headers) {
     logger.info('Unauthorized');
     return sendResponse(403, { msg: 'Unauthorized' }, context);
   }
@@ -33,7 +33,7 @@ exports.handler = async (event, context) => {
             return await updateItem(obj);
         }else {
             logger.info('Unauthorized');
-            throw 'Unauthorized Access.';
+            throw new Error('Unauthorized Access.');
           }
     } else { logger.info('Not Implemented');
     return sendResponse(405, { msg: 'Not Implemented' }, context);
