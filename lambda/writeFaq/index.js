@@ -35,8 +35,6 @@ exports.handler = async (event, context) => {
 };
 
 async function updateItem(obj, context) {
-  const { faq } = obj;
-
   try {
     if (!obj.faq){
       throw new Error('FAQ property is missing in the input object');
