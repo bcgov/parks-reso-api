@@ -15,8 +15,6 @@ exports.handler = async (event, context) => {
   };
 
   try {
-    
-    const token = await decodeJWT(event);
     queryObj.ExpressionAttributeValues = {};
     queryObj.ExpressionAttributeValues[':pk'] = { S: 'faq' };
     queryObj.ExpressionAttributeValues[':sk'] = { S: 'faq' };
@@ -25,7 +23,6 @@ exports.handler = async (event, context) => {
     return sendResponse(200, faq, context);
 
   } catch (err) {
-    console.log(err);
     logger.error(err);
     return sendResponse(400, err, context);
   }
