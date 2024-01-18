@@ -36,30 +36,22 @@ exports.handler = async (event, context) => {
 
 async function updateItem(obj, context) {
   try {
-    if (!obj.faq){
-      throw new Error('FAQ property is missing in the input object');
-    }
-    let updateParams = {
-      Key: {
-        pk: { S: 'faq' },
-        sk: { S: 'faq' }
-      },
-      ExpressionAttributeNames: { '#text': 'text' },
-      ExpressionAttributeValues: {},
-      UpdateExpression: 'set',
-      ReturnValues: 'ALL_NEW',
-      TableName: TABLE_NAME,
-      ConditionExpression: 'attribute_exists(pk)'
-    };
-    if (obj?.faq) {
-      updateParams.UpdateExpression += ' #text = :faq,';
-      updateParams.ExpressionAttributeValues[':faq'] = { S: obj.faq };
-    }
-    updateParams.UpdateExpression = updateParams.UpdateExpression.slice(0, -1);
-    logger.debug('Updating FAQ:', updateParams);
-    const { Attributes } = await dynamodb.updateItem(updateParams).promise();
-    logger.info('Results:', Attributes);
-    return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(Attributes), context);
+    if (obj?.faq){
+      const updateParams = {
+        Key: { pk: { S: 'faq' }, sk: { S: 'faq' } },
+        ExpressionAttributeNames: { '#text': 'text' },
+        ExpressionAttributeValues: { ':faq': { S: obj.faq } },
+        UpdateExpression: 'set #text = :faq',
+        ReturnValues: 'ALL_NEW',
+        TableName: TABLE_NAME,
+        ConditionExpression: 'attribute_exists(pk)',
+      };
+      const { Attributes } = await dynamodb.updateItem(updateParams).promise();
+      logger.info('Results:', Attributes);
+      return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(Attributes), context);  
+  }else{
+    throw new Error('FAQ property is missing in the input object');
+  }
   } catch (error) {
     logger.error('Error updating item:', error);
     return sendResponse(500, { error: 'Internal Server Error' }, context);
