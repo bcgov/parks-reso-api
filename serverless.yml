@@ -319,7 +319,36 @@ functions:
     events:
       - http:
           method: GET
-          path: /metrics
+          path: /metrics  
+          cors: true
+
+   ###########
+  # FAQ
+  ###########
+  readFaq:
+    handler: lambda/readFaq/index.handler
+    package:
+      include:
+        - lambda/readFaq/**
+        - node_modules/**
+        - lambda/*.js
+    events:
+      - http:
+          method: GET
+          path: /readfaq
+          cors: true
+  
+  writeFaq:
+    handler: lambda/writeFaq/index.handler
+    package:
+      include:
+        - lambda/readFaq/**
+        - node_modules/**
+        - lambda/*.js
+    events:
+      - http:
+          method: PUT
+          path: /writefaq
           cors: true
 
   ###########
