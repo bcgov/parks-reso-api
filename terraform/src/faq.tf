@@ -112,7 +112,7 @@ resource "aws_api_gateway_integration" "getFaqIntegration" {
   resource_id = aws_api_gateway_resource.faqResource.id
   http_method = aws_api_gateway_method.readFaqMethod.http_method
 
-  integration_http_method = "GET"  
+  integration_http_method = "POST"  
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.readFaqLambda.invoke_arn
 }
