@@ -32,7 +32,7 @@ exports.handler = async (event, context) => {
       if (currentPSTDateTime.hour >= 18) {
         logger.debug("Expiring:", pass);
         passesToChange.push(pass);
-        break;
+        continue;
       }
 
       // If pass date converted to PST is before the end of yesterday, it's definitely expire (AM/PM/DAY)
@@ -40,6 +40,7 @@ exports.handler = async (event, context) => {
       if (passPSTDateTime <= yesterdayEndPSTDateTime){
         logger.debug("Expiring:", pass);
         passesToChange.push(pass);
+        continue;
       }
 
       // If AM, see if we're currently in the afternoon or later compared to the pass date's noon time.
