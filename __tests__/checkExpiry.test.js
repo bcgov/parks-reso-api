@@ -19,7 +19,7 @@ async function setupDb() {
     endpoint: ENDPOINT,
     convertEmptyValues: true
   });
-  
+
   await docClient
     .put({
       TableName: TABLE_NAME,
@@ -124,6 +124,39 @@ describe('checkExpiryHandler', () => {
       })
       .promise();
     expect(result.Item.passStatus).toBe('active');
+  });
+
+  test.each([['PM', '123456799'], ['DAY', '123456798']])('should set %s passes from today to expired if it is after 18:00', async (passType, sk) => {
+    const passDate = DateTime.fromISO('2021-12-08T20:00:00.000Z');
+    await docClient
+      .put({
+        TableName: TABLE_NAME,
+        Item: {
+          pk: 'pass::Test Park',
+          sk: sk,
+          facilityName: 'Parking Lot A',
+          type: passType,
+          registrationNumber: sk,
+          passStatus: 'active',
+          date: passDate.toISO()
+        }
+      })
+      .promise();
+
+    MockDate.set(new Date('2021-12-09T03:00:00.000Z'));
+    await checkExpiry.handler(null, {});
+    MockDate.reset();
+
+    const result = await docClient
+      .get({
+        TableName: TABLE_NAME,
+        Key: {
+          pk: 'pass::Test Park',
+          sk: sk
+        }
+      })
+      .promise();
+    expect(result.Item.passStatus).toBe('expired');
   });
 
   test('should set AM passes to expired after 12:00', async () => {
