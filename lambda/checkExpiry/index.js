@@ -17,6 +17,7 @@ exports.handler = async (event, context) => {
   );
   try {
     const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
+    // Any active passes before this time will be moved to expired. Same day passes will be handled differently.
     const yesterdayEndPSTDateTime = currentPSTDateTime.minus({ days: 1 }).endOf('day');
 
     let passesToChange = [];
@@ -25,12 +26,21 @@ exports.handler = async (event, context) => {
     logger.debug("Active Passes:", passes);
 
     for (pass of passes) {
-      // NOTE: Pass dates are stored in UTC. 
+      // NOTE: Pass dates are stored in UTC.
+
+      // If it is beyond 6pm (18:00 PST/PDT), move every active pass to expired.
+      if (currentPSTDateTime.hour >= 18) {
+        logger.debug("Expiring:", pass);
+        passesToChange.push(pass);
+        continue;
+      }
+
       // If pass date converted to PST is before the end of yesterday, it's definitely expire (AM/PM/DAY)
       const passPSTDateTime = DateTime.fromISO(pass.date).setZone(TIMEZONE);
       if (passPSTDateTime <= yesterdayEndPSTDateTime){
         logger.debug("Expiring:", pass);
         passesToChange.push(pass);
+        continue;
       }
 
       // If AM, see if we're currently in the afternoon or later compared to the pass date's noon time.
