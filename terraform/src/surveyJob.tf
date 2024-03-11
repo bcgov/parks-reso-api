@@ -32,11 +32,11 @@ resource "aws_lambda_alias" "send_survey_cronjob_target_latest" {
   function_version = aws_lambda_function.send_survey_cronjob_target.version
 }
 
-# Every day at 12:00 UTC (12:00 PST) = cron(0 20 * * ? *)
+# Every day at 11:00 UTC (12:00 PDT) = cron(0 19 * * ? *)
 resource "aws_cloudwatch_event_rule" "send_survey_cronjob_target_cronjob" {
   name                = "send_survey_cronjob_target_cronjob"
-  description         = "Sends scheduled pass reminder at 16:00 PST"
-  schedule_expression = "cron(0 20 * * ? *)"
+  description         = "Sends scheduled pass reminder at 12:00 PDT"
+  schedule_expression = "cron(0 19 * * ? *)"
 }
 
 resource "aws_cloudwatch_event_target" "send_survey_cronjob_target_cronjob_target" {
