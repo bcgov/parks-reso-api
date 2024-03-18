@@ -35,11 +35,11 @@ resource "aws_lambda_alias" "send_reminder_latest" {
   function_version = aws_lambda_function.send_reminder.version
 }
 
-# Every day at 24:00 UTC (16:00 PST) = cron(0 0 * * ? *)
+# Every day at 23:00 UTC (16:00 PDT) = cron(0 23 * * ? *)
 resource "aws_cloudwatch_event_rule" "send_reminder_cronjob" {
   name                = "send_reminder_cronjob"
-  description         = "Sends scheduled pass reminder at 16:00 PST"
-  schedule_expression = "cron(0 0 * * ? *)"
+  description         = "Sends scheduled pass reminder at 16:00 PDT"
+  schedule_expression = "cron(0 23 * * ? *)"
 }
 
 resource "aws_cloudwatch_event_target" "send_reminder_cronjob_target" {
