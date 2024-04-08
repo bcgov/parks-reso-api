@@ -6,7 +6,7 @@ const { logger } = require("./logger");
 
 const MAX_TRANSACTION_SIZE = 25;
 
-async function createMetric(park, facility, date) {
+async function createMetric(park, facility, date, specialClosure) {
   const today = DateTime.now().setZone(TIMEZONE);
   const currentDate = today.toISODate();
 
@@ -97,7 +97,8 @@ async function createMetric(park, facility, date) {
     fullyBooked: totalUsedPasses >= totalCapacity ? true : false,
     capacities: capacities,
     status: resObj?.status || facility.status.state || null,
-    passesRequired: resObj?.passesRequired || checkPassesRequired(facility, date) || null
+    passesRequired: resObj?.passesRequired || checkPassesRequired(facility, date) || null,
+    specialClosure: !!park.specialClosure
   }
 
   if (hourlyData.length) {

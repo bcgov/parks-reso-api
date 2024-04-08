@@ -193,6 +193,33 @@ async function updateItem(obj, context) {
     };
   }
 
+  updateParams.UpdateExpression = updateParams.UpdateExpression + ' specialClosure =:specialClosure,';
+  if (obj?.park?.specialClosure) {
+    updateParams.ExpressionAttributeValues = {
+      ...updateParams.ExpressionAttributeValues,
+      ':specialClosure': AWS.DynamoDB.Converter.input(obj.park.specialClosure)
+    };
+  } else {
+    updateParams.ExpressionAttributeValues = {
+      ...updateParams.ExpressionAttributeValues,
+      ':specialClosure': { NULL: true }
+    };
+  }
+
+
+ updateParams.UpdateExpression = updateParams.UpdateExpression + ' specialClosureText =:specialClosureText,';
+ if (obj?.park?.specialClosureText) {
+   updateParams.ExpressionAttributeValues = {
+     ...updateParams.ExpressionAttributeValues,
+     ':specialClosureText': AWS.DynamoDB.Converter.input(obj.park.specialClosureText)
+   };
+ } else {
+   updateParams.ExpressionAttributeValues = {
+     ...updateParams.ExpressionAttributeValues,
+     ':specialClosureText': { NULL: true }
+   };
+ }
+
   // Trim the last , from the updateExpression
   updateParams.UpdateExpression = updateParams.UpdateExpression.slice(0, -1);
 
