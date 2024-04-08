@@ -6,7 +6,7 @@ const { logger } = require("./logger");
 
 const MAX_TRANSACTION_SIZE = 25;
 
-async function createMetric(park, facility, date, specialClosure) {
+async function createMetric(park, facility, date) {
   const today = DateTime.now().setZone(TIMEZONE);
   const currentDate = today.toISODate();
 
