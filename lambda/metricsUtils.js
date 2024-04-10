@@ -97,7 +97,8 @@ async function createMetric(park, facility, date) {
     fullyBooked: totalUsedPasses >= totalCapacity ? true : false,
     capacities: capacities,
     status: resObj?.status || facility.status.state || null,
-    passesRequired: resObj?.passesRequired || checkPassesRequired(facility, date) || null
+    passesRequired: resObj?.passesRequired || checkPassesRequired(facility, date) || null,
+    specialClosure: !!park.specialClosure
   }
 
   if (hourlyData.length) {
