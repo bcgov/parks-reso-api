@@ -173,21 +173,14 @@ function verifyJWT(token) {
   try {
     const decoded = jwt.verify(token, SECRET, { algorithm: ALGORITHM });
     logger.info('JWT decoded.')
-    // A256GCM
-    if (decoded.data) {
-      return {
-        valid: true,
-        registrationNumber: decoded.registrationNumber,
-        facility: decoded.facility,
-        orcs: decoded.orcs,
-        bookingDate: decoded.bookingDate,
-        passType: decoded.passType
-      };
-    } else {
-      return {
-        valid: false
-      };
-    }
+    return {
+      valid: true,
+      registrationNumber: decoded.registrationNumber,
+      facility: decoded.facility,
+      orcs: decoded.orcs,
+      bookingDate: decoded.bookingDate,
+      passType: decoded.passType
+    };
   } catch (e) {
     logger.error(e);
     return {

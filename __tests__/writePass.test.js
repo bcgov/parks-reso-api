@@ -112,7 +112,6 @@ describe('Pass Fails', () => {
     const writePassHandler = require('../lambda/writePass/index');
     const token = jwt.sign(
       {
-        data: 'verified',
         registrationNumber: '1111111111',
         facility: 'Trail B',
         bookingDate: '2022-01-01',
@@ -157,7 +156,6 @@ describe('Pass Fails', () => {
     const writePassHandler = require('../lambda/writePass/index');
     const token = jwt.sign(
       {
-        data: 'verified',
         registrationNumber: '1111111112',
         facility: 'Trail B',
         orcs: 'Test Park 1',
@@ -205,7 +203,6 @@ describe('Pass Fails', () => {
     const writePassHandler = require('../lambda/writePass/index');
     const token = jwt.sign(
       {
-        data: 'verified',
         registrationNumber: '1111111113',
         facility: 'Parking lot A',
         orcs: 'Test Park 1',
@@ -253,7 +250,6 @@ describe('Pass Fails', () => {
     const writePassHandler = require('../lambda/writePass/index');
     const token = jwt.sign(
       {
-        data: 'verified',
         registrationNumber: '1111111114',
         facility: 'Trail B',
         orcs: 'Test Park 1',
@@ -414,10 +410,11 @@ describe('Pass Successes', () => {
 
     const token = jwt.sign(
       {
-        data: 'verified',
         registrationNumber: '1111111115',
         facility: 'P1 and Lower P5',
-        orcs: '0015'
+        orcs: '0015',
+        bookingDate: '2022-01-01',
+        passType: 'DAY'
       },
       'defaultSecret',
       {
@@ -467,7 +464,6 @@ describe('Pass Successes', () => {
 
     const token = jwt.sign(
       {
-        data: 'verified',
         registrationNumber: '1111111116',
         facility: 'Parking lot A',
         orcs: 'Test Park 1'
@@ -521,7 +517,6 @@ describe('Pass Successes', () => {
 
     const token = jwt.sign(
       {
-        data: 'verified',
         registrationNumber: '1111111117',
         facility: 'Trail B',
         orcs: 'Test Park 1'
@@ -699,7 +694,6 @@ describe('Pass Successes', () => {
 
     const token = jwt.sign(
       {
-        data: 'verified',
         registrationNumber: '1111111118',
         facility: undefined,
         orcs: 'Test Park 1'
@@ -740,7 +734,6 @@ describe('Pass Successes', () => {
 
     const token = jwt.sign(
       {
-        data: 'verified',
         registrationNumber: '1111111119',
         facility: 'Parking lot A',
         orcs: 'Test Park 1',

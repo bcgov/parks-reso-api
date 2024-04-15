@@ -22,70 +22,8 @@ const { generateRegistrationNumber } = require('../captchaUtil');
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
 
-async function modifyPassCheckInStatus(pk, sk, checkedIn) {
-  let updateParams = {
-    Key: {
-      pk: { S: `pass::${pk}` },
-      sk: { S: sk }
-    },
-    ExpressionAttributeValues: {
-      ':checkedIn': { BOOL: checkedIn }
-    },
-    UpdateExpression: 'set checkedIn =:checkedIn',
-    ReturnValues: 'ALL_NEW',
-    TableName: TABLE_NAME,
-    ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)'
-  };
-
-  if (checkedIn) {
-    updateParams.ExpressionAttributeValues[':checkedInTime'] = { S: DateTime.now().setZone(TIMEZONE).toISO() };
-    updateParams.UpdateExpression += ', checkedInTime =:checkedInTime';
-  } else {
-    // Remove time as it's irrelevant now
-    updateParams.UpdateExpression += ' remove checkedInTime';
-  }
-
-  const res = await dynamodb.updateItem(updateParams).promise();
-  return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(res.Attributes));
-}
-
-async function putPassHandler(event, context, permissionObject, passObj) {
-  try {
-    if (!permissionObject.isAuthenticated) {
-      return sendResponse(403, {
-        msg: 'You are not authorized to perform this operation.',
-        title: 'Unauthorized'
-      });
-    }
-
-    // Only support check-in
-    if (event?.queryStringParameters?.checkedIn === 'true') {
-      return await modifyPassCheckInStatus(passObj.pk, passObj.sk, true);
-    } else if (event?.queryStringParameters?.checkedIn === 'false') {
-      return await modifyPassCheckInStatus(passObj.pk, passObj.sk, false);
-    } else {
-      throw 'Bad Request - invalid query string parameters';
-    }
-  } catch (e) {
-    logger.info('There was an error in putPassHandler');
-    logger.error(e);
-    return sendResponse(
-      400,
-      {
-        msg: 'The operation failed.',
-        title: 'Bad Request'
-      },
-      context
-    );
-  }
-}
-
 exports.handler = async (event, context) => {
   logger.debug('WritePass:', event);
-  let passObject = {
-    TableName: TABLE_NAME,
-    ConditionExpression: 'attribute_not_exists(sk)'
-  };
 
   if (!event) {
     logger.info('There was an error in your submission:');
@@ -113,12 +51,8 @@ exports.handler = async (event, context) => {
       return putPassHandler(event, context, permissionObject, newObject);
     }
 
-    // HC Adjustment
-    if (newObject.parkName === '0015') {
-      // Running an old version
-      newObject['parkOrcs'] = '0015';
-      newObject.parkName = 'Mount Seymour Provincial Park';
-    }
+    // HardCode Adjustment
+    newObject = checkForHardCodeAdjustment(newObject);
 
     // http POST (new)
     let {
@@ -171,12 +105,7 @@ exports.handler = async (event, context) => {
       }
 
       // Check if pass already exists
-      const passExists = await checkIfPassExists(
-        verification.orcs,
-        verification.registrationNumber,
-        verification.facility
-      );
-      if (passExists) {
+      if (await checkIfPassExists(verification.orcs, verification.registrationNumber, verification.facility)) {
         logger.info('Pass already exists');
         return sendResponse(400, {
           msg: 'This pass already exsits.',
@@ -246,45 +175,23 @@ exports.handler = async (event, context) => {
       }
     }
 
-    passObject.Item = {};
-    passObject.Item['pk'] = { S: 'pass::' + parkData.sk };
-    passObject.Item['sk'] = { S: registrationNumber };
-    passObject.Item['parkName'] = { S: parkData.name };
-    passObject.Item['firstName'] = { S: firstName };
-    passObject.Item['searchFirstName'] = { S: firstName.toLowerCase() };
-    passObject.Item['lastName'] = { S: lastName };
-    passObject.Item['searchLastName'] = { S: lastName.toLowerCase() };
-    passObject.Item['facilityName'] = { S: facilityName };
-    passObject.Item['email'] = { S: email };
-    passObject.Item['date'] = { S: bookingPSTDateTime.toUTC().toISO() };
-    passObject.Item['shortPassDate'] = { S: bookingPSTShortDate };
-    passObject.Item['type'] = { S: type };
-    passObject.Item['registrationNumber'] = { S: registrationNumber };
-    passObject.Item['numberOfGuests'] = AWS.DynamoDB.Converter.input(numberOfGuests);
-    passObject.Item['passStatus'] = { S: status };
-    passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
-    passObject.Item['facilityType'] = { S: facilityData.type };
-    passObject.Item['isOverbooked'] = { BOOL: false };
-    // Audit
-    passObject.Item['creationDate'] = { S: currentPSTDateTime.toUTC().toISO() };
-    passObject.Item['dateUpdated'] = { S: currentPSTDateTime.toUTC().toISO() };
-    passObject.Item['audit'] = {
-      L: [
-        {
-          M: {
-            by: {
-              S: 'system'
-            },
-            passStatus: {
-              S: status
-            },
-            dateUpdated: {
-              S: currentPSTDateTime.toUTC().toISO()
-            }
-          }
-        }
-      ]
-    };
+    // Create the base pass object
+    let passObject = createPassObject(
+      parkData,
+      registrationNumber,
+      firstName,
+      lastName,
+      facilityName,
+      email,
+      bookingPSTDateTime,
+      bookingPSTShortDate,
+      type,
+      numberOfGuests,
+      status,
+      phoneNumber,
+      facilityData,
+      currentPSTDateTime
+    );
 
     const cancellationLink =
       process.env.PUBLIC_FRONTEND +
@@ -301,8 +208,6 @@ exports.handler = async (event, context) => {
       type;
 
     const encodedCancellationLink = encodeURI(cancellationLink);
-
-    let gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
 
     const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
     const formattedBookingDate = bookingPSTDateTime.toLocaleString(dateOptions);
@@ -321,11 +226,6 @@ exports.handler = async (event, context) => {
       parksLink: parkData.bcParksLink,
       ...(await getPersonalizationAttachment(parkData.sk, registrationNumber.toString(), facilityData.qrcode))
     };
-
-    // Parking.
-    if (facilityData.type === 'Parking') {
-      gcNotifyTemplate = process.env.GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID;
-    }
 
     if (parkData.visible === true) {
       // Check existing pass for the same facility, email, type and date
@@ -404,46 +304,14 @@ exports.handler = async (event, context) => {
       // If the conditions where the related facility object has a lock, we then fail the whole transaction.
       // This is to prevent a race condition related to available pass tallies.
       passObject.ReturnValuesOnConditionCheckFailure = 'ALL_OLD';
-      const transactionObj = {
-        TransactItems: [
-          {
-            ConditionCheck: {
-              TableName: TABLE_NAME,
-              Key: {
-                pk: { S: `facility::${parkData.sk}` },
-                sk: { S: facilityName }
-              },
-              ExpressionAttributeValues: {
-                ':isUpdating': { BOOL: false }
-              },
-              ConditionExpression: 'isUpdating = :isUpdating',
-              ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
-            }
-          },
-          {
-            Update: {
-              TableName: TABLE_NAME,
-              Key: {
-                pk: { S: reservationsObjectPK },
-                sk: { S: bookingPSTShortDate }
-              },
-              ExpressionAttributeValues: {
-                ':dec': AWS.DynamoDB.Converter.input(numberOfGuests)
-              },
-              ExpressionAttributeNames: {
-                '#type': type,
-                '#availablePasses': 'availablePasses'
-              },
-              UpdateExpression: 'SET capacities.#type.#availablePasses = capacities.#type.#availablePasses - :dec',
-              ConditionExpression: 'capacities.#type.#availablePasses >= :dec',
-              ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
-            }
-          },
-          {
-            Put: passObject
-          }
-        ]
-      };
+      const transactionObj = generateTrasactionObject(parkData,
+                                                      facilityName,
+                                                      reservationsObjectPK,
+                                                      bookingPSTShortDate,
+                                                      type,
+                                                      numberOfGuests,
+                                                      passObject
+                                                     );
       logger.debug('Transact obj:', transactionObj);
       logger.debug('Putting item:', passObject);
       try {
@@ -488,24 +356,7 @@ exports.handler = async (event, context) => {
 
       try {
         logger.info('Posting to GC Notify');
-        const gcnData = {
-          email_address: email,
-          template_id: gcNotifyTemplate,
-          personalisation: personalisation
-        };
-
-        // Push this email job onto the queue so we can return quickly to the front-end
-        logger.info('Sending to SQS');
-        await sendSQSMessage('GCN', gcnData);
-        logger.info('Sent');
-
-        // Prune audit
-        delete passObject.Item['audit'];
-        logger.info(
-          `Pass successfully created. Registration number: ${JSON.stringify(
-            passObject?.Item['registrationNumber']
-          )}, Orcs: ${parkData.sk}`
-        );
+        passObject = await sendTemplateMessageAndDeleteAuditItem(facilityData.type, personalisation, passObject);
         return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
       } catch (err) {
         logger.info(
@@ -529,3 +380,252 @@ exports.handler = async (event, context) => {
     return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
   }
 };
+
+/**
+ * Sends a template message and deletes the audit item.
+ * @param {string} templateId - The ID of the template.
+ * @param {object} personalisation - The personalisation data for the template.
+ * @param {object} passObject - The pass object.
+ * @returns {object} - The updated pass object.
+ */
+async function sendTemplateMessageAndDeleteAuditItem(facilityType, personalisation, passObject) {
+  let gcNotifyTemplate;
+  // Parking?
+  if (facilityType === 'Parking') {
+    gcNotifyTemplate = process.env.GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID;
+  } else {
+    gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
+  }
+  const gcnData = {
+    email_address: email,
+    template_id: gcNotifyTemplate,
+    personalisation: personalisation
+  };
+
+  // Push this email job onto the queue so we can return quickly to the front-end
+  logger.info('Sending to SQS');
+  await sendSQSMessage('GCN', gcnData);
+  logger.info('Sent');
+
+  // Prune audit
+  delete passObject.Item['audit'];
+  logger.info(
+    `Pass successfully created. Registration number: ${JSON.stringify(
+      passObject?.Item['registrationNumber']
+    )}, Orcs: ${parkData.sk}`
+  );
+  return passObject;
+};
+
+/**
+ * Creates a pass object with the provided data.
+ *
+ * @param {Object} parkData - The park data object.
+ * @param {string} registrationNumber - The registration number.
+ * @param {string} firstName - The first name.
+ * @param {string} lastName - The last name.
+ * @param {string} facilityName - The facility name.
+ * @param {string} email - The email address.
+ * @param {Date} bookingPSTDateTime - The booking date and time in PST.
+ * @param {string} bookingPSTShortDate - The booking short date in PST.
+ * @param {string} type - The type of pass.
+ * @param {number} numberOfGuests - The number of guests.
+ * @param {string} status - The pass status.
+ * @param {string} phoneNumber - The phone number.
+ * @param {Object} facilityData - The facility data object.
+ * @returns {Object} - The pass object.
+ */
+function createPassObject(parkData,
+                          registrationNumber,
+                          firstName,
+                          lastName,
+                          facilityName,
+                          email,
+                          bookingPSTDateTime,
+                          bookingPSTShortDate,
+                          type,
+                          numberOfGuests,
+                          status,
+                          phoneNumber,
+                          facilityData,
+                          currentPSTDateTime
+                        ) {
+  const passObject = {
+    TableName: TABLE_NAME,
+    ConditionExpression: 'attribute_not_exists(sk)'
+  };
+  passObject.Item = {};
+  passObject.Item['pk'] = { S: 'pass::' + parkData.sk };
+  passObject.Item['sk'] = { S: registrationNumber };
+  passObject.Item['parkName'] = { S: parkData.name };
+  passObject.Item['firstName'] = { S: firstName };
+  passObject.Item['searchFirstName'] = { S: firstName.toLowerCase() };
+  passObject.Item['lastName'] = { S: lastName };
+  passObject.Item['searchLastName'] = { S: lastName.toLowerCase() };
+  passObject.Item['facilityName'] = { S: facilityName };
+  passObject.Item['email'] = { S: email };
+  passObject.Item['date'] = { S: bookingPSTDateTime.toUTC().toISO() };
+  passObject.Item['shortPassDate'] = { S: bookingPSTShortDate };
+  passObject.Item['type'] = { S: type };
+  passObject.Item['registrationNumber'] = { S: registrationNumber };
+  passObject.Item['numberOfGuests'] = AWS.DynamoDB.Converter.input(numberOfGuests);
+  passObject.Item['passStatus'] = { S: status };
+  passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
+  passObject.Item['facilityType'] = { S: facilityData.type };
+  passObject.Item['isOverbooked'] = { BOOL: false };
+  // Audit
+  passObject.Item['creationDate'] = { S: currentPSTDateTime.toUTC().toISO() };
+  passObject.Item['dateUpdated'] = { S: currentPSTDateTime.toUTC().toISO() };
+  passObject.Item['audit'] = {
+    L: [
+      {
+        M: {
+          by: {
+            S: 'system'
+          },
+          passStatus: {
+            S: status
+          },
+          dateUpdated: {
+            S: currentPSTDateTime.toUTC().toISO()
+          }
+        }
+      }
+    ]
+  };
+  return passObject;
+}
+
+/**
+ * Checks for HardCode adjustment and updates the newObject if necessary.
+ * If the parkName in newObject is '0015', it means an old version is running.
+ * In that case, it updates the parkOrcs property to '0015' and changes the parkName to 'Mount Seymour Provincial Park'.
+ * @param {Object} newObject - The object to be checked and updated if necessary.
+ * @returns {Object} - The updated object.
+ */
+function checkForHardCodeAdjustment(newObject) {
+  if (newObject.parkName === '0015') {
+    // Running an old version
+    newObject['parkOrcs'] = '0015';
+    newObject.parkName = 'Mount Seymour Provincial Park';
+  }
+  return newObject;
+}
+
+function generateTrasactionObject(parkData, facilityName, reservationsObjectPK, bookingPSTShortDate, type, numberOfGuests, passObject) {
+  return {
+    TransactItems: [
+      {
+        ConditionCheck: {
+          TableName: TABLE_NAME,
+          Key: {
+            pk: { S: `facility::${parkData.sk}` },
+            sk: { S: facilityName }
+          },
+          ExpressionAttributeValues: {
+            ':isUpdating': { BOOL: false }
+          },
+          ConditionExpression: 'isUpdating = :isUpdating',
+          ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
+        }
+      },
+      {
+        Update: {
+          TableName: TABLE_NAME,
+          Key: {
+            pk: { S: reservationsObjectPK },
+            sk: { S: bookingPSTShortDate }
+          },
+          ExpressionAttributeValues: {
+            ':dec': AWS.DynamoDB.Converter.input(numberOfGuests)
+          },
+          ExpressionAttributeNames: {
+            '#type': type,
+            '#availablePasses': 'availablePasses'
+          },
+          UpdateExpression: 'SET capacities.#type.#availablePasses = capacities.#type.#availablePasses - :dec',
+          ConditionExpression: 'capacities.#type.#availablePasses >= :dec',
+          ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
+        }
+      },
+      {
+        Put: passObject
+      }
+    ]
+  };
+}
+
+/**
+ * Modifies the check-in status of a pass.
+ *
+ * @param {string} pk - The partition key of the pass.
+ * @param {string} sk - The sort key of the pass.
+ * @param {boolean} checkedIn - The new check-in status of the pass.
+ * @returns {Promise<Object>} - A promise that resolves to the updated pass object.
+ */
+async function modifyPassCheckInStatus(pk, sk, checkedIn) {
+  let updateParams = {
+    Key: {
+      pk: { S: `pass::${pk}` },
+      sk: { S: sk }
+    },
+    ExpressionAttributeValues: {
+      ':checkedIn': { BOOL: checkedIn }
+    },
+    UpdateExpression: 'set checkedIn =:checkedIn',
+    ReturnValues: 'ALL_NEW',
+    TableName: TABLE_NAME,
+    ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)'
+  };
+
+  if (checkedIn) {
+    updateParams.ExpressionAttributeValues[':checkedInTime'] = { S: DateTime.now().setZone(TIMEZONE).toISO() };
+    updateParams.UpdateExpression += ', checkedInTime =:checkedInTime';
+  } else {
+    // Remove time as it's irrelevant now
+    updateParams.UpdateExpression += ' remove checkedInTime';
+  }
+
+  const res = await dynamodb.updateItem(updateParams).promise();
+  return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(res.Attributes));
+}
+
+/**
+ * Handles the PUT request for updating a pass.
+ *
+ * @param {Object} event - The event object containing the request details.
+ * @param {Object} context - The context object containing the runtime information.
+ * @param {Object} permissionObject - The permission object containing authentication details.
+ * @param {Object} passObj - The pass object to be modified.
+ * @returns {Promise<Object>} - A promise that resolves to the response object.
+ */
+async function putPassHandler(event, context, permissionObject, passObj) {
+  try {
+    if (!permissionObject.isAuthenticated) {
+      return sendResponse(403, {
+        msg: 'You are not authorized to perform this operation.',
+        title: 'Unauthorized'
+      });
+    }
+
+    // Only support check-in
+    if (event?.queryStringParameters?.checkedIn === 'true') {
+      return await modifyPassCheckInStatus(passObj.pk, passObj.sk, true);
+    } else if (event?.queryStringParameters?.checkedIn === 'false') {
+      return await modifyPassCheckInStatus(passObj.pk, passObj.sk, false);
+    } else {
+      throw 'Bad Request - invalid query string parameters';
+    }
+  } catch (e) {
+    logger.info('There was an error in putPassHandler');
+    logger.error(e);
+    return sendResponse(
+      400,
+      {
+        msg: 'The operation failed.',
+        title: 'Bad Request'
+      },
+      context
+    );
+  }
+}
