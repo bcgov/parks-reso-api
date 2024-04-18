@@ -397,7 +397,7 @@ async function sendTemplateMessageAndDeleteAuditItem(facilityType, personalisati
     gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
   }
   const gcnData = {
-    email_address: email,
+    email_address: passObject.email,
     template_id: gcNotifyTemplate,
     personalisation: personalisation
   };
@@ -412,7 +412,7 @@ async function sendTemplateMessageAndDeleteAuditItem(facilityType, personalisati
   logger.info(
     `Pass successfully created. Registration number: ${JSON.stringify(
       passObject?.Item['registrationNumber']
-    )}, Orcs: ${parkData.sk}`
+    )}, Orcs: ${passObject.Item.pk}`
   );
   return passObject;
 };
