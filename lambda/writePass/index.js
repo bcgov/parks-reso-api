@@ -397,7 +397,7 @@ async function sendTemplateMessageAndDeleteAuditItem(facilityType, personalisati
     gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
   }
   const gcnData = {
-    email_address: passObject.email,
+    email_address: passObject.Item['email'].S,
     template_id: gcNotifyTemplate,
     personalisation: personalisation
   };
