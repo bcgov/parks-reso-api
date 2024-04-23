@@ -412,7 +412,7 @@ async function sendTemplateMessageAndDeleteAuditItem(facilityType, personalisati
   logger.info(
     `Pass successfully created. Registration number: ${JSON.stringify(
       passObject?.Item['registrationNumber']
-    )}, Orcs: ${parkData.sk}`
+    )}, Orcs: ${passObject.Item.pk}`
   );
   return passObject;
 };
