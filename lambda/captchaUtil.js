@@ -39,12 +39,8 @@ async function getCaptcha(options, facility, orcs, bookingDate, passType) {
     };
   }
 
-  const isValidBooking = await isBookingAllowed(orcs, facility, bookingDate, passType);
-
-  // if you cant currently book a pass for the facility, dont bother creating the captcha.
-  if (!isValidBooking || !isValidBooking.valid) {
-    return isValidBooking;
-  }
+  // Throws error if booking is not allowed
+  await isBookingAllowed(orcs, facility, bookingDate, passType);
 
   // add answer, and expiry to body
   const body = {
@@ -63,26 +59,13 @@ async function getCaptcha(options, facility, orcs, bookingDate, passType) {
       }
     ),
   };
-  try {
-    const validation = await encrypt(body);
-    if (validation === '') {
-      return {
-        valid: false
-      };
-    } else {
-      // create basic response
-      const responseBody = {
-        captcha: captcha.data,
-        validation: validation
-      };
-      return responseBody;
-    }
-  } catch (err) {
-    logger.error(err);
-    return {
-      valid: false
-    };
-  }
+  const validation = await encrypt(body);
+  // create basic response
+  const responseBody = {
+    captcha: captcha.data,
+    validation: validation
+  };
+  return responseBody;
 }
 
 /**
@@ -172,7 +155,7 @@ async function verifyCaptcha(payload) {
 function verifyJWT(token) {
   try {
     const decoded = jwt.verify(token, SECRET, { algorithm: ALGORITHM });
-    logger.info('JWT decoded.')
+    logger.info('JWT decoded.');
     return {
       valid: true,
       registrationNumber: decoded.registrationNumber,
@@ -191,13 +174,8 @@ function verifyJWT(token) {
 
 async function encrypt(body) {
   const buff = Buffer.from(JSON.stringify(body));
-  try {
-    const cr = await jose.JWE.createEncrypt(PRIVATE_KEY).update(buff).final();
-    return cr;
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
+  const cr = await jose.JWE.createEncrypt(PRIVATE_KEY).update(buff).final();
+  return cr;
 }
 
 async function decrypt(body, private_key) {

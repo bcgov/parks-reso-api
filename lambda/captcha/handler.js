@@ -11,25 +11,23 @@ async function generateCaptcha(event, context) {
   }
   const postBody = JSON.parse(event.body);
   if (!postBody.facility || !postBody.orcs) {
-    return sendResponse(400, { msg: 'Failed to generate captcha' }, context);
+    return sendResponse(400, { msg: 'Invalid post body' }, context);
   }
   logger.info('Post Body');
   logger.debug(JSON.stringify(postBody));
-  const captcha = await getCaptcha({ fontSize: 76, width: 190, height: 70 },
-                                    postBody.facility,
-                                    postBody.orcs,
-                                    postBody.bookingDate,
-                                    postBody.passType);
+  try {
+    const captcha = await getCaptcha({ fontSize: 76, width: 190, height: 70 },
+                                      postBody.facility,
+                                      postBody.orcs,
+                                      postBody.bookingDate,
+                                      postBody.passType);
 
-  logger.debug(JSON.stringify(captcha));
-
-  if (captcha?.valid === false) {
-    logger.info('Failed to generate captcha');
-    logger.debug(captcha);
-    return sendResponse(400, { msg: 'Failed to generate captcha' }, context);
+    logger.debug(JSON.stringify(captcha));
+    return sendResponse(200, captcha);
+  } catch (error) {
+    logger.error(error);
+    return sendResponse(400, { msg: error.message }, context);
   }
-
-  return sendResponse(200, captcha);
 }
 
 async function verifyAnswer(event, context) {

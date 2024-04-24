@@ -9,14 +9,13 @@ const {
   getConfig,
   DEFAULT_PM_OPENING_HOUR
 } = require('../dynamoUtil');
-const { sendResponse, checkWarmup } = require('../responseUtil');
+const { sendResponse, checkWarmup, CustomError } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
 const { createNewReservationsObj } = require('../reservationObjUtils');
 const { getPersonalizationAttachment, getAdminLinkToPass, isBookingAllowed } = require('../passUtils');
 const { sendSQSMessage } = require('../sqsUtils');
-const { checkIfPassExists } = require('../passUtils');
 const { generateRegistrationNumber } = require('../captchaUtil');
 
 // default opening/closing hours in 24h time
@@ -48,13 +47,187 @@ exports.handler = async (event, context) => {
     let newObject = JSON.parse(event.body);
     // Check for update method (check this pass in)
     if (event.httpMethod === 'PUT') {
-      return putPassHandler(event, context, permissionObject, newObject);
+      return await putPassHandler(event, permissionObject, newObject);
     }
 
     // HardCode Adjustment
     newObject = checkForHardCodeAdjustment(newObject);
 
-    // http POST (new)
+    // If committing to secure the pass
+    if (newObject.commit) {
+      return await handleCommitPass(newObject, permissionObject.isAdmin);
+    } else {
+      return await handleHoldPass(newObject, permissionObject.isAdmin);
+    }
+  } catch (err) {
+    logger.info('Operation Failed');
+    logger.error('err', err.message);
+    return sendResponse(err.statusCode, { msg: err.message, title: 'Operation Failed' });
+  }
+};
+
+async function checkHoldPassJwt(holdPassJwt) {
+  // Check if hold-pass JWT is present
+  if (!holdPassJwt || !holdPassJwt.length) {
+    logger.info('Missing hold-pass verification');
+    throw new CustomError('Missing hold-pass verification', 400);
+  }
+  // Check if hold-pass JWT is not expired
+  logger.debug('holdPassJwt:', holdPassJwt);
+  const holdPassVerification = verifyJWT(holdPassJwt);
+  logger.debug('holdPassVerification:', holdPassVerification);
+  if (!holdPassVerification.bookingDate ||
+    !holdPassVerification.facility ||
+    !holdPassVerification.orcs ||
+    !holdPassVerification.passType ||
+    !holdPassVerification.valid
+  ) {
+    logger.info("hold-pass THROWs")
+    logger.info('hold-pass verification failed');
+    throw new CustomError('hold-pass verification failed', 400);
+  }
+
+  return holdPassVerification;
+}
+
+async function checkCaptchaJwt(captchaJwt) {
+  // Check if CAPTCHA is present
+  if (!captchaJwt || !captchaJwt.length) {
+    logger.info('Missing CAPTCHA verification');
+    throw new CustomError('Missing CAPTCHA verification.', 400);
+  }
+
+  // Verify CAPTCHA
+  logger.debug('captchaJwt:', captchaJwt);
+  const verification = verifyJWT(captchaJwt);
+  logger.debug('verification:', verification)
+
+  if (verification.valid === false) {
+    throw new CustomError('CAPTCHA verification failed.', 400);
+  }
+
+  if (!verification.bookingDate ||
+    !verification.facility ||
+    !verification.orcs ||
+    !verification.passType ||
+    !verification.registrationNumber ||
+    !verification.valid) {
+    logger.info('CAPTCHA missing fields.');
+    throw new CustomError('CAPTCHA missing fields.', 400);
+  }
+
+  return verification;
+}
+
+async function checkJWTsMatch(holdPassVerification, verification) {
+  // Ensure both JWT's are for the same pass
+  if (
+    holdPassVerification.bookingDate !== verification.bookingDate &&
+    holdPassVerification.facility !== verification.facility &&
+    holdPassVerification.orcs !== verification.orcs &&
+    holdPassVerification.passType !== verification.passType &&
+    holdPassVerification.registrationNumber !== verification.registrationNumber
+  ) {
+    logger.info('CAPTCHA and Hold Pass JWTs do not match');
+    throw new CustomError('CAPTCHA and Hold Pass JWTs do not match.', 400);
+  }
+}
+
+async function handleCommitPass(newObject, isAdmin) {
+  let {
+    parkOrcs,
+    firstName,
+    lastName,
+    facilityName,
+    email,
+    date,
+    type,
+    numberOfGuests,
+    phoneNumber,
+    captchaJwt,
+    holdPassJwt,
+    ...otherProps
+  } = newObject;
+
+  // Do extra checks if user is not sysadmin.
+  if (!isAdmin) {
+    try {
+      logger.info('Checking JWTs');
+      // Check if hold-pass JWT is valid
+      const holdPassVerification = await checkHoldPassJwt(holdPassJwt);
+
+      logger.info('Checking CAPTCHA JWT');
+      // Check if CAPTCHA JWT is valid
+      const verification = await checkCaptchaJwt(captchaJwt);
+      logger.debug('Verification:', verification )
+
+      logger.info('Checking JWTs match');
+      // Check if JWTs match
+      await checkJWTsMatch(holdPassVerification, verification);
+    } catch (error) {
+      // Handle the error here
+      logger.error(error);
+      return sendResponse(error.statusCode, { msg: error.message, title: 'Operation Failed.' });
+    }
+  }
+
+  const cancellationLink =
+    process.env.PUBLIC_FRONTEND +
+    process.env.PASS_CANCELLATION_ROUTE +
+    '?passId=' +
+    registrationNumber +
+    '&email=' +
+    email +
+    '&park=' +
+    parkOrcs +
+    '&date=' +
+    bookingPSTShortDate +
+    '&type=' +
+    type;
+
+  const encodedCancellationLink = encodeURI(cancellationLink);
+
+  const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+  const formattedBookingDate = bookingPSTDateTime.toLocaleString(dateOptions);
+
+  let personalisation = {
+    firstName: firstName,
+    lastName: lastName,
+    date: formattedBookingDate,
+    type: type === 'DAY' ? 'ALL DAY' : type,
+    facilityName: facilityName,
+    numberOfGuests: numberOfGuests.toString(),
+    registrationNumber: registrationNumber.toString(),
+    cancellationLink: encodedCancellationLink,
+    parkName: parkData.name,
+    mapLink: parkData.mapLink || null,
+    parksLink: parkData.bcParksLink,
+    ...(await getPersonalizationAttachment(parkData.sk, registrationNumber.toString(), facilityData.qrcode))
+  };
+
+  // Send to GC Notify
+  try {
+    logger.info('Posting to GC Notify');
+    passObject = await sendTemplateSQS(facilityData.type, personalisation, passObject);
+    // Prune audit
+  } catch (err) {
+    logger.info(
+      `GCNotify error, return 200 anyway. Registration number: ${JSON.stringify(
+        passObject?.Item['registrationNumber']
+      )}`
+    );
+    logger.error(err.response?.data || err);
+    let errRes = AWS.DynamoDB.Converter.unmarshall(passObject.Item);
+    errRes['err'] = 'Email Failed to Send';
+    return sendResponse(200, errRes);
+  }
+
+  // TODO: Remove JWT from hold pass area in database.
+}
+
+async function handleHoldPass(newObject, isAdmin) {
+  logger.debug('newObject:', newObject);
+  try {
     let {
       parkOrcs,
       firstName,
@@ -65,89 +238,27 @@ exports.handler = async (event, context) => {
       type,
       numberOfGuests,
       phoneNumber,
+      holdPassJwt,
       captchaJwt,
       ...otherProps
     } = newObject;
 
     logger.info('GetFacility');
-    logger.debug(permissionObject.roles);
+    logger.debug('parkOrcs:', parkOrcs);
     const parkData = await getPark(parkOrcs);
-    const facilityData = await getFacility(parkOrcs, facilityName, permissionObject.isAdmin);
+    logger.debug('parkData:', parkData);
+    logger.debug('facilityName:', facilityName);
+    const facilityData = await getFacility(parkOrcs, facilityName, isAdmin);
 
-    if (Object.keys(facilityData).length === 0) {
-      throw 'Facility not found.';
-    }
+    // Call a function that checks the facilityData object
+    numberOfGuests = checkFacilityData(facilityData, numberOfGuests);
 
-    let registrationNumber;
-    if (!permissionObject.isAdmin) {
-      // Do extra checks if user is not sysadmin.
-      if (!captchaJwt || !captchaJwt.length) {
-        logger.info('Missing CAPTCHA verification');
-        return sendResponse(400, {
-          msg: 'Missing CAPTCHA verification.',
-          title: 'Missing CAPTCHA verification'
-        });
-      }
-
-      const verification = verifyJWT(captchaJwt);
-      if (!verification.valid
-          || !verification.registrationNumber
-          || !verification.orcs
-          || !verification.facility
-          || !verification.bookingDate
-          || !verification.passType)
-      {
-        logger.info('CAPTCHA verification failed');
-        return sendResponse(400, {
-          msg: 'CAPTCHA verification failed.',
-          title: 'CAPTCHA verification failed'
-        });
-      }
-
-      // Check if pass already exists
-      if (await checkIfPassExists(verification.orcs, verification.registrationNumber, verification.facility)) {
-        logger.info('Pass already exists');
-        return sendResponse(400, {
-          msg: 'This pass already exsits.',
-          title: 'Pass exists'
-        });
-      } else {
-        registrationNumber = verification.registrationNumber;
-      }
-      // Enforce maximum limit per pass
-      if (facilityData.type === 'Trail' && numberOfGuests > 4) {
-        logger.info('Too many guests');
-        return sendResponse(400, {
-          msg: 'You cannot have more than 4 guests on a trail.',
-          title: 'Too many guests'
-        });
-      }
-
-      if (facilityData.type === 'Parking') {
-        numberOfGuests = 1;
-      }
-    } else {
-      // If the user is an Admin, generate a reg number
-      registrationNumber = generateRegistrationNumber(10);
-    }
-
-    // numberOfGuests cannot be less than 1.
-    if (numberOfGuests < 1) {
-      logger.info('Invalid number of guests:', numberOfGuests);
-      return sendResponse(400, {
-        msg: 'Passes must have at least 1 guest.',
-        title: 'Invalid number of guests'
-      });
-    }
+    const holdPassVerification = await checkHoldPassJwt(holdPassJwt);
+    logger.debug("holdPassVerification", holdPassVerification);
 
     // check if valid booking attempt
-    const isBookingAttemptValid = await isBookingAllowed(parkOrcs, facilityName, date, type);
-    if (!isBookingAttemptValid || !isBookingAttemptValid.valid) {
-      return sendResponse(400, {
-        msg: isBookingAttemptValid.reason || 'Booking failed.',
-        title: 'Booking date in the past'
-      })
-    }
+    logger.info('Checking if booking is allowed');
+    await isBookingAllowed(parkOrcs, facilityName, date, type);
 
     // the timestamp this script was run
     const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
@@ -175,6 +286,24 @@ exports.handler = async (event, context) => {
       }
     }
 
+    // Check if park is visible
+    if (parkData.visible !== true) {
+      logger.info('Something went wrong, park not visible.');
+      // Not allowed for whatever reason.
+      throw new CustomError('Something went wrong.', 400);
+    }
+
+    // Check if an existing pass already exists for the same facility, email, type, and date
+    // Only perform this check in production environment
+    const config = await getConfig();
+    if (config.ENVIRONMENT === 'prod') {
+      logger.info('Checking for existing pass');
+      await checkExistingPass(parkData, facilityName, email, type, bookingPSTShortDate);
+    }
+
+    logger.info('Creating pass object');
+    const registrationNumber = generateRegistrationNumber(10);
+
     // Create the base pass object
     let passObject = createPassObject(
       parkData,
@@ -193,193 +322,179 @@ exports.handler = async (event, context) => {
       currentPSTDateTime
     );
 
-    const cancellationLink =
-      process.env.PUBLIC_FRONTEND +
-      process.env.PASS_CANCELLATION_ROUTE +
-      '?passId=' +
-      registrationNumber +
-      '&email=' +
-      email +
-      '&park=' +
-      parkOrcs +
-      '&date=' +
-      bookingPSTShortDate +
-      '&type=' +
-      type;
+    // Here, we must create/update a reservation object
+    // https://github.com/bcgov/parks-reso-api/wiki/Models
 
-    const encodedCancellationLink = encodeURI(cancellationLink);
+    // TODO: We need to change park name in the PK to use orcs instead.
+    const reservationsObjectPK = `reservations::${parkData.sk}::${facilityName}`;
 
-    const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-    const formattedBookingDate = bookingPSTDateTime.toLocaleString(dateOptions);
+    const bookingTimeTypes = Object.keys(facilityData.bookingTimes);
+    if (!bookingTimeTypes.includes(type)) {
+      // Type given does not exist in the facility.
+      logger.info('Booking Time Type Error: type provided does not exist in facility');
+      logger.error('Write Pass', bookingTimeTypes, type);
+      throw new CustomError('Type provided does not exist in facility.', 400);
+    }
 
-    let personalisation = {
-      firstName: firstName,
-      lastName: lastName,
-      date: formattedBookingDate,
-      type: type === 'DAY' ? 'ALL DAY' : type,
-      facilityName: facilityName,
-      numberOfGuests: numberOfGuests.toString(),
-      registrationNumber: registrationNumber.toString(),
-      cancellationLink: encodedCancellationLink,
-      parkName: parkData.name,
-      mapLink: parkData.mapLink || null,
-      parksLink: parkData.bcParksLink,
-      ...(await getPersonalizationAttachment(parkData.sk, registrationNumber.toString(), facilityData.qrcode))
-    };
+    logger.info('Creating reservations object');
+    // We need to ensure that the reservations object exists.
+    // Attempt to create reservations object. If it fails, so what...
+    await createNewReservationsObj(facilityData, reservationsObjectPK, bookingPSTShortDate);
 
-    if (parkData.visible === true) {
-      // Check existing pass for the same facility, email, type and date
-      // Unless not in production
-      const config = await getConfig();
-      if (config.ENVIRONMENT === 'prod') {
-        try {
-          const existingPassCheckObject = {
-            TableName: TABLE_NAME,
-            IndexName: 'shortPassDate-index',
-            KeyConditionExpression: 'shortPassDate = :shortPassDate AND facilityName = :facilityName',
-            FilterExpression: 'email = :email AND #type = :type AND passStatus IN (:reserved, :active)',
-            ExpressionAttributeNames: {
-              '#type': 'type'
-            },
-            ExpressionAttributeValues: {
-              ':facilityName': { S: facilityName },
-              ':email': { S: email },
-              ':type': { S: type },
-              ':shortPassDate': { S: bookingPSTShortDate },
-              ':reserved': { S: 'reserved' },
-              ':active': { S: 'active' }
-            }
-          };
-          let existingItems;
-          try {
-            logger.info('Running existingPassCheckObject');
-            existingItems = await dynamodb.query(existingPassCheckObject).promise();
-          } catch (error) {
-            logger.info('Error while running query for existingPassCheckObject');
-            logger.error(error);
-            throw error;
-          }
+    logger.info('Creating transaction object');
 
-          if (existingItems.Count === 0) {
-            logger.debug('No existing pass found. Creating new pass...');
-          } else {
-            logger.info(
-              `email account already has a reservation. Registration number: ${JSON.stringify(
-                existingItems?.Items[0]?.registrationNumber
-              )}, Orcs: ${parkData.sk}`
-            );
-            return sendResponse(400, {
-              title: 'This email account already has a reservation for this booking time.',
-              msg: 'A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>'
-            });
-          }
-        } catch (err) {
-          logger.info(
-            `Error on check existing pass for the same facility, email, type and date. Registration number: ${registrationNumber}, Orcs: ${parkData.sk}`
-          );
-          logger.error(err);
-          return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
-        }
-      }
+    // Perform a transaction where we decrement the available passes and create the pass
+    // If the conditions where the related facility object has a lock, we then fail the whole transaction.
+    // This is to prevent a race condition related to available pass tallies.
+    passObject.ReturnValuesOnConditionCheckFailure = 'ALL_OLD';
 
-      // Here, we must create/update a reservation object
-      // https://github.com/bcgov/parks-reso-api/wiki/Models
+    logger.info('numberOfGuests:', numberOfGuests)
 
-      // TODO: We need to change park name in the PK to use orcs instead.
-      const reservationsObjectPK = `reservations::${parkData.sk}::${facilityName}`;
+    const transactionObj = generateTrasactionObject(parkData,
+      facilityName,
+      reservationsObjectPK,
+      bookingPSTShortDate,
+      type,
+      numberOfGuests,
+      passObject
+    );
+    logger.debug('Transact obj:', transactionObj);
+    logger.debug('Putting item:', passObject);
 
-      const bookingTimeTypes = Object.keys(facilityData.bookingTimes);
-      if (!bookingTimeTypes.includes(type)) {
-        // Type given does not exist in the facility.
-        logger.info('Booking Time Type Error: type provided does not exist in facility');
-        logger.error('Write Pass', bookingTimeTypes, type);
-        return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
-      }
+    // Perform the transaction, retrying if necessary
+    logger.info('Performing transaction');
 
-      // We need to ensure that the reservations object exists.
-      // Attempt to create reservations object. If it fails, so what...
-      await createNewReservationsObj(facilityData, reservationsObjectPK, bookingPSTShortDate);
+    await transactWriteWithRetries(transactionObj); // TODO: Set a retry limit if 3 isn't enough.
 
-      // Perform a transaction where we decrement the available passes and create the pass
-      // If the conditions where the related facility object has a lock, we then fail the whole transaction.
-      // This is to prevent a race condition related to available pass tallies.
-      passObject.ReturnValuesOnConditionCheckFailure = 'ALL_OLD';
-      const transactionObj = generateTrasactionObject(parkData,
-                                                      facilityName,
-                                                      reservationsObjectPK,
-                                                      bookingPSTShortDate,
-                                                      type,
-                                                      numberOfGuests,
-                                                      passObject
-                                                     );
-      logger.debug('Transact obj:', transactionObj);
-      logger.debug('Putting item:', passObject);
-      try {
-        logger.info('Writing Transact obj.');
-        const res = await dynamodb.transactWriteItems(transactionObj).promise();
-        logger.debug('Res:', res);
-      } catch (error) {
-        logger.info('Transaction failed:', error.code);
-        logger.error(error);
-        if (error.code === 'TransactionCanceledException') {
-          let cancellationReasons = error.message.slice(error.message.lastIndexOf('[') + 1);
-          cancellationReasons = cancellationReasons.slice(0, -1);
-          cancellationReasons = cancellationReasons.split(', ');
-          let message = error.message;
-          if (cancellationReasons[0] != 'None') {
-            logger.info('Facility is currently locked');
-            message = 'An error has occured, please try again.';
-            // TODO: we could implement a retry transaction here.
-          }
+    logger.info('Transaction complete');
+
+    // Temporarily assign the QRCode Link for the front end not to guess at it.
+    if (facilityData.qrcode === true) {
+      passObject.Item['adminPassLink'] = { S: getAdminLinkToPass(parkData.sk, registrationNumber.toString()) };
+    }
+
+    delete passObject.Item['audit'];
+    return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
+  } catch (error) {
+    logger.info('Operation Failed');
+    logger.error('err', error.message);
+    return sendResponse(error.statusCode, { msg: error.message, title: 'Operation Failed' });
+  }
+};
+
+async function transactWriteWithRetries(transactionObj, maxRetries = 3) {
+  let retryCount = 0;
+  let res;
+  do {
+    try {
+      logger.info('Writing Transact obj.');
+      logger.debug('Transact obj:', JSON.stringify(transactionObj)); 
+      res = await dynamodb.transactWriteItems(transactionObj).promise();
+      logger.debug('Res:', res);
+      break; // Break out of the loop if transaction succeeds
+    } catch (error) {
+      logger.info('Transaction failed:', error.code);
+      logger.error(error);
+      if (error.code === 'TransactionCanceledException') {
+        let cancellationReasons = error.message.slice(error.message.lastIndexOf('[') + 1);
+        cancellationReasons = cancellationReasons.slice(0, -1);
+        cancellationReasons = cancellationReasons.split(', ');
+        let message = error.message;
+        if (cancellationReasons[0] != 'None') {
+          logger.info('Facility is currently locked');
+          message = 'An error has occured, please try again.';
           if (cancellationReasons[1] != 'None') {
             logger.info(`Sold out of passes: ${parkData.name} / ${facilityName}`);
             message =
               'We have sold out of allotted passes for this time, please check back on the site from time to time as new passes may come available.';
+            throw new CustomError(message, 400);
+          } else if (cancellationReasons[2] != 'None') {
+            message = 'Error creating pass.';
+            logger.info(message);
+            throw new CustomError(message, 400);
           }
-          if (cancellationReasons[2] != 'None') {
-            logger.info('Error creating pass.');
-            message = 'An error has occured, please try again.';
-          }
-          logger.info('unable to fill your specific request');
-          return sendResponse(400, {
-            msg: message,
-            title: 'Sorry, we are unable to fill your specific request.'
-          });
-        } else {
-          throw error;
         }
+        if (retryCount === maxRetries) {
+          logger.info('Retry limit reached');
+          throw new CustomError(message, 400);
+        }
+        retryCount++;
+      } else {
+        throw new CustomError(error.message, 400);
       }
-      // Temporarily assign the QRCode Link for the front end not to guess at it.
-      if (facilityData.qrcode === true) {
-        passObject.Item['adminPassLink'] = { S: getAdminLinkToPass(parkData.sk, registrationNumber.toString()) };
-      }
-
-      try {
-        logger.info('Posting to GC Notify');
-        passObject = await sendTemplateMessageAndDeleteAuditItem(facilityData.type, personalisation, passObject);
-        return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
-      } catch (err) {
-        logger.info(
-          `GCNotify error, return 200 anyway. Registration number: ${JSON.stringify(
-            passObject?.Item['registrationNumber']
-          )}`
-        );
-        logger.error(err.response?.data || err);
-        let errRes = AWS.DynamoDB.Converter.unmarshall(passObject.Item);
-        errRes['err'] = 'Email Failed to Send';
-        return sendResponse(200, errRes);
-      }
-    } else {
-      logger.info('Something went wrong, park not visible.');
-      // Not allowed for whatever reason.
-      return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
     }
-  } catch (err) {
-    logger.info('Operation Failed');
-    logger.error('err', err);
-    return sendResponse(400, { msg: 'Something went wrong.', title: 'Operation Failed' });
-  }
+  } while (retryCount < maxRetries);
 };
+
+async function checkExistingPass(parkData, facilityName, email, type, bookingPSTShortDate) {
+  const existingPassCheckObject = {
+    TableName: TABLE_NAME,
+    IndexName: 'shortPassDate-index',
+    KeyConditionExpression: 'shortPassDate = :shortPassDate AND facilityName = :facilityName',
+    FilterExpression: 'email = :email AND #type = :type AND passStatus IN (:reserved, :active)',
+    ExpressionAttributeNames: {
+      '#type': 'type'
+    },
+    ExpressionAttributeValues: {
+      ':facilityName': { S: facilityName },
+      ':email': { S: email },
+      ':type': { S: type },
+      ':shortPassDate': { S: bookingPSTShortDate },
+      ':reserved': { S: 'reserved' },
+      ':active': { S: 'active' }
+    }
+  };
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(bookingPSTShortDate)) {
+    throw new CustomError('Invalid booking date.', 400);
+  }
+
+  let existingItems;
+  try {
+    logger.info('Running existingPassCheckObject');
+    logger.debug(existingPassCheckObject);
+    existingItems = await dynamodb.query(existingPassCheckObject).promise();
+  } catch (error) {
+    logger.info('Error while running query for existingPassCheckObject');
+    logger.error(error);
+    throw new CustomError('Error while running query for existingPassCheckObject', 400);
+  }
+
+  if (existingItems.Count === 0) {
+    logger.debug('No existing pass found. Creating new pass...');
+  } else {
+    logger.info(
+      `email account already has a reservation. Registration number: ${JSON.stringify(
+        existingItems?.Items[0]?.registrationNumber
+      )}, Orcs: ${parkData.sk}`
+    );
+    throw new CustomError('This email account already has a reservation for this booking time. A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>', 400);
+  }
+}
+
+function checkFacilityData(facilityData, numberOfGuests) {
+  if (Object.keys(facilityData).length === 0) {
+    throw new CustomError('Facility not found.', 400);
+  }
+
+  // Enforce maximum limit per pass
+  if (facilityData.type === 'Trail' && numberOfGuests > 4) {
+    logger.info('Too many guests');
+    throw new CustomError('You cannot have more than 4 guests on a trail.', 400);
+  }
+
+  // numberOfGuests cannot be less than 1.
+  if (numberOfGuests < 1) {
+    logger.info('Invalid number of guests:', numberOfGuests);
+    throw new CustomError('Passes must have at least 1 guest.', 400);
+  }
+
+  if (facilityData.type === 'Parking') {
+    numberOfGuests = 1;
+  }
+
+  return numberOfGuests;
+}
 
 /**
  * Sends a template message and deletes the audit item.
@@ -388,7 +503,7 @@ exports.handler = async (event, context) => {
  * @param {object} passObject - The pass object.
  * @returns {object} - The updated pass object.
  */
-async function sendTemplateMessageAndDeleteAuditItem(facilityType, personalisation, passObject) {
+async function sendTemplateSQS(facilityType, personalisation, passObject) {
   let gcNotifyTemplate;
   // Parking?
   if (facilityType === 'Parking') {
@@ -407,8 +522,6 @@ async function sendTemplateMessageAndDeleteAuditItem(facilityType, personalisati
   await sendSQSMessage('GCN', gcnData);
   logger.info('Sent');
 
-  // Prune audit
-  delete passObject.Item['audit'];
   logger.info(
     `Pass successfully created. Registration number: ${JSON.stringify(
       passObject?.Item['registrationNumber']
@@ -512,6 +625,18 @@ function checkForHardCodeAdjustment(newObject) {
   return newObject;
 }
 
+/**
+ * Generates a transaction object for updating DynamoDB tables and adding a pass object.
+ *
+ * @param {Object} parkData - The park data object.
+ * @param {string} facilityName - The facility name.
+ * @param {string} reservationsObjectPK - The primary key of the reservations object.
+ * @param {string} bookingPSTShortDate - The booking PST short date.
+ * @param {string} type - The type of pass.
+ * @param {number} numberOfGuests - The number of guests.
+ * @param {Object} passObject - The pass object to be added.
+ * @returns {Object} - The transaction object.
+ */
 function generateTrasactionObject(parkData, facilityName, reservationsObjectPK, bookingPSTShortDate, type, numberOfGuests, passObject) {
   return {
     TransactItems: [
@@ -594,38 +719,23 @@ async function modifyPassCheckInStatus(pk, sk, checkedIn) {
  * Handles the PUT request for updating a pass.
  *
  * @param {Object} event - The event object containing the request details.
- * @param {Object} context - The context object containing the runtime information.
  * @param {Object} permissionObject - The permission object containing authentication details.
  * @param {Object} passObj - The pass object to be modified.
  * @returns {Promise<Object>} - A promise that resolves to the response object.
  */
-async function putPassHandler(event, context, permissionObject, passObj) {
-  try {
-    if (!permissionObject.isAuthenticated) {
-      return sendResponse(403, {
-        msg: 'You are not authorized to perform this operation.',
-        title: 'Unauthorized'
-      });
-    }
+async function putPassHandler(event, permissionObject, passObj) {
+  logger.info("putPassHandler");
+  logger.info(permissionObject.isAuthenticated)
+  if (!permissionObject.isAuthenticated) {
+    throw new CustomError('You are not authorized to perform this operation.', 403);
+  }
 
-    // Only support check-in
-    if (event?.queryStringParameters?.checkedIn === 'true') {
-      return await modifyPassCheckInStatus(passObj.pk, passObj.sk, true);
-    } else if (event?.queryStringParameters?.checkedIn === 'false') {
-      return await modifyPassCheckInStatus(passObj.pk, passObj.sk, false);
-    } else {
-      throw 'Bad Request - invalid query string parameters';
-    }
-  } catch (e) {
-    logger.info('There was an error in putPassHandler');
-    logger.error(e);
-    return sendResponse(
-      400,
-      {
-        msg: 'The operation failed.',
-        title: 'Bad Request'
-      },
-      context
-    );
+  // Only support check-in
+  if (event?.queryStringParameters?.checkedIn === 'true') {
+    return await modifyPassCheckInStatus(passObj.pk, passObj.sk, true);
+  } else if (event?.queryStringParameters?.checkedIn === 'false') {
+    return await modifyPassCheckInStatus(passObj.pk, passObj.sk, false);
+  } else {
+    throw new CustomError('Bad Request - invalid query string parameters', 400);
   }
 }

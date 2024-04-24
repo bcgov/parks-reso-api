@@ -10,16 +10,20 @@ const { REGION, ENDPOINT, TABLE_NAME } = require('./global/settings');
 let docClient;
 
 async function setupDb() {
+  console.log('Setting up database');
   new AWS.DynamoDB({
     region: REGION,
     endpoint: ENDPOINT
   });
+
+  console.log('Creating table');
   docClient = new DocumentClient({
     region: REGION,
     endpoint: ENDPOINT,
     convertEmptyValues: true
   });
 
+  console.log('Creating test data');
   await docClient
     .put({
       TableName: TABLE_NAME,
@@ -53,11 +57,12 @@ async function setupDb() {
       }
     })
     .promise();
+  console.log('Database setup complete');
 }
 
 describe('checkExpiryHandler', () => {
-  beforeAll(() => {
-    return setupDb();
+  beforeAll(async () => {
+    return await setupDb();
   });
 
   test.each([['AM', '123456710'], ['PM', '123456711'], ['DAY', '123456712']])('should set %s passes from yesterday to expired', async (passType, sk) => {

@@ -135,7 +135,7 @@ describe('checkActivationHandler', () => {
     const res = await captchaHandler.generateCaptcha(event);
 
     expect(res.statusCode).toEqual(400);
-    expect(JSON.parse(res.body).msg).toEqual('Failed to generate captcha');
+    expect(JSON.parse(res.body).msg).toEqual('Invalid post body');
   });
 
   test('verifyAnswer - 200 - Correct answer provided', async () => {
