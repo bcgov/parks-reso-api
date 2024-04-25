@@ -1,0 +1,9 @@
+{
+    "name": "warmupFunction",
+    "version": "1.0.0",
+    "author": "bbbb",
+    "dependencies": {
+        "uuid": "9.0.1",
+        "aws-sdk": "2.1576.0"
+        }
+  }

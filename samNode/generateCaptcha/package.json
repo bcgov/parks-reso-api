@@ -1,0 +1,10 @@
+{
+    "name": "GenerateCaptchaFunction",
+    "version": "1.0.0",
+    "author": "bbbb",
+    "dependencies": {
+        "node-jose": "^2.2.0",
+        "svg-captcha": "^1.4.0",
+        "jsonwebtoken": "^9.0.0"
+        }
+  }

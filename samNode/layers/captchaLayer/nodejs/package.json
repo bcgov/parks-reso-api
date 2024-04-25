@@ -1,0 +1,12 @@
+{
+    "name": "captchaLayer",
+    "version": "0.0.1",
+    "author": "?/////.",
+    "license": "MIT",
+    "dependencies": {
+      "aws-sdk": "^2.1441.0",
+      "jsonwebtoken": "^9.0.0",
+      "node-jose": "^2.2.0",
+      "svg-captcha": "^1.4.0"
+    }
+  }

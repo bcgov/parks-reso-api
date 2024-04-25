@@ -1,0 +1,6 @@
+{
+    "name": "readReservationFunction",
+    "version": "1.0.0",
+    "author": "bbbb",
+    "dependencies": {"luxon": "3.4.4"}
+  }

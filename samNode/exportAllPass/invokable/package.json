@@ -1,0 +1,9 @@
+{
+    "name": "ExportAllPassInvokeFunction",
+    "version": "1.0.0",
+    "author": "bbbb",
+    "dependencies": {
+        "aws-sdk": "^2.1441.0",
+        "csvjson": "^5.1.0"
+        }
+  }

@@ -1,0 +1,8 @@
+{
+    "name": "SQSFunction",
+    "version": "1.0.0",
+    "author": "bbbb",
+    "dependencies": {
+        "axios": "1.6.7"
+    }
+  }

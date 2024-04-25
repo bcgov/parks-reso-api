@@ -1,0 +1,9 @@
+{
+    "name": "writeFacilityFunction",
+    "version": "1.0.0",
+    "author": "bbbb",
+    "dependencies": {
+        "luxon": "^3.2.1",
+        "aws-sdk": "^2.1441.0"
+        }
+  }

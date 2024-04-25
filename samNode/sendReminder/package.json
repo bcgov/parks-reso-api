@@ -1,0 +1,10 @@
+{
+    "name": "SendReminderFunction",
+    "version": "1.0.0",
+    "author": "bbbb",
+    "dependencies": {
+        "esbuild": "^0.14.14",
+        "luxon": "3.4.4",
+        "aws-sdk": "^2.1441.0"
+    }
+  }

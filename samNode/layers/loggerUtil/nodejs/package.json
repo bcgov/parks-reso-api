@@ -1,0 +1,9 @@
+{
+    "name": "api-response-layer",
+    "version": "0.0.1",
+    "author": "?/////.",
+    "license": "MIT",
+    "dependencies": {
+      "winston": "^3.7.2"
+    }
+  }

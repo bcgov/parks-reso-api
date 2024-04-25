@@ -1,0 +1,10 @@
+{
+    "name": "api-exportAllPass-layer",
+    "version": "0.0.1",
+    "author": "?/////.",
+    "license": "MIT",
+    "dependencies": {
+      "aws-sdk": "^2.1441.0",
+      "crypto":"1.0.1"
+    }
+  }

@@ -1,0 +1,8 @@
+{
+    "name": "writeConfigFunction",
+    "version": "1.0.0",
+    "author": "bbbb",
+    "dependencies": {
+        "aws-sdk": "^2.1441.0"
+        }
+  }

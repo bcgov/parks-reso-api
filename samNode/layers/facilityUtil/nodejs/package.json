@@ -1,0 +1,9 @@
+{
+    "name": "api-facility-layer",
+    "version": "0.0.1",
+    "author": "?/////.",
+    "license": "MIT",
+    "dependencies": {
+      "aws-sdk": "^2.1441.0"
+    }
+  }

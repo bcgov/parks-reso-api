@@ -1,0 +1,9 @@
+{
+    "name": "writePassFunction",
+    "version": "1.0.0",
+    "author": "bbbb",
+    "dependencies": {
+        "aws-lambda": "1.0.7",
+        "aws-sdk": "^2.1441.0"
+        }
+  }

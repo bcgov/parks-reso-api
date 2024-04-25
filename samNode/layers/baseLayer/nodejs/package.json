@@ -1,0 +1,11 @@
+{
+    "name": "api-base-layer",
+    "version": "0.0.1",
+    "author": "?/////.",
+    "license": "MIT",
+    "dependencies": {
+      "aws-sdk": "^2.1441.0",
+      "luxon": "3.4.4",
+      "winston": "^3.7.2"
+    }
+  }

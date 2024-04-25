@@ -1,0 +1,27 @@
+{
+	"scripts": {
+		"start": "sam local start-api --env-vars vars.json --skip-pull-image 2>&1 | tr '\r' '\n'",
+		"start-full": "yarn build && yarn start",
+		"build": "sam build",
+		"test": "export AWS_REGION=local-env && export TABLE_NAME=parksreso && yarn build && jest --coverage"
+	},
+	"devDependencies": {
+		"@types/aws-lambda": "^8.10.134",
+		"@types/node": "^20.11.20"
+	},
+	"dependencies": {
+		"aws-lambda": "^1.0.7",
+		"aws-sdk": "^2.1441.0",
+		"winston": "^3.7.2",
+		"luxon": "3.4.4",
+		"jsonwebtoken": "9.0.2",
+		"jwks-rsa": "^3.0.0",
+		"axios": "1.6.7",
+		"crypto": "1.0.1",
+		"@aws-sdk/client-dynamodb": "^3.44.0",
+		"aws-sdk-mock": "^5.4.0",
+		"node-jose": "~2.2.0",
+		"svg-captcha": "^1.4.0",
+		"qrcode": "^1.5.1"
+	}
+}
