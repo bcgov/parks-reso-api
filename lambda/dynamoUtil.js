@@ -19,9 +19,9 @@ const PASS_TYPE_AM = 'AM';
 const PASS_TYPE_PM = 'PM';
 const PASS_TYPE_DAY = 'DAY';
 const TIMEZONE = 'America/Vancouver';
-const DEFAULT_PM_OPENING_HOUR = 12;
+const DEFAULT_PM_OPENING_HOUR = 13;
 const PASS_TYPE_EXPIRY_HOURS = {
-  AM: 12,
+  AM: 13,
   PM: 0,
   DAY: 0
 };
@@ -88,7 +88,7 @@ async function getOne(pk, sk) {
 
 // TODO: set paginated to TRUE by default. Query results will then be at most 1 page
 // (1MB) unless they are explicitly specified to retrieve more.
-// TODO: Ensure the returned object has the same structure whether results are paginated or not. 
+// TODO: Ensure the returned object has the same structure whether results are paginated or not.
 async function runQuery(query, paginated = false) {
   logger.info('query:', query);
   let data = [];
@@ -124,7 +124,7 @@ async function runQuery(query, paginated = false) {
 
 // TODO: set paginated to TRUE by default. Scan results will then be at most 1 page
 // (1MB) unless they are explicitly specified to retrieve more.
-// TODO: Ensure the returned object has the same structure whether results are paginated or not. 
+// TODO: Ensure the returned object has the same structure whether results are paginated or not.
 async function runScan(query, paginated = false) {
   logger.info('query:', query);
   let data = [];
