@@ -1,0 +1,10 @@
+{
+    "name": "jwtLayer",
+    "version": "1.0.0",
+    "author": "Digitalspace <contact@digitalspace.ca>",
+    "license": "MIT",
+    "dependencies": {
+        "node-jose": "^2.2.0",
+        "jsonwebtoken": "^9.0.0"
+    }
+}

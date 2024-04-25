@@ -1,0 +1,10 @@
+{
+    "name": "PassLayer",
+    "version": "1.0.0",
+    "author": "Digitalspace <contact@digitalspace.ca>",
+    "license": "MIT",
+    "dependencies": {
+        "luxon": "^3.2.1",
+        "qrcode": "^1.5.1"
+    }
+}

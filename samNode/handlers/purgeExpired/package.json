@@ -1,0 +1,9 @@
+{
+	"name": "PurgeExpiredFunction",
+	"version": "1.0.0",
+	"author": "Digitalspace <contact@digitalspace.ca>",
+  "license": "MIT",
+	"dependencies": {
+		"jsonwebtoken": "^9.0.0"
+	}
+}

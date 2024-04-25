@@ -1,0 +1,9 @@
+{
+	"name": "exportAllPassInvokeFunction",
+	"version": "1.0.0",
+	"author": "Digitalspace <contact@digitalspace.ca>",
+  "license": "MIT",
+	"dependencies": {
+		"csvjson": "^5.1.0"
+	}
+}
