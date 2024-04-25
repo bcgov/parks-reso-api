@@ -5,12 +5,13 @@ const { DateTime } = require('luxon');
 const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 const META_TABLE_NAME = process.env.META_TABLE_NAME || 'parksreso-meta';
 const METRICS_TABLE_NAME = process.env.METRICS_TABLE_NAME || 'parksreso-metrics';
+const DB_ENDPOINT_OVERRIDE = process.env.DB_ENDPOINT_OVERRIDE || 'http://localhost:8000'
 const options = {
   region: 'ca-central-1'
 };
 
 if (process.env.IS_OFFLINE) {
-  options.endpoint = 'http://localhost:8000';
+  options.endpoint = DB_ENDPOINT_OVERRIDE;
 }
 const ACTIVE_STATUS = 'active';
 const RESERVED_STATUS = 'reserved';
