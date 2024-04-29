@@ -582,19 +582,30 @@ function createPassObject(parkData,
   passObject.Item['pk'] = { S: 'pass::' + parkData.sk };
   passObject.Item['sk'] = { S: registrationNumber };
   passObject.Item['parkName'] = { S: parkData.name };
-  passObject.Item['firstName'] = { S: firstName };
+  
+  if (firstName) {
+    passObject.Item['firstName'] = { S: firstName };
+  }
   passObject.Item['searchFirstName'] = { S: firstName.toLowerCase() };
-  passObject.Item['lastName'] = { S: lastName };
+  if (lastName) {
+    passObject.Item['lastName'] = { S: lastName };
+  }
   passObject.Item['searchLastName'] = { S: lastName.toLowerCase() };
   passObject.Item['facilityName'] = { S: facilityName };
-  passObject.Item['email'] = { S: email };
+  if (email != null) {
+    passObject.Item['email'] = { S: email };
+  }
   passObject.Item['date'] = { S: bookingPSTDateTime.toUTC().toISO() };
   passObject.Item['shortPassDate'] = { S: bookingPSTShortDate };
   passObject.Item['type'] = { S: type };
   passObject.Item['registrationNumber'] = { S: registrationNumber };
   passObject.Item['numberOfGuests'] = AWS.DynamoDB.Converter.input(numberOfGuests);
-  passObject.Item['passStatus'] = { S: status };
-  passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
+  if (status != null) {
+    passObject.Item['passStatus'] = { S: status };
+  }
+  if (phoneNumber != null) {
+    passObject.Item['phoneNumber'] = AWS.DynamoDB.Converter.input(phoneNumber);
+  }
   passObject.Item['facilityType'] = { S: facilityData.type };
   passObject.Item['isOverbooked'] = { BOOL: false };
   // Audit
