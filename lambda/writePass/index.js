@@ -584,18 +584,18 @@ function createPassObject(parkData,
   passObject.Item['sk'] = { S: registrationNumber };
   passObject.Item['parkName'] = { S: parkData.name };
   
-  if (firstName) {
+  if (firstName != null) {
     passObject.Item['firstName'] = { S: firstName };
+    passObject.Item['searchFirstName'] = { S: firstName.toLowerCase() };
   }
-  passObject.Item['searchFirstName'] = { S: firstName.toLowerCase() };
-  if (lastName) {
+  if (lastName != null) {
     passObject.Item['lastName'] = { S: lastName };
+    passObject.Item['searchLastName'] = { S: lastName.toLowerCase() };
   }
-  passObject.Item['searchLastName'] = { S: lastName.toLowerCase() };
-  passObject.Item['facilityName'] = { S: facilityName };
   if (email != null) {
     passObject.Item['email'] = { S: email };
   }
+  passObject.Item['facilityName'] = { S: facilityName };
   passObject.Item['date'] = { S: bookingPSTDateTime.toUTC().toISO() };
   passObject.Item['shortPassDate'] = { S: bookingPSTShortDate };
   passObject.Item['type'] = { S: type };
