@@ -1,5 +1,7 @@
 const AWS = require('aws-sdk');
 const { verifyJWT } = require('../captchaUtil');
+const SECRET = process.env.JWT_SECRET || 'defaultSecret';
+const ALGORITHM = process.env.ALGORITHM || 'HS384';
 const {
   dynamodb,
   TABLE_NAME,
@@ -230,16 +232,10 @@ async function handleHoldPass(newObject, isAdmin) {
   try {
     let {
       parkOrcs,
-      firstName,
-      lastName,
       facilityName,
-      email,
       date,
       type,
       numberOfGuests,
-      phoneNumber,
-      holdPassJwt,
-      captchaJwt,
       token,
       ...otherProps
     } = newObject;
@@ -308,20 +304,15 @@ async function handleHoldPass(newObject, isAdmin) {
     logger.info('Creating pass object');
     const registrationNumber = generateRegistrationNumber(10);
 
-    // Create the base pass object
+    // // Create the base pass object
     let passObject = createPassObject(
       parkData,
       registrationNumber,
-      firstName,
-      lastName,
       facilityName,
-      email,
       bookingPSTDateTime,
       bookingPSTShortDate,
       type,
       numberOfGuests,
-      status,
-      phoneNumber,
       facilityData,
       currentPSTDateTime
     );
@@ -347,10 +338,10 @@ async function handleHoldPass(newObject, isAdmin) {
 
     logger.info('Creating transaction object');
 
-    // Perform a transaction where we decrement the available passes and create the pass
-    // If the conditions where the related facility object has a lock, we then fail the whole transaction.
-    // This is to prevent a race condition related to available pass tallies.
-    passObject.ReturnValuesOnConditionCheckFailure = 'ALL_OLD';
+    // // Perform a transaction where we decrement the available passes and create the pass
+    // // If the conditions where the related facility object has a lock, we then fail the whole transaction.
+    // // This is to prevent a race condition related to available pass tallies.
+    // passObject.ReturnValuesOnConditionCheckFailure = 'ALL_OLD';
 
     logger.info('numberOfGuests:', numberOfGuests);
 
@@ -359,11 +350,9 @@ async function handleHoldPass(newObject, isAdmin) {
       reservationsObjectPK,
       bookingPSTShortDate,
       type,
-      numberOfGuests,
-      passObject
+      numberOfGuests
     );
     logger.debug('Transact obj:', transactionObj);
-    logger.debug('Putting item:', passObject);
 
     // Perform the transaction, retrying if necessary
     logger.info('Performing transaction');
@@ -372,13 +361,17 @@ async function handleHoldPass(newObject, isAdmin) {
 
     logger.info('Transaction complete');
 
-    // Temporarily assign the QRCode Link for the front end not to guess at it.
-    if (facilityData.qrcode === true) {
-      passObject.Item['adminPassLink'] = { S: getAdminLinkToPass(parkData.sk, registrationNumber.toString()) };
-    }
+    // // Temporarily assign the QRCode Link for the front end not to guess at it.
+    // if (facilityData.qrcode === true) {
+    //   passObject.Item['adminPassLink'] = { S: getAdminLinkToPass(parkData.sk, registrationNumber.toString()) };
+    // }
 
-    delete passObject.Item['audit'];
-    return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
+    // delete passObject.Item['audit'];
+    // return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
+
+    // Return the jwt'd pass object for the front end with a 7 minute expiry time.
+    const jwt = jwt.sign(passObject, SECRET, { algorithm: ALGORITHM, expiresIn: '7m'});
+    return sendResponse(200, jwt);
   } catch (error) {
     logger.info('Operation Failed');
     logger.error('err', error.message);
@@ -630,57 +623,64 @@ function checkForHardCodeAdjustment(newObject) {
 }
 
 /**
- * Generates a transaction object for updating DynamoDB tables and adding a pass object.
+ * Generates a transaction object for updating DynamoDB tables.
  *
  * @param {Object} parkData - The park data object.
  * @param {string} facilityName - The facility name.
  * @param {string} reservationsObjectPK - The primary key of the reservations object.
  * @param {string} bookingPSTShortDate - The booking PST short date.
- * @param {string} type - The type of pass.
+ * @param {string} type - The type of transaction.
  * @param {number} numberOfGuests - The number of guests.
- * @param {Object} passObject - The pass object to be added.
+ * @param {Object} [passObject=undefined] - The pass object (optional).
  * @returns {Object} - The transaction object.
  */
-function generateTrasactionObject(parkData, facilityName, reservationsObjectPK, bookingPSTShortDate, type, numberOfGuests, passObject) {
-  return {
-    TransactItems: [
-      {
-        ConditionCheck: {
-          TableName: TABLE_NAME,
-          Key: {
-            pk: { S: `facility::${parkData.sk}` },
-            sk: { S: facilityName }
-          },
-          ExpressionAttributeValues: {
-            ':isUpdating': { BOOL: false }
-          },
-          ConditionExpression: 'isUpdating = :isUpdating',
-          ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
-        }
-      },
-      {
-        Update: {
-          TableName: TABLE_NAME,
-          Key: {
-            pk: { S: reservationsObjectPK },
-            sk: { S: bookingPSTShortDate }
-          },
-          ExpressionAttributeValues: {
-            ':dec': AWS.DynamoDB.Converter.input(numberOfGuests)
-          },
-          ExpressionAttributeNames: {
-            '#type': type,
-            '#availablePasses': 'availablePasses'
-          },
-          UpdateExpression: 'SET capacities.#type.#availablePasses = capacities.#type.#availablePasses - :dec',
-          ConditionExpression: 'capacities.#type.#availablePasses >= :dec',
-          ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
-        }
-      },
-      {
-        Put: passObject
+function generateTrasactionObject(parkData, facilityName, reservationsObjectPK, bookingPSTShortDate, type, numberOfGuests, passObject = undefined) {
+  
+  let TransactItems = [
+    {
+      ConditionCheck: {
+        TableName: TABLE_NAME,
+        Key: {
+          pk: { S: `facility::${parkData.sk}` },
+          sk: { S: facilityName }
+        },
+        ExpressionAttributeValues: {
+          ':isUpdating': { BOOL: false }
+        },
+        ConditionExpression: 'isUpdating = :isUpdating',
+        ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
       }
-    ]
+    },
+    {
+      Update: {
+        TableName: TABLE_NAME,
+        Key: {
+          pk: { S: reservationsObjectPK },
+          sk: { S: bookingPSTShortDate }
+        },
+        ExpressionAttributeValues: {
+          ':dec': AWS.DynamoDB.Converter.input(numberOfGuests)
+        },
+        ExpressionAttributeNames: {
+          '#type': type,
+          '#availablePasses': 'availablePasses'
+        },
+        UpdateExpression: 'SET capacities.#type.#availablePasses = capacities.#type.#availablePasses - :dec',
+        ConditionExpression: 'capacities.#type.#availablePasses >= :dec',
+        ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
+      }
+    },
+  ];
+
+  // If passObject is provided, add it to the transaction object
+  if (passObject !== undefined) {
+    TransactItems.push({
+      Put: passObject
+    });
+  }
+
+  return {
+    TransactItems
   };
 }
 
