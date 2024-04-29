@@ -297,13 +297,14 @@ async function handleHoldPass(newObject, isAdmin) {
       throw new CustomError('Something went wrong.', 400);
     }
 
-    // Check if an existing pass already exists for the same facility, email, type, and date
-    // Only perform this check in production environment
-    const config = await getConfig();
-    if (config.ENVIRONMENT === 'prod') {
-      logger.info('Checking for existing pass');
-      await checkExistingPass(parkData, facilityName, email, type, bookingPSTShortDate);
-    }
+    // TODO: Do this check in the commit, not in the hold.
+    // // Check if an existing pass already exists for the same facility, email, type, and date
+    // // Only perform this check in production environment
+    // const config = await getConfig();
+    // if (config.ENVIRONMENT === 'prod') {
+    //   logger.info('Checking for existing pass');
+    //   await checkExistingPass(parkData, facilityName, email, type, bookingPSTShortDate);
+    // }
 
     logger.info('Creating pass object');
     const registrationNumber = generateRegistrationNumber(10);
