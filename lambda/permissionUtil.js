@@ -9,7 +9,7 @@ const INVALID_TOKEN = {
 };
 const { logger } = require('./logger');
 const { runQuery, TABLE_NAME } = require('./dynamoUtil');
-const { CustomError } = require('../responseUtil');
+const { CustomError } = require('./responseUtil');
 
 exports.decodeJWT = async function (event) {
   const token = event.headers.Authorization;
