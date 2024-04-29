@@ -26,6 +26,7 @@ const { createNewReservationsObj } = require('../reservationObjUtils');
 const { getPersonalizationAttachment, getAdminLinkToPass, isBookingAllowed } = require('../passUtils');
 const { sendSQSMessage } = require('../sqsUtils');
 const { generateRegistrationNumber } = require('../captchaUtil');
+const jwt = require('jsonwebtoken');
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
@@ -380,12 +381,11 @@ async function handleHoldPass(newObject, isAdmin) {
     // return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
 
     // Return the jwt'd pass object for the front end with a 7 minute expiry time.
-    const jwt = jwt.sign(passObject, SECRET, { algorithm: ALGORITHM, expiresIn: '7m'});
+    const holdPassJwt = jwt.sign(passObject, SECRET, { algorithm: ALGORITHM, expiresIn: '7m'});
 
     // TODO: Store in dynamo the jwt, as well as the registration number, and the expiry time.
     // TODO: Setup a job to prune jwt's from the database after 7m
-    
-    return sendResponse(200, jwt);
+    return sendResponse(200, holdPassJwt);
   } catch (error) {
     logger.info('Operation Failed');
     logger.error('err', error.message);
