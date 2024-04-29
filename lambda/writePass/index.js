@@ -10,7 +10,7 @@ const {
   DEFAULT_PM_OPENING_HOUR
 } = require('../dynamoUtil');
 const { sendResponse, checkWarmup, CustomError } = require('../responseUtil');
-const { decodeJWT, resolvePermissions } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions, validateToken } = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
 const { createNewReservationsObj } = require('../reservationObjUtils');
@@ -82,7 +82,7 @@ async function checkHoldPassJwt(holdPassJwt) {
     !holdPassVerification.passType ||
     !holdPassVerification.valid
   ) {
-    logger.info("hold-pass THROWs")
+    logger.info("hold-pass THROWs");
     logger.info('hold-pass verification failed');
     throw new CustomError('hold-pass verification failed', 400);
   }
@@ -100,7 +100,7 @@ async function checkCaptchaJwt(captchaJwt) {
   // Verify CAPTCHA
   logger.debug('captchaJwt:', captchaJwt);
   const verification = verifyJWT(captchaJwt);
-  logger.debug('verification:', verification)
+  logger.debug('verification:', verification);
 
   if (verification.valid === false) {
     throw new CustomError('CAPTCHA verification failed.', 400);
@@ -159,7 +159,7 @@ async function handleCommitPass(newObject, isAdmin) {
       logger.info('Checking CAPTCHA JWT');
       // Check if CAPTCHA JWT is valid
       const verification = await checkCaptchaJwt(captchaJwt);
-      logger.debug('Verification:', verification )
+      logger.debug('Verification:', verification);
 
       logger.info('Checking JWTs match');
       // Check if JWTs match
@@ -240,8 +240,12 @@ async function handleHoldPass(newObject, isAdmin) {
       phoneNumber,
       holdPassJwt,
       captchaJwt,
+      token,
       ...otherProps
     } = newObject;
+
+    // Validating turnstile token
+    await validateToken(token);
 
     logger.info('GetFacility');
     logger.debug('parkOrcs:', parkOrcs);
@@ -348,7 +352,7 @@ async function handleHoldPass(newObject, isAdmin) {
     // This is to prevent a race condition related to available pass tallies.
     passObject.ReturnValuesOnConditionCheckFailure = 'ALL_OLD';
 
-    logger.info('numberOfGuests:', numberOfGuests)
+    logger.info('numberOfGuests:', numberOfGuests);
 
     const transactionObj = generateTrasactionObject(parkData,
       facilityName,
@@ -388,7 +392,7 @@ async function transactWriteWithRetries(transactionObj, maxRetries = 3) {
   do {
     try {
       logger.info('Writing Transact obj.');
-      logger.debug('Transact obj:', JSON.stringify(transactionObj)); 
+      logger.debug('Transact obj:', JSON.stringify(transactionObj));
       res = await dynamodb.transactWriteItems(transactionObj).promise();
       logger.debug('Res:', res);
       break; // Break out of the loop if transaction succeeds
@@ -725,7 +729,7 @@ async function modifyPassCheckInStatus(pk, sk, checkedIn) {
  */
 async function putPassHandler(event, permissionObject, passObj) {
   logger.info("putPassHandler");
-  logger.info(permissionObject.isAuthenticated)
+  logger.info(permissionObject.isAuthenticated);
   if (!permissionObject.isAuthenticated) {
     throw new CustomError('You are not authorized to perform this operation.', 403);
   }
