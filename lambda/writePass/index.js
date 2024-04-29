@@ -1,3 +1,10 @@
+/**
+ * Lambda function for handling the creation and management of passes.
+ *
+ * @param {Object} event - The event object containing the request details.
+ * @param {Object} context - The context object containing the runtime information.
+ * @returns {Promise<Object>} - A promise that resolves to the response object.
+ */
 const AWS = require('aws-sdk');
 const { verifyJWT } = require('../captchaUtil');
 const SECRET = process.env.JWT_SECRET || 'defaultSecret';
@@ -305,11 +312,16 @@ async function handleHoldPass(newObject, isAdmin) {
     let passObject = createPassObject(
       parkData,
       registrationNumber,
+      null,
+      null,
       facilityName,
+      null,
       bookingPSTDateTime,
       bookingPSTShortDate,
       type,
       numberOfGuests,
+      'hold', // TODO: Change this to 'reserved' when we're ready to go live.
+      null,
       facilityData,
       currentPSTDateTime
     );
@@ -544,7 +556,8 @@ async function sendTemplateSQS(facilityType, personalisation, passObject) {
  * @param {string} status - The pass status.
  * @param {string} phoneNumber - The phone number.
  * @param {Object} facilityData - The facility data object.
- * @returns {Object} - The pass object.
+ * @param {Date} currentPSTDateTime - The current date and time in PST.
+ * @returns {Object} The pass object.
  */
 function createPassObject(parkData,
                           registrationNumber,
