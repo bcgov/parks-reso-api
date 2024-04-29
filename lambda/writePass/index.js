@@ -253,9 +253,6 @@ async function handleHoldPass(newObject, isAdmin) {
     // Call a function that checks the facilityData object
     numberOfGuests = checkFacilityData(facilityData, numberOfGuests);
 
-    const holdPassVerification = await checkHoldPassJwt(holdPassJwt);
-    logger.debug("holdPassVerification", holdPassVerification);
-
     // check if valid booking attempt
     logger.info('Checking if booking is allowed');
     await isBookingAllowed(parkOrcs, facilityName, date, type);
@@ -371,6 +368,10 @@ async function handleHoldPass(newObject, isAdmin) {
 
     // Return the jwt'd pass object for the front end with a 7 minute expiry time.
     const jwt = jwt.sign(passObject, SECRET, { algorithm: ALGORITHM, expiresIn: '7m'});
+
+    // TODO: Store in dynamo the jwt, as well as the registration number, and the expiry time.
+    // TODO: Setup a job to prune jwt's from the database after 7m
+    
     return sendResponse(200, jwt);
   } catch (error) {
     logger.info('Operation Failed');
