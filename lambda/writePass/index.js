@@ -10,13 +10,14 @@ const { verifyJWT } = require('../captchaUtil');
 const SECRET = process.env.JWT_SECRET || 'defaultSecret';
 const ALGORITHM = process.env.ALGORITHM || 'HS384';
 const {
-  dynamodb,
+  DEFAULT_PM_OPENING_HOUR,
   TABLE_NAME,
   TIMEZONE,
+  dynamodb,
+  getConfig,
   getFacility,
   getPark,
-  getConfig,
-  DEFAULT_PM_OPENING_HOUR
+  storeObject
 } = require('../dynamoUtil');
 const { sendResponse, checkWarmup, CustomError } = require('../responseUtil');
 const { decodeJWT, resolvePermissions, validateToken } = require('../permissionUtil');
@@ -174,6 +175,14 @@ async function handleCommitPass(newObject, isAdmin) {
       logger.info('Checking JWTs match');
       // Check if JWTs match
       await checkJWTsMatch(holdPassVerification, verification);
+
+      // Check if an existing pass already exists for the same facility, email, type, and date
+      // Only perform this check in production environment
+      const config = await getConfig();
+      if (config.ENVIRONMENT === 'prod') {
+        logger.info('Checking for existing pass');
+        await checkExistingPass(parkData, facilityName, email, type, bookingPSTShortDate);
+      }
     } catch (error) {
       // Handle the error here
       logger.error(error);
@@ -298,15 +307,6 @@ async function handleHoldPass(newObject, isAdmin) {
       throw new CustomError('Something went wrong.', 400);
     }
 
-    // TODO: Do this check in the commit, not in the hold.
-    // // Check if an existing pass already exists for the same facility, email, type, and date
-    // // Only perform this check in production environment
-    // const config = await getConfig();
-    // if (config.ENVIRONMENT === 'prod') {
-    //   logger.info('Checking for existing pass');
-    //   await checkExistingPass(parkData, facilityName, email, type, bookingPSTShortDate);
-    // }
-
     logger.info('Creating pass object');
     const registrationNumber = generateRegistrationNumber(10);
 
@@ -347,15 +347,13 @@ async function handleHoldPass(newObject, isAdmin) {
     // Attempt to create reservations object. If it fails, so what...
     await createNewReservationsObj(facilityData, reservationsObjectPK, bookingPSTShortDate);
 
-    logger.info('Creating transaction object');
+    logger.info('numberOfGuests:', numberOfGuests);
 
     // // Perform a transaction where we decrement the available passes and create the pass
     // // If the conditions where the related facility object has a lock, we then fail the whole transaction.
     // // This is to prevent a race condition related to available pass tallies.
     // passObject.ReturnValuesOnConditionCheckFailure = 'ALL_OLD';
-
-    logger.info('numberOfGuests:', numberOfGuests);
-
+    logger.info('Creating transaction object');
     const transactionObj = generateTrasactionObject(parkData,
       facilityName,
       reservationsObjectPK,
@@ -363,11 +361,11 @@ async function handleHoldPass(newObject, isAdmin) {
       type,
       numberOfGuests
     );
-    logger.debug('Transact obj:', transactionObj);
+
+    logger.info('Performing transaction');
+    logger.debug(transactionObj);
 
     // Perform the transaction, retrying if necessary
-    logger.info('Performing transaction');
-
     await transactWriteWithRetries(transactionObj); // TODO: Set a retry limit if 3 isn't enough.
 
     logger.info('Transaction complete');
@@ -381,10 +379,14 @@ async function handleHoldPass(newObject, isAdmin) {
     // return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
 
     // Return the jwt'd pass object for the front end with a 7 minute expiry time.
-    const holdPassJwt = jwt.sign(AWS.DynamoDB.Converter.unmarshall(passObject.Item), SECRET, { algorithm: ALGORITHM, expiresIn: '7m'});
+    const holdPassJwt = jwt.sign(AWS.DynamoDB.Converter.unmarshall(passObject.Item),
+                                 SECRET,
+                                 { algorithm: ALGORITHM, expiresIn: '7m'});
 
-    // TODO: Store in dynamo the jwt, as well as the registration number, and the expiry time.
-    // TODO: Setup a job to prune jwt's from the database after 7m
+    // Store the jwt, as well as the registration number, and the expiry time in DynamoDB
+    await storeHoldPassJwt(holdPassJwt);
+
+    // TODO: Setup a job to prune JWTs from the database after 7m
     return sendResponse(200, holdPassJwt);
   } catch (error) {
     logger.info('Operation Failed');
@@ -392,6 +394,27 @@ async function handleHoldPass(newObject, isAdmin) {
     return sendResponse(error.statusCode, { msg: error.message, title: 'Operation Failed' });
   }
 };
+
+async function storeHoldPassJwt(holdPassJwt) {
+  try {
+    let retries = 0;
+    let success = false;
+    while (retries < 3 && !success) {
+      try {
+        await storeObject(holdPassJwt);
+        success = true;
+      } catch (error) {
+        retries++;
+        if (retries === 3) {
+          throw error;
+        }
+      }
+    }
+  } catch (error) {
+    logger.error('Failed to store JWT in DynamoDB:', error);
+    throw new CustomError('Failed to store JWT in DynamoDB', 500);
+  }
+}
 
 async function transactWriteWithRetries(transactionObj, maxRetries = 3) {
   let retryCount = 0;

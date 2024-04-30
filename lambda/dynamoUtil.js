@@ -252,6 +252,22 @@ const getPassesByStatus = async function (status, filterExpression = undefined) 
   return results;
 }
 
+const storeObject = async function (object, tableName = TABLE_NAME) {
+  const params = {
+    TableName: tableName,
+    Item: AWS.DynamoDB.Converter.marshall(object)
+  };
+
+  try {
+    await dynamodb.putItem(params).promise();
+    logger.info(`Stored object: ${object.sk}`);
+  }
+  catch (err) {
+    logger.error(`Error storing object: ${object.sk}`, err);
+    throw err;
+  }
+}
+
 const visibleFilter = function (queryObj, isAdmin) {
   logger.info('visibleFilter:', queryObj, isAdmin);
   if (!isAdmin) {
@@ -287,5 +303,6 @@ module.exports = {
   getFacilities,
   getPassesByStatus,
   expressionBuilder,
+  storeObject,
   visibleFilter
 };
