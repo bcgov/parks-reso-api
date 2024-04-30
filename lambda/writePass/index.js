@@ -11,16 +11,17 @@ const SECRET = process.env.JWT_SECRET || 'defaultSecret';
 const ALGORITHM = process.env.ALGORITHM || 'HS384';
 const {
   DEFAULT_PM_OPENING_HOUR,
+  PASS_HOLD_STATUS,
   TABLE_NAME,
   TIMEZONE,
-  dynamodb,
+  convertPassToReserved,
   getConfig,
   getFacility,
   getPark,
   storeObject
 } = require('../dynamoUtil');
 const { sendResponse, checkWarmup, CustomError } = require('../responseUtil');
-const { decodeJWT, resolvePermissions, validateToken } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions, validateToken, verifyHoldToken } = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
 const { createNewReservationsObj } = require('../reservationObjUtils');
@@ -146,43 +147,49 @@ async function checkJWTsMatch(holdPassVerification, verification) {
 
 async function handleCommitPass(newObject, isAdmin) {
   let {
-    parkOrcs,
+    parkOrcs, // Embed this in the JWT we put into the hold
     firstName,
     lastName,
-    facilityName,
     email,
-    date,
-    type,
-    numberOfGuests,
-    phoneNumber,
-    captchaJwt,
-    holdPassJwt,
+    token,
     ...otherProps
   } = newObject;
 
   // Do extra checks if user is not sysadmin.
   if (!isAdmin) {
     try {
-      logger.info('Checking JWTs');
-      // Check if hold-pass JWT is valid
-      const holdPassVerification = await checkHoldPassJwt(holdPassJwt);
+      // TODO: Check if the user has a valid token, ensuring it has not expired
+      const decodedToken = await verifyHoldToken(token);
 
-      logger.info('Checking CAPTCHA JWT');
-      // Check if CAPTCHA JWT is valid
-      const verification = await checkCaptchaJwt(captchaJwt);
-      logger.debug('Verification:', verification);
+      const facilityName = decodedToken.facilityName;
+      const type = decodedToken.facilityName;
+      const shortPassDate = decodedToken.shortPassDate;
+      const bookingPSTDateTime = decodedToken.date;
 
-      logger.info('Checking JWTs match');
-      // Check if JWTs match
-      await checkJWTsMatch(holdPassVerification, verification);
+      // try to find this token in the database
+      const jwt = await getOne('jwt', token);
+      if (jwt) {
+        throw new CustomError(400, 'Pass already exists for this booking.');
+      }
 
       // Check if an existing pass already exists for the same facility, email, type, and date
       // Only perform this check in production environment
       const config = await getConfig();
       if (config.ENVIRONMENT === 'prod') {
         logger.info('Checking for existing pass');
-        await checkExistingPass(parkData, facilityName, email, type, bookingPSTShortDate);
+        await checkExistingPass(parkData, facilityName, email, type, shortPassDate);
       }
+
+      // Check if the booking window is already active
+      const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
+      logger.info('Checking pass status based on current time');
+      const passStatus = checkPassStatusBasedOnCurrentTime(currentPSTDateTime, bookingPSTDateTime, type);
+
+      // Update the pass in the database
+      logger.info('Updating the pass in the database');
+      const pass = await convertPassToReserved(decodedToken, passStatus, firstName, lastName, email);
+      // Update the pass in the database
+      logger.debug(pass);
     } catch (error) {
       // Handle the error here
       logger.error(error);
@@ -190,21 +197,11 @@ async function handleCommitPass(newObject, isAdmin) {
     }
   }
 
-  const cancellationLink =
-    process.env.PUBLIC_FRONTEND +
-    process.env.PASS_CANCELLATION_ROUTE +
-    '?passId=' +
-    registrationNumber +
-    '&email=' +
-    email +
-    '&park=' +
-    parkOrcs +
-    '&date=' +
-    bookingPSTShortDate +
-    '&type=' +
-    type;
-
-  const encodedCancellationLink = encodeURI(cancellationLink);
+  const encodedCancellationLink = generateCancellationLink(registrationNumber,
+                                                           email,
+                                                           parkOrcs,
+                                                           bookingPSTShortDate,
+                                                           type);
 
   const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
   const formattedBookingDate = bookingPSTDateTime.toLocaleString(dateOptions);
@@ -242,6 +239,36 @@ async function handleCommitPass(newObject, isAdmin) {
   }
 
   // TODO: Remove JWT from hold pass area in database.
+}
+
+// if the window is already active, activate the pass.
+// check if booking same-day
+function checkPassStatusBasedOnCurrentTime(currentPSTDateTime, bookingPSTDateTime, type) {
+  let openingHour = DEFAULT_AM_OPENING_HOUR;
+  if (currentPSTDateTime.get('day') === bookingPSTDateTime.get('day')) {
+    if (type === 'PM') {
+      openingHour = DEFAULT_PM_OPENING_HOUR;
+    }
+    if (currentPSTDateTime.get('hour') >= openingHour) {
+      status = 'active';
+    }
+  }
+  return status;
+}
+
+function generateCancellationLink(registrationNumber, email, parkOrcs, bookingPSTShortDate, type) {
+  return encodeURI(process.env.PUBLIC_FRONTEND +
+    process.env.PASS_CANCELLATION_ROUTE +
+    '?passId=' +
+    registrationNumber +
+    '&email=' +
+    email +
+    '&park=' +
+    parkOrcs +
+    '&date=' +
+    bookingPSTShortDate +
+    '&type=' +
+    type);
 }
 
 async function handleHoldPass(newObject, isAdmin) {
@@ -286,20 +313,6 @@ async function handleHoldPass(newObject, isAdmin) {
     });
     const bookingPSTShortDate = bookingPSTDateTime.toISODate();
 
-    // set pass status
-    let status = 'reserved';
-
-    // if the window is already active, activate the pass.
-    // check if booking same-day
-    if (currentPSTDateTime.get('day') === bookingPSTDateTime.get('day')) {
-      if (type === 'PM') {
-        openingHour = DEFAULT_PM_OPENING_HOUR;
-      }
-      if (currentPSTDateTime.get('hour') >= openingHour) {
-        status = 'active';
-      }
-    }
-
     // Check if park is visible
     if (parkData.visible !== true) {
       logger.info('Something went wrong, park not visible.');
@@ -322,7 +335,7 @@ async function handleHoldPass(newObject, isAdmin) {
       bookingPSTShortDate,
       type,
       numberOfGuests,
-      'hold', // TODO: Change this to 'reserved' when we're ready to go live.
+      PASS_HOLD_STATUS, // TODO: Change this to 'reserved' when we're ready to go live.
       null,
       facilityData,
       currentPSTDateTime
@@ -369,11 +382,6 @@ async function handleHoldPass(newObject, isAdmin) {
     await transactWriteWithRetries(transactionObj); // TODO: Set a retry limit if 3 isn't enough.
 
     logger.info('Transaction complete');
-
-    // // Temporarily assign the QRCode Link for the front end not to guess at it.
-    // if (facilityData.qrcode === true) {
-    //   passObject.Item['adminPassLink'] = { S: getAdminLinkToPass(parkData.sk, registrationNumber.toString()) };
-    // }
 
     // delete passObject.Item['audit'];
     // return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
@@ -652,6 +660,11 @@ function createPassObject(parkData,
       }
     ]
   };
+  // // Temporarily assign the QRCode Link for the front end not to guess at it.
+  if (facilityData.qrcode === true) {
+    passObject.Item['adminPassLink'] = { S: getAdminLinkToPass(parkData.sk, registrationNumber.toString()) };
+  }
+
   return passObject;
 }
 

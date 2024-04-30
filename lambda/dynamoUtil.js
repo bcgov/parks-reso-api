@@ -15,6 +15,7 @@ if (process.env.IS_OFFLINE) {
 }
 const ACTIVE_STATUS = 'active';
 const RESERVED_STATUS = 'reserved';
+const PASS_HOLD_STATUS = 'hold';
 const EXPIRED_STATUS = 'expired';
 const PASS_TYPE_AM = 'AM';
 const PASS_TYPE_PM = 'PM';
@@ -277,10 +278,53 @@ const visibleFilter = function (queryObj, isAdmin) {
   return queryObj;
 };
 
+async function convertPassToReserved(decodedToken, passStatus, firstName, lastName, email) {
+  const updateParams = {
+    TableName: TABLE_NAME,
+    Key: {
+      pk: { S: `pass::${decodedToken.orcs}` },
+      sk: { S: decodedToken.registrationNumber }
+    },
+    ExpressionAttributeValues: {
+      ':statusValue': { S: passStatus },
+      ':firstName': { S: firstName },
+      ':lastName': { S: lastName },
+      ':email': { S: email },
+      ':empty_list': { L: [] }, // For pass objects which do not have an audit property.
+      ':dateUpdated': { S: DateTime.now().toUTC().toISO() },
+      ':audit_val': {
+        L: [
+          {
+            M: {
+              by: {
+                S: 'system'
+              },
+              passStatus: {
+                S: passStatus
+              },
+              dateUpdated: {
+
+
+                S: DateTime.now().toUTC().toISO()
+              }
+            }
+          }
+        ]
+      }
+    },
+    UpdateExpression: 'SET passStatus = :statusValue, firstName = :firstName, lastName = :lastName, email = :email, audit = list_append(if_not_exists(audit, :empty_list), :audit_val), dateUpdated = :dateUpdated',
+    ReturnValues: 'ALL_NEW'
+  };
+
+  const res = await dynamodb.updateItem(updateParams).promise();
+  logger.info(`Set status of ${res.Attributes?.type?.S} pass ${res.Attributes?.sk?.S} to ${passStatus}`);
+};
+
 module.exports = {
   ACTIVE_STATUS,
   DEFAULT_BOOKING_DAYS_AHEAD,
   EXPIRED_STATUS,
+  PASS_HOLD_STATUS,
   PASS_TYPE_AM,
   PASS_TYPE_PM,
   PASS_TYPE_DAY,
@@ -291,6 +335,7 @@ module.exports = {
   TABLE_NAME,
   META_TABLE_NAME,
   METRICS_TABLE_NAME,
+  convertPassToReserved,
   dynamodb,
   setStatus,
   runQuery,

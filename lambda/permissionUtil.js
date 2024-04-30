@@ -49,6 +49,23 @@ exports.decodeJWT = async function (event) {
   }
 };
 
+exports.verifyHoldToken = function (token, secret) {
+  let decodedToken;
+  try {
+    decodedToken = jwt.verify(token, secret);
+    if (!decodedToken) {
+      throw new CustomError(400, 'Invalid token');
+    }
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      throw new CustomError(400, 'Token has expired');
+    } else {
+      throw new CustomError(400, 'Invalid token');
+    }
+  }
+  return decodedToken;
+};
+
 const verifyToken = function (token, callback, sendError) {
   logger.debug('verifying token');
   logger.debug('token:', token);
