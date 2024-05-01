@@ -19,6 +19,7 @@ const {
   dynamodb,
   getConfig,
   getFacility,
+  getOne,
   getPark,
   storeObject
 } = require('../dynamoUtil');
@@ -135,7 +136,7 @@ async function checkCaptchaJwt(captchaJwt) {
 
 async function handleCommitPass(newObject, isAdmin) {
   let {
-    parkOrcs, // Embed this in the JWT we put into the hold
+    parkOrcs, // TODO: Embed this in the JWT we put into the hold
     firstName,
     lastName,
     email,
@@ -145,33 +146,41 @@ async function handleCommitPass(newObject, isAdmin) {
 
   // This populates when there is a pass created.
   let pass;
-
+  let decodedToken;
+  let bookingPSTDateTime;
+  let type;
   // Do extra checks if user is not sysadmin.
   if (!isAdmin) {
     try {
       // Check if the user has a valid token, ensuring it has not expired
-      logger.info('Checking if the user has a valid token, ensuring it has not expired');
-      const decodedToken = await verifyHoldToken(token, SECRET);
+      logger.info('Checking if the user has a valid token, ensuring it has not expired.');
+      decodedToken =  verifyHoldToken(token, SECRET);
       logger.info('Decoded Token');
       console.log(decodedToken);
 
-      const facilityName = decodedToken.facilityName;
-      const type = decodedToken.facilityName;
-      const shortPassDate = decodedToken.shortPassDate;
-      const bookingPSTDateTime = decodedToken.date;
+      bookingPSTDateTime = DateTime.fromISO(decodedToken.date);
+      type = decodedToken.type;
 
       // try to find this token in the database
       const jwt = await getOne('jwt', token);
-      if (jwt) {
-        throw new CustomError(400, 'Pass already exists for this booking.');
-      }
+      if (jwt && Object.keys(jwt).length > 0) {
+        // The JWT is found, therefore continue with the request.
+        logger.info('JWT found.');
 
-      // Check if an existing pass already exists for the same facility, email, type, and date
-      // Only perform this check in production environment
-      const config = await getConfig();
-      if (config.ENVIRONMENT === 'prod') {
-        logger.info('Checking for existing pass');
-        await checkPassExists(facilityName, email, type, shortPassDate);
+        // Check if the JWT is expired
+        console.log('checking jwt expiry', decodedToken);
+        const jwtExpiry = DateTime.fromISO(jwt.expiry);
+        console.log(jwtExpiry);
+        if (jwtExpiry < DateTime.now().setZone(TIMEZONE)) {
+          // The JWT is expired, therefore reject this request.
+          logger.info('JWT is expired.');
+          throw new CustomError('JWT is expired.', 400);
+        }
+
+      } else {
+        // The JWT is missing, therefore reject this request.
+        logger.info('JWT not found.');
+        throw new CustomError('JWT not found.', 400);
       }
 
       // Check if the booking window is already active
@@ -183,6 +192,7 @@ async function handleCommitPass(newObject, isAdmin) {
       logger.info('Updating the pass in the database');
       pass = await convertPassToReserved(decodedToken, passStatus, firstName, lastName, email);
       logger.debug(pass);
+      console.log(pass)
 
       // delete the audit property
       delete pass.audit;
@@ -193,6 +203,8 @@ async function handleCommitPass(newObject, isAdmin) {
       return sendResponse(error.statusCode, { msg: error.message, title: 'Operation Failed.' });
     }
   }
+
+  const facilityName = decodedToken.facilityName;
 
   const encodedCancellationLink = generateCancellationLink(registrationNumber,
                                                            email,
@@ -246,10 +258,10 @@ function checkPassStatusBasedOnCurrentTime(currentPSTDateTime, bookingPSTDateTim
       openingHour = DEFAULT_PM_OPENING_HOUR;
     }
     if (currentPSTDateTime.get('hour') >= openingHour) {
-      status = 'active';
+      return 'active';
     }
   }
-  return status;
+  return 'reserved';
 }
 
 function generateCancellationLink(registrationNumber, email, parkOrcs, bookingPSTShortDate, type) {
@@ -383,6 +395,7 @@ async function handleHoldPass(newObject, isAdmin) {
     // return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
 
     // Return the jwt'd pass object for the front end with a 7 minute expiry time.
+    console.log("/faK", passObject.Item);
     const holdPassJwt = jwt.sign(AWS.DynamoDB.Converter.unmarshall(passObject.Item),
                                  SECRET,
                                  { algorithm: ALGORITHM, expiresIn: '7m'});
@@ -405,7 +418,10 @@ async function storeHoldPassJwt(holdPassJwt) {
     let success = false;
     while (retries < 3 && !success) {
       try {
-        await storeObject(holdPassJwt);
+        await storeObject({
+          'pk': 'jwt',
+          'sk': holdPassJwt
+        });
         success = true;
       } catch (error) {
         retries++;

@@ -1,6 +1,7 @@
 const AWS = require('aws-sdk');
 const { logger } = require('./logger');
 const { DateTime } = require('luxon');
+const { CustomError } = require('./responseUtil');
 
 const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 const META_TABLE_NAME = process.env.META_TABLE_NAME || 'parksreso-meta';
@@ -254,11 +255,12 @@ const getPassesByStatus = async function (status, filterExpression = undefined) 
 }
 
 const storeObject = async function (object, tableName = TABLE_NAME) {
+  console.log('storeObject:', object);
   const params = {
     TableName: tableName,
     Item: AWS.DynamoDB.Converter.marshall(object)
   };
-
+  console.log('params:', params)
   try {
     await dynamodb.putItem(params).promise();
     logger.info(`Stored object: ${object.sk}`);
@@ -361,9 +363,12 @@ async function convertPassToReserved(decodedToken, passStatus, firstName, lastNa
     UpdateExpression: 'SET passStatus = :statusValue, firstName = :firstName, lastName = :lastName, email = :email, audit = list_append(if_not_exists(audit, :empty_list), :audit_val), dateUpdated = :dateUpdated',
     ReturnValues: 'ALL_NEW'
   };
-
+  console.log('updateParams:', updateParams);
   const res = await dynamodb.updateItem(updateParams).promise();
-  logger.info(`Set status of ${res.Attributes?.type?.S} pass ${res.Attributes?.sk?.S} to ${passStatus}`);
+  if (Object.keys(res.Attributes).length === 0) {
+    logger.info(`Set status of ${res.Attributes?.type?.S} pass ${res.Attributes?.sk?.S} to ${passStatus}`);
+    throw new CustomError('Operation Failed', 400);
+  }
   return AWS.DynamoDB.Converter.unmarshall(res.Attributes);
 };
 
