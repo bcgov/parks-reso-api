@@ -351,8 +351,6 @@ async function convertPassToReserved(decodedToken, passStatus, firstName, lastNa
                 S: passStatus
               },
               dateUpdated: {
-
-
                 S: DateTime.now().toUTC().toISO()
               }
             }
@@ -369,6 +367,7 @@ async function convertPassToReserved(decodedToken, passStatus, firstName, lastNa
   };
   console.log('updateParams:', updateParams);
   const res = await dynamodb.updateItem(updateParams).promise();
+  console.log(res);
   if (Object.keys(res.Attributes).length === 0) {
     logger.info(`Set status of ${res.Attributes?.type?.S} pass ${res.Attributes?.sk?.S} to ${passStatus}`);
     throw new CustomError('Operation Failed', 400);
