@@ -361,7 +361,7 @@ async function handleHoldPass(newObject, isAdmin) {
     // Store the jwt, as well as the registration number, and the expiry time in DynamoDB
     await storeHoldPassJwt(holdPassJwt);
 
-    // TODO: Setup a job to prune JWTs from the database after 7m
+    // TODO: Setup a job to prune JWTs from the database after 7m. Remove the held passes (pk::xxxx, sk: 112345)
     return sendResponse(200, holdPassJwt);
   } catch (error) {
     logger.info('Operation Failed');
