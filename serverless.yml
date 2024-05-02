@@ -19,45 +19,6 @@ plugins:
   - serverless-dotenv-plugin
 
 functions:
-  ###########
-  # captcha
-  ###########
-  generateCaptcha:
-    handler: lambda/captcha/handler.generateCaptcha
-    package:
-      include:
-        - lambda/captcha/**
-        - node_modules/**
-        - lambda/*.js
-    events:
-      - http:
-          method: POST
-          path: /captcha
-          cors: true
-  verifyCaptcha:
-    handler: lambda/captcha/handler.verifyAnswer
-    package:
-      include:
-        - lambda/captcha/**
-        - node_modules/**
-        - lambda/*.js
-    events:
-      - http:
-          method: POST
-          path: /captcha/verify
-          cors: true
-  generateCaptchaAudio:
-    handler: lambda/captcha/handler.generateAudio
-    package:
-      include:
-        - lambda/captcha/**
-        - node_modules/**
-        - lambda/*.js
-    events:
-      - http:
-          method: POST
-          path: /captcha/audio
-          cors: true
   cloudwatchAlarm:
     handler: lambda/cloudwatchAlarm/index.handler
     package:

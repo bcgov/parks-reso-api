@@ -306,7 +306,7 @@ async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
   let existingItems;
   try {
     logger.info('Running existingPassCheckObject');
-    logger.debug(existingPassCheckObject);
+    console.log(existingPassCheckObject);
     existingItems = await dynamodb.query(existingPassCheckObject).promise();
   } catch (error) {
     logger.info('Error while running query for existingPassCheckObject');

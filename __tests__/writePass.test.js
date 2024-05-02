@@ -159,8 +159,7 @@ describe('Pass Fails', () => {
         date: '',
         type: '',
         numberOfGuests: 5, // Too many
-        phoneNumber: '',
-        captchaJwt: token
+        phoneNumber: ''
       })
     };
     expect(await writePassHandler.handler(event, null)).toMatchObject({
@@ -280,8 +279,7 @@ describe('Pass Fails', () => {
         type: 'DAY',
         numberOfGuests: 1,
         phoneNumber: '',
-        holdPassJwt: token,
-        captchaJwt: token
+        holdPassJwt: token
       })
     };
     expect(await writePassHandler.handler(event, null)).toMatchObject({
@@ -328,7 +326,6 @@ describe('Pass Fails', () => {
         type: 'DAY',
         numberOfGuests: 1,
         phoneNumber: '',
-        captchaJwt: token,
         holdPassJwt: token,
       })
     };
@@ -523,7 +520,7 @@ describe('Pass Successes', () => {
             lastName: 'User',
             facilityName: 'Parking lot B',
             email: 'testEmail2@test.ca',
-            date: new Date(),
+            date: new Date().toISOString(),
             type: 'DAY',
             numberOfGuests: 1,
             phoneNumber: '2505555555',
@@ -540,7 +537,7 @@ describe('Pass Successes', () => {
             lastName: 'User',
             facilityName: 'Parking lot B',
             email: 'testEmail2@test.ca',
-            date: new Date(),
+            date: new Date().toISOString(),
             type: 'DAY',
             numberOfGuests: 1,
             phoneNumber: '2505555555',
@@ -568,7 +565,7 @@ describe('Pass Successes', () => {
       lastName: 'User',
       facilityName: 'Parking lot B',
       email: 'testEmail2@test.ca',
-      date: new Date(),
+      date: new Date().toISOString(),
       type: 'DAY',
       numberOfGuests: 1,
       phoneNumber: '2505555555',
@@ -581,6 +578,7 @@ describe('Pass Successes', () => {
 
     const writePassHandler = require('../lambda/writePass/index');
     const event = {
+      httpMethod: 'POST',
       headers: {
         Authorization: 'None'
       },
@@ -591,7 +589,7 @@ describe('Pass Successes', () => {
         lastName: 'User',
         facilityName: 'Parking lot B',
         email: 'testEmail2@test.ca',
-        date: new Date(),
+        date: new Date().toISOString(),
         type: 'DAY',
         numberOfGuests: 1,
         phoneNumber: '2505555555',
@@ -696,8 +694,7 @@ describe('Pass Successes', () => {
         date: parkObject.bookingDate,
         type: parkObject.passType,
         numberOfGuests: 0, // Too little
-        phoneNumber: '',
-        captchaJwt: token
+        phoneNumber: ''
       })
     };
 
@@ -901,6 +898,7 @@ describe('Pass Successes', () => {
     const writePassHandler = require('../lambda/writePass/index');
 
     const event = {
+      httpMethod: 'POST',
       headers: {
         Authorization: 'None'
       },
@@ -937,13 +935,16 @@ describe('Pass Successes', () => {
         TableName: TABLE_NAME,
         Item: {
           sk: '1111111115',
+          registrationNumber: '1111111115',
           pk: 'pass::Test Park 1',
           firstName: 'Jest',
           lastName: 'User',
           facilityName: 'Parking lot B',
           email: 'testEmail2@test.ca',
           date: theDate,
+          shortPassDate: '2021-12-31',
           type: 'DAY',
+          passStatus: 'reserved',
           numberOfGuests: 1,
           phoneNumber: '2505555555',
           facilityType: 'Parking',
@@ -952,6 +953,15 @@ describe('Pass Successes', () => {
         }
       })
       .promise();
+
+    let foo = await ddb.get({
+      TableName: TABLE_NAME,
+      Key: {
+        pk: 'pass::Test Park 1',
+        sk: '1111111115'
+      }
+    }).promise();
+    console.log(foo.Item)
 
     let response = await writePassHandler.handler(event, null);
 
@@ -964,11 +974,10 @@ describe('Pass Successes', () => {
       }
     }).promise();
 
-    response = await writePassHandler.handler(event, null);
     expect(response.statusCode).toEqual(400);
     const body = JSON.parse(response.body);
     expect(body.msg).toEqual('This email account already has a reservation for this booking time. A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href=\"mailto:parkinfo@gov.bc.ca\">parkinfo@gov.bc.ca</a>');
-    expect(body.title).toEqual('Operation Failed');
+    expect(body.title).toEqual('Operation Failed.');
   });
 });
 

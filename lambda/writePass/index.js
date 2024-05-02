@@ -6,7 +6,7 @@
  * @returns {Promise<Object>} - A promise that resolves to the response object.
  */
 const AWS = require('aws-sdk');
-const { verifyJWT } = require('../captchaUtil');
+const { verifyJWT } = require('../jwtUtil');
 const SECRET = process.env.JWT_SECRET || 'defaultSecret';
 const ALGORITHM = process.env.ALGORITHM || 'HS384';
 const {
@@ -35,7 +35,7 @@ const {
   sendTemplateSQS
 } = require('../passUtils');
 
-const { generateRegistrationNumber } = require('../captchaUtil');
+const { generateRegistrationNumber } = require('../jwtUtil');
 const jwt = require('jsonwebtoken');
 
 // default opening/closing hours in 24h time
@@ -63,6 +63,8 @@ exports.handler = async (event, context) => {
     // Check for update method (check this pass in)
     if (event.httpMethod === 'PUT') {
       return await putPassHandler(event, permissionObject, newObject);
+    } else if (event.httpMethod === 'OPTIONS') {
+      return sendResponse(200, {});
     }
 
     // HardCode Adjustment
@@ -103,35 +105,6 @@ async function checkHoldPassJwt(holdPassJwt) {
   }
 
   return holdPassVerification;
-}
-
-async function checkCaptchaJwt(captchaJwt) {
-  // Check if CAPTCHA is present
-  if (!captchaJwt || !captchaJwt.length) {
-    logger.info('Missing CAPTCHA verification');
-    throw new CustomError('Missing CAPTCHA verification.', 400);
-  }
-
-  // Verify CAPTCHA
-  logger.debug('captchaJwt:', captchaJwt);
-  const verification = verifyJWT(captchaJwt);
-  logger.debug('verification:', verification);
-
-  if (verification.valid === false) {
-    throw new CustomError('CAPTCHA verification failed.', 400);
-  }
-
-  if (!verification.bookingDate ||
-    !verification.facility ||
-    !verification.orcs ||
-    !verification.passType ||
-    !verification.registrationNumber ||
-    !verification.valid) {
-    logger.info('CAPTCHA missing fields.');
-    throw new CustomError('CAPTCHA missing fields.', 400);
-  }
-
-  return verification;
 }
 
 async function handleCommitPass(newObject, isAdmin) {
@@ -176,7 +149,6 @@ async function handleCommitPass(newObject, isAdmin) {
           logger.info('JWT is expired.');
           throw new CustomError('JWT is expired.', 400);
         }
-
       } else {
         // The JWT is missing, therefore reject this request.
         logger.info('JWT not found.');
@@ -186,7 +158,15 @@ async function handleCommitPass(newObject, isAdmin) {
       // Check if the booking window is already active
       const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
       logger.info('Checking pass status based on current time');
-      const passStatus = checkPassStatusBasedOnCurrentTime(currentPSTDateTime, bookingPSTDateTime, type);
+      const passStatus = checkPassStatusBasedOnCurrentTime(currentPSTDateTime,
+                                                           bookingPSTDateTime,
+                                                           type);
+      // Does the pass already exist in the database?
+      logger.info('Checking if the pass already exists in the database');
+      pass = await checkPassExists(decodedToken.facilityName,
+                                   decodedToken.email,
+                                   decodedToken.type,
+                                   bookingPSTDateTime.toISODate());
 
       // Update the pass in the database
       logger.info('Updating the pass in the database');
