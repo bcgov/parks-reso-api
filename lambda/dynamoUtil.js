@@ -330,7 +330,7 @@ async function convertPassToReserved(decodedToken, passStatus, firstName, lastNa
   const updateParams = {
     TableName: TABLE_NAME,
     Key: {
-      pk: { S: `pass::${decodedToken.orcs}` },
+      pk: { S: `pass::${decodedToken.parkOrcs}` },
       sk: { S: decodedToken.registrationNumber }
     },
     ExpressionAttributeValues: {

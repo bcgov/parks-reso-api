@@ -352,7 +352,6 @@ async function handleHoldPass(newObject, isAdmin) {
     // return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
 
     // Return the jwt'd pass object for the front end with a 7 minute expiry time.
-    console.log("/faK", passObject.Item);
     const holdPassJwt = jwt.sign(AWS.DynamoDB.Converter.unmarshall(passObject.Item),
                                  SECRET,
                                  { algorithm: ALGORITHM, expiresIn: '7m'});

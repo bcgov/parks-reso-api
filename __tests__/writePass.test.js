@@ -514,7 +514,7 @@ describe('Pass Successes', () => {
         }),
         decodeJWT: jest.fn(event => {
           return {
-            orcs: 'Test Park 1',
+            parkOrcs: 'Test Park 1',
             registrationNumber: '1111111115',
             firstName: 'Jest',
             lastName: 'User',
@@ -531,7 +531,7 @@ describe('Pass Successes', () => {
         }),
         verifyHoldToken: jest.fn(event => {
           return {
-            orcs: 'Test Park 1',
+            parkOrcs: 'Test Park 1',
             registrationNumber: '1111111115',
             firstName: 'Jest',
             lastName: 'User',
@@ -559,7 +559,7 @@ describe('Pass Successes', () => {
       };
     });
     const token = jwt.sign({
-      orcs: 'Test Park 1',
+      parkOrcs: 'Test Park 1',
       registrationNumber: '1111111115',
       firstName: 'Jest',
       lastName: 'User',
@@ -583,7 +583,7 @@ describe('Pass Successes', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        orcs: 'Test Park 1',
+        parkOrcs: 'Test Park 1',
         registrationNumber: '1111111115',
         firstName: 'Jest',
         lastName: 'User',
