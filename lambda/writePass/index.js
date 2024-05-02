@@ -141,7 +141,7 @@ async function handleCommitPass(newObject, isAdmin) {
       // Does the pass already exist in the database?
       logger.info('Checking if the pass already exists in the database');
       pass = await checkPassExists(decodedToken.facilityName,
-                                   decodedToken.email,
+                                   email,
                                    decodedToken.type,
                                    bookingPSTDateTime.toISODate());
 
