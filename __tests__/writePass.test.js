@@ -990,7 +990,7 @@ async function databaseOperation(version, mode) {
           Item: {
             pk: 'config',
             sk: 'config',
-            ENVIRONMENT: 'prod'
+            ENVIRONMENT: 'test'
           }
         })
         .promise();
