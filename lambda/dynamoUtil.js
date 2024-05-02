@@ -326,7 +326,7 @@ async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
   }
 }
 
-async function convertPassToReserved(decodedToken, passStatus, firstName, lastName, email) {
+async function convertPassToReserved(decodedToken, passStatus, firstName, lastName, email, phoneNumber) {
   const updateParams = {
     TableName: TABLE_NAME,
     Key: {
@@ -362,6 +362,10 @@ async function convertPassToReserved(decodedToken, passStatus, firstName, lastNa
     },
     UpdateExpression: 'SET passStatus = :statusValue, firstName = :firstName, lastName = :lastName, email = :email, audit = list_append(if_not_exists(audit, :empty_list), :audit_val), dateUpdated = :dateUpdated',
     ReturnValues: 'ALL_NEW'
+  };
+  if (phoneNumber) {
+    updateParams.ExpressionAttributeValues[':phoneNumber'] = { S: phoneNumber };
+    updateParams.UpdateExpression += ', phoneNumber = :phoneNumber';
   };
   console.log('updateParams:', updateParams);
   const res = await dynamodb.updateItem(updateParams).promise();
