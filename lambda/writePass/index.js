@@ -83,35 +83,12 @@ exports.handler = async (event, context) => {
   }
 };
 
-async function checkHoldPassJwt(holdPassJwt) {
-  // Check if hold-pass JWT is present
-  if (!holdPassJwt || !holdPassJwt.length) {
-    logger.info('Missing hold-pass verification');
-    throw new CustomError('Missing hold-pass verification', 400);
-  }
-  // Check if hold-pass JWT is not expired
-  logger.debug('holdPassJwt:', holdPassJwt);
-  const holdPassVerification = verifyJWT(holdPassJwt);
-  logger.debug('holdPassVerification:', holdPassVerification);
-  if (!holdPassVerification.bookingDate ||
-    !holdPassVerification.facility ||
-    !holdPassVerification.orcs ||
-    !holdPassVerification.passType ||
-    !holdPassVerification.valid
-  ) {
-    logger.info("hold-pass THROWs");
-    logger.info('hold-pass verification failed');
-    throw new CustomError('hold-pass verification failed', 400);
-  }
-
-  return holdPassVerification;
-}
-
 async function handleCommitPass(newObject, isAdmin) {
   let {
     parkOrcs, // TODO: Embed this in the JWT we put into the hold
     firstName,
     lastName,
+    phoneNumber,
     email,
     token,
     ...otherProps
@@ -170,7 +147,7 @@ async function handleCommitPass(newObject, isAdmin) {
 
       // Update the pass in the database
       logger.info('Updating the pass in the database');
-      pass = await convertPassToReserved(decodedToken, passStatus, firstName, lastName, email);
+      pass = await convertPassToReserved(decodedToken, passStatus, firstName, lastName, email, phoneNumber);
       logger.debug(pass);
       console.log(pass)
 
