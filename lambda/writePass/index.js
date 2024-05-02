@@ -337,7 +337,8 @@ async function handleHoldPass(newObject, isAdmin) {
       reservationsObjectPK,
       bookingPSTShortDate,
       type,
-      numberOfGuests
+      numberOfGuests,
+      passObject
     );
 
     logger.info('Performing transaction');
