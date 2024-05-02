@@ -6,7 +6,6 @@
  * @returns {Promise<Object>} - A promise that resolves to the response object.
  */
 const AWS = require('aws-sdk');
-const { verifyJWT } = require('../jwtUtil');
 const SECRET = process.env.JWT_SECRET || 'defaultSecret';
 const ALGORITHM = process.env.ALGORITHM || 'HS384';
 const {
@@ -17,7 +16,6 @@ const {
   checkPassExists,
   convertPassToReserved,
   dynamodb,
-  getConfig,
   getFacility,
   getOne,
   getPark,
@@ -84,8 +82,8 @@ exports.handler = async (event, context) => {
 };
 
 async function handleCommitPass(newObject, isAdmin) {
-  let {
-    parkOrcs, // TODO: Embed this in the JWT we put into the hold
+  const {
+    parkOrcs,
     firstName,
     lastName,
     phoneNumber,
@@ -99,6 +97,10 @@ async function handleCommitPass(newObject, isAdmin) {
   let decodedToken;
   let bookingPSTDateTime;
   let type;
+  let facilityName;
+
+  const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+
   // Do extra checks if user is not sysadmin.
   if (!isAdmin) {
     try {
@@ -106,12 +108,13 @@ async function handleCommitPass(newObject, isAdmin) {
       logger.info('Checking if the user has a valid token, ensuring it has not expired.');
       decodedToken =  verifyHoldToken(token, SECRET);
       logger.info('Decoded Token');
-      console.log(decodedToken);
+
+      facilityName = decodedToken.facilityName;
 
       bookingPSTDateTime = DateTime.fromISO(decodedToken.date);
       type = decodedToken.type;
 
-      // try to find this token in the database
+      // Try to find this token in the database, if not it's not a valid token
       const jwt = await getOne('jwt', token);
       if (jwt && Object.keys(jwt).length > 0) {
         // The JWT is found, therefore continue with the request.
@@ -140,36 +143,35 @@ async function handleCommitPass(newObject, isAdmin) {
                                                            type);
       // Does the pass already exist in the database?
       logger.info('Checking if the pass already exists in the database');
-      pass = await checkPassExists(decodedToken.facilityName,
+      await checkPassExists(decodedToken.facilityName,
                                    email,
                                    decodedToken.type,
                                    bookingPSTDateTime.toISODate());
 
       // Update the pass in the database
       logger.info('Updating the pass in the database');
-      pass = await convertPassToReserved(decodedToken, passStatus, firstName, lastName, email, phoneNumber);
-      logger.debug(pass);
-      console.log(pass)
+      pass = await convertPassToReserved(decodedToken,
+                                         passStatus,
+                                         firstName,
+                                         lastName,
+                                         email,
+                                         phoneNumber);
+      logger.debug(JSON.stringify(pass));
 
-      // delete the audit property
+      // delete the audit property before returning back to FE.
       delete pass.audit;
-      return sendResponse(200, pass);
     } catch (error) {
-      // Handle the error here
       logger.error(error);
       return sendResponse(error.statusCode, { msg: error.message, title: 'Operation Failed.' });
     }
   }
 
-  const facilityName = decodedToken.facilityName;
-
-  const encodedCancellationLink = generateCancellationLink(registrationNumber,
+  const encodedCancellationLink = generateCancellationLink(pass.registrationNumber,
                                                            email,
                                                            parkOrcs,
                                                            bookingPSTShortDate,
                                                            type);
 
-  const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
   const formattedBookingDate = bookingPSTDateTime.toLocaleString(dateOptions);
 
   let personalisation = {
@@ -179,12 +181,12 @@ async function handleCommitPass(newObject, isAdmin) {
     type: type === 'DAY' ? 'ALL DAY' : type,
     facilityName: facilityName,
     numberOfGuests: numberOfGuests.toString(),
-    registrationNumber: registrationNumber.toString(),
+    registrationNumber: pass.registrationNumber,
     cancellationLink: encodedCancellationLink,
     parkName: parkData.name,
     mapLink: parkData.mapLink || null,
     parksLink: parkData.bcParksLink,
-    ...(await getPersonalizationAttachment(parkData.sk, registrationNumber.toString(), facilityData.qrcode))
+    ...(await getPersonalizationAttachment(parkData.sk, pass.registrationNumber, facilityData.qrcode))
   };
 
   // Send to GC Notify
@@ -194,15 +196,13 @@ async function handleCommitPass(newObject, isAdmin) {
   } catch (err) {
     logger.info(
       `Sending SQS msg error, return 200 anyway. Registration number: ${JSON.stringify(
-        pass['registrationNumber']
+        pass.registrationNumber
       )}`
     );
     logger.error(err.response?.data || err);
-    let errRes = AWS.DynamoDB.Converter.unmarshall(passObject.Item);
     errRes['err'] = 'Email Failed to Send';
-    return sendResponse(200, errRes);
+    return sendResponse(200, pass);
   }
-
   // TODO: Remove JWT from hold pass area in database.
 }
 
@@ -366,7 +366,7 @@ async function handleHoldPass(newObject, isAdmin) {
   } catch (error) {
     logger.info('Operation Failed');
     logger.error('err', error.message);
-    return sendResponse(error.statusCode, { msg: error.message, title: 'Operation Failed' });
+    return sendResponse(error.statusCode, { msg: error.message, twhiitle: 'Operation Failed' });
   }
 };
 

@@ -306,7 +306,7 @@ async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
   let existingItems;
   try {
     logger.info('Running existingPassCheckObject');
-    console.log(existingPassCheckObject);
+    logger.debug(JSON.stringify(existingPassCheckObject));
     existingItems = await dynamodb.query(existingPassCheckObject).promise();
   } catch (error) {
     logger.info('Error while running query for existingPassCheckObject');
@@ -314,9 +314,7 @@ async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
     throw new CustomError('Error while running query for existingPassCheckObject', 400);
   }
 
-  if (existingItems.Count === 0) {
-    logger.debug('No existing pass found.');
-  } else {
+  if (existingItems.Count > 0) {
     logger.info(
       `email account already has a reservation. Registration number: ${JSON.stringify(
         existingItems?.Items[0]?.registrationNumber
@@ -324,6 +322,8 @@ async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
     );
     throw new CustomError('This email account already has a reservation for this booking time. A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>', 400);
   }
+
+  logger.debug('No existing pass found.');
 }
 
 async function convertPassToReserved(decodedToken, passStatus, firstName, lastName, email, phoneNumber) {
