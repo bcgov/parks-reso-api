@@ -278,6 +278,52 @@ const visibleFilter = function (queryObj, isAdmin) {
   return queryObj;
 };
 
+async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
+  const existingPassCheckObject = {
+    TableName: TABLE_NAME,
+    IndexName: 'shortPassDate-index',
+    KeyConditionExpression: 'shortPassDate = :shortPassDate AND facilityName = :facilityName',
+    FilterExpression: 'email = :email AND #type = :type AND passStatus IN (:reserved, :active)',
+    ExpressionAttributeNames: {
+      '#type': 'type'
+    },
+    ExpressionAttributeValues: {
+      ':facilityName': { S: facilityName },
+      ':email': { S: email },
+      ':type': { S: type },
+      ':shortPassDate': { S: bookingPSTShortDate },
+      ':reserved': { S: 'reserved' },
+      ':active': { S: 'active' }
+    }
+  };
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(bookingPSTShortDate)) {
+    throw new CustomError('Invalid booking date.', 400);
+  }
+
+  let existingItems;
+  try {
+    logger.info('Running existingPassCheckObject');
+    logger.debug(existingPassCheckObject);
+    existingItems = await dynamodb.query(existingPassCheckObject).promise();
+  } catch (error) {
+    logger.info('Error while running query for existingPassCheckObject');
+    logger.error(error);
+    throw new CustomError('Error while running query for existingPassCheckObject', 400);
+  }
+
+  if (existingItems.Count === 0) {
+    logger.debug('No existing pass found.');
+  } else {
+    logger.info(
+      `email account already has a reservation. Registration number: ${JSON.stringify(
+        existingItems?.Items[0]?.registrationNumber
+      )}`
+    );
+    throw new CustomError('This email account already has a reservation for this booking time. A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>', 400);
+  }
+}
+
 async function convertPassToReserved(decodedToken, passStatus, firstName, lastName, email) {
   const updateParams = {
     TableName: TABLE_NAME,
@@ -318,6 +364,7 @@ async function convertPassToReserved(decodedToken, passStatus, firstName, lastNa
 
   const res = await dynamodb.updateItem(updateParams).promise();
   logger.info(`Set status of ${res.Attributes?.type?.S} pass ${res.Attributes?.sk?.S} to ${passStatus}`);
+  return AWS.DynamoDB.Converter.unmarshall(res.Attributes);
 };
 
 module.exports = {
@@ -336,6 +383,7 @@ module.exports = {
   META_TABLE_NAME,
   METRICS_TABLE_NAME,
   convertPassToReserved,
+  checkPassExists,
   dynamodb,
   setStatus,
   runQuery,

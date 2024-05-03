@@ -21,9 +21,10 @@ describe('Pass Fails', () => {
 
   afterEach(async () => {
     await databaseOperation(1, 'teardown');
+    jest.resetModules();
   });
 
-  test('Handler - 400 Bad Request - nothing passed in', async () => {
+  test('400 Bad Request - nothing passed in', async () => {
     const writePassHandler = require('../lambda/writePass/index');
     expect(await writePassHandler.handler(null, null)).toMatchObject({
       body: JSON.stringify({
@@ -40,7 +41,7 @@ describe('Pass Fails', () => {
     });
   });
 
-  test('Handler - 400 Bad Request - Missing JWT', async () => {
+  test('400 Bad Request - Missing JWT', async () => {
     const writePassHandler = require('../lambda/writePass/index');
     const token = jwt.sign(
       {
@@ -69,14 +70,13 @@ describe('Pass Fails', () => {
         type: '',
         numberOfGuests: '',
         phoneNumber: '',
-        holdPassJwt: token,
-        commit: true
-        // Missing JWT
+        commit: true,
+        // Missing `token`
       })
     };
     expect(await writePassHandler.handler(event, null)).toMatchObject({
       body: JSON.stringify({
-        msg: 'Missing CAPTCHA verification.',
+        msg: 'Invalid token',
         title: 'Operation Failed.'
       }),
       headers: {
@@ -89,21 +89,8 @@ describe('Pass Fails', () => {
     });
   });
 
-  test('Handler - 400 Bad Request - JWT Invalid', async () => {
+  test('400 Bad Request - JWT Invalid', async () => {
     const writePassHandler = require('../lambda/writePass/index');
-    const token = jwt.sign(
-      {
-        registrationNumber: '1111111111',
-        facility: 'Trail B',
-        bookingDate: '2022-01-01',
-        passType: 'DAY',
-        orcs: 'Test Park 1'
-      },
-      'defaultSecret',
-      {
-        algorithm: ALGORITHM
-      }
-    );
     const event = {
       headers: {
         Authorization: 'None'
@@ -118,14 +105,13 @@ describe('Pass Fails', () => {
         type: 'DAY',
         numberOfGuests: 1,
         phoneNumber: '',
-        captchaJwt: 'This is an invalid JWT',
-        holdPassJwt: token,
+        token: 'This is an invalid token',
         commit: true
       })
     };
     expect(await writePassHandler.handler(event, null)).toMatchObject({
       body: JSON.stringify({
-        msg: 'CAPTCHA verification failed.',
+        msg: 'Invalid token',
         title: 'Operation Failed.'
       }),
       headers: {
@@ -138,7 +124,25 @@ describe('Pass Fails', () => {
     });
   });
 
-  test('Handler - 400 Bad Request - Trail pass limit maximum', async () => {
+  test('400 Bad Request - Trail pass limit maximum', async () => {
+    jest.mock('../lambda/permissionUtil', () => {
+      return {
+        validateToken: jest.fn(event => {
+          // Do Nothing, Don't throw
+        }),
+        decodeJWT: jest.fn(event => {
+          return null;
+        }),
+        resolvePermissions: jest.fn(() => {
+          return {
+            isAdmin: false,
+            roles: [''],
+            isAuthenticated: false
+          };
+        })
+      };
+    });
+    
     const writePassHandler = require('../lambda/writePass/index');
     const token = jwt.sign(
       {
@@ -182,7 +186,34 @@ describe('Pass Fails', () => {
     });
   });
 
-  test('Handler - 400 Bad Request - Invalid Date', async () => {
+  test('400 Bad Request - Invalid Date', async () => {
+    jest.mock('../lambda/permissionUtil', () => {
+      return {
+        validateToken: jest.fn(event => {
+          // Do Nothing, Don't throw
+        }),
+        decodeJWT: jest.fn(event => {
+          return {
+            parkOrcs: 'Test Park 1',
+            firstName: '',
+            lastName: '',
+            facilityName: 'Trail B',
+            email: 'test@example.nowhere',
+            date: '',
+            type: 'DAY',
+            numberOfGuests: 1,
+            phoneNumber: ''
+          };
+        }),
+        resolvePermissions: jest.fn(() => {
+          return {
+            isAdmin: false,
+            roles: [''],
+            isAuthenticated: false
+          };
+        })
+      };
+    });
     const writePassHandler = require('../lambda/writePass/index');
     const parkObject = {
       registrationNumber: '1111111112',
@@ -213,8 +244,7 @@ describe('Pass Fails', () => {
         type: parkObject.passType,
         numberOfGuests: 1,
         phoneNumber: '',
-        holdPassJwt: token,
-        captchaJwt: token
+        token: token
       })
     };
     expect(await writePassHandler.handler(event, null)).toMatchObject({

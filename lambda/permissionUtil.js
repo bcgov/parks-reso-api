@@ -54,13 +54,13 @@ exports.verifyHoldToken = function (token, secret) {
   try {
     decodedToken = jwt.verify(token, secret);
     if (!decodedToken) {
-      throw new CustomError(400, 'Invalid token');
+      throw new CustomError('Invalid token', 400);
     }
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
-      throw new CustomError(400, 'Token has expired');
+      throw new CustomError('Token has expired', 400);
     } else {
-      throw new CustomError(400, 'Invalid token');
+      throw new CustomError('Invalid token', 400);
     }
   }
   return decodedToken;

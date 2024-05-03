@@ -14,7 +14,9 @@ const {
   PASS_HOLD_STATUS,
   TABLE_NAME,
   TIMEZONE,
+  checkPassExists,
   convertPassToReserved,
+  dynamodb,
   getConfig,
   getFacility,
   getPark,
@@ -25,8 +27,13 @@ const { decodeJWT, resolvePermissions, validateToken, verifyHoldToken } = requir
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
 const { createNewReservationsObj } = require('../reservationObjUtils');
-const { getPersonalizationAttachment, getAdminLinkToPass, isBookingAllowed } = require('../passUtils');
-const { sendSQSMessage } = require('../sqsUtils');
+const {
+  getAdminLinkToPass,
+  getPersonalizationAttachment,
+  isBookingAllowed,
+  sendTemplateSQS
+} = require('../passUtils');
+
 const { generateRegistrationNumber } = require('../captchaUtil');
 const jwt = require('jsonwebtoken');
 
@@ -38,12 +45,7 @@ exports.handler = async (event, context) => {
 
   if (!event) {
     logger.info('There was an error in your submission:');
-    return sendResponse(
-      400,
-      {
-        msg: 'There was an error in your submission.',
-        title: 'Bad Request'
-      },
+    return sendResponse(400, { msg: 'There was an error in your submission.', title: 'Bad Request' },
       context
     );
   }
@@ -131,20 +133,6 @@ async function checkCaptchaJwt(captchaJwt) {
   return verification;
 }
 
-async function checkJWTsMatch(holdPassVerification, verification) {
-  // Ensure both JWT's are for the same pass
-  if (
-    holdPassVerification.bookingDate !== verification.bookingDate &&
-    holdPassVerification.facility !== verification.facility &&
-    holdPassVerification.orcs !== verification.orcs &&
-    holdPassVerification.passType !== verification.passType &&
-    holdPassVerification.registrationNumber !== verification.registrationNumber
-  ) {
-    logger.info('CAPTCHA and Hold Pass JWTs do not match');
-    throw new CustomError('CAPTCHA and Hold Pass JWTs do not match.', 400);
-  }
-}
-
 async function handleCommitPass(newObject, isAdmin) {
   let {
     parkOrcs, // Embed this in the JWT we put into the hold
@@ -155,11 +143,17 @@ async function handleCommitPass(newObject, isAdmin) {
     ...otherProps
   } = newObject;
 
+  // This populates when there is a pass created.
+  let pass;
+
   // Do extra checks if user is not sysadmin.
   if (!isAdmin) {
     try {
-      // TODO: Check if the user has a valid token, ensuring it has not expired
-      const decodedToken = await verifyHoldToken(token);
+      // Check if the user has a valid token, ensuring it has not expired
+      logger.info('Checking if the user has a valid token, ensuring it has not expired');
+      const decodedToken = await verifyHoldToken(token, SECRET);
+      logger.info('Decoded Token');
+      console.log(decodedToken);
 
       const facilityName = decodedToken.facilityName;
       const type = decodedToken.facilityName;
@@ -177,7 +171,7 @@ async function handleCommitPass(newObject, isAdmin) {
       const config = await getConfig();
       if (config.ENVIRONMENT === 'prod') {
         logger.info('Checking for existing pass');
-        await checkExistingPass(parkData, facilityName, email, type, shortPassDate);
+        await checkPassExists(facilityName, email, type, shortPassDate);
       }
 
       // Check if the booking window is already active
@@ -187,9 +181,12 @@ async function handleCommitPass(newObject, isAdmin) {
 
       // Update the pass in the database
       logger.info('Updating the pass in the database');
-      const pass = await convertPassToReserved(decodedToken, passStatus, firstName, lastName, email);
-      // Update the pass in the database
+      pass = await convertPassToReserved(decodedToken, passStatus, firstName, lastName, email);
       logger.debug(pass);
+
+      // delete the audit property
+      delete pass.audit;
+      return sendResponse(200, pass);
     } catch (error) {
       // Handle the error here
       logger.error(error);
@@ -224,12 +221,11 @@ async function handleCommitPass(newObject, isAdmin) {
   // Send to GC Notify
   try {
     logger.info('Posting to GC Notify');
-    passObject = await sendTemplateSQS(facilityData.type, personalisation, passObject);
-    // Prune audit
+    await sendTemplateSQS(facilityData.type, personalisation, pass);
   } catch (err) {
     logger.info(
-      `GCNotify error, return 200 anyway. Registration number: ${JSON.stringify(
-        passObject?.Item['registrationNumber']
+      `Sending SQS msg error, return 200 anyway. Registration number: ${JSON.stringify(
+        pass['registrationNumber']
       )}`
     );
     logger.error(err.response?.data || err);
@@ -467,52 +463,6 @@ async function transactWriteWithRetries(transactionObj, maxRetries = 3) {
     }
   } while (retryCount < maxRetries);
 };
-
-async function checkExistingPass(parkData, facilityName, email, type, bookingPSTShortDate) {
-  const existingPassCheckObject = {
-    TableName: TABLE_NAME,
-    IndexName: 'shortPassDate-index',
-    KeyConditionExpression: 'shortPassDate = :shortPassDate AND facilityName = :facilityName',
-    FilterExpression: 'email = :email AND #type = :type AND passStatus IN (:reserved, :active)',
-    ExpressionAttributeNames: {
-      '#type': 'type'
-    },
-    ExpressionAttributeValues: {
-      ':facilityName': { S: facilityName },
-      ':email': { S: email },
-      ':type': { S: type },
-      ':shortPassDate': { S: bookingPSTShortDate },
-      ':reserved': { S: 'reserved' },
-      ':active': { S: 'active' }
-    }
-  };
-
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(bookingPSTShortDate)) {
-    throw new CustomError('Invalid booking date.', 400);
-  }
-
-  let existingItems;
-  try {
-    logger.info('Running existingPassCheckObject');
-    logger.debug(existingPassCheckObject);
-    existingItems = await dynamodb.query(existingPassCheckObject).promise();
-  } catch (error) {
-    logger.info('Error while running query for existingPassCheckObject');
-    logger.error(error);
-    throw new CustomError('Error while running query for existingPassCheckObject', 400);
-  }
-
-  if (existingItems.Count === 0) {
-    logger.debug('No existing pass found. Creating new pass...');
-  } else {
-    logger.info(
-      `email account already has a reservation. Registration number: ${JSON.stringify(
-        existingItems?.Items[0]?.registrationNumber
-      )}, Orcs: ${parkData.sk}`
-    );
-    throw new CustomError('This email account already has a reservation for this booking time. A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>', 400);
-  }
-}
 
 function checkFacilityData(facilityData, numberOfGuests) {
   if (Object.keys(facilityData).length === 0) {

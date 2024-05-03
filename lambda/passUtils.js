@@ -2,12 +2,81 @@ const qrcode = require('qrcode');
 const { runQuery, TABLE_NAME, TIMEZONE, getOne, DEFAULT_BOOKING_DAYS_AHEAD, DEFAULT_PM_OPENING_HOUR } = require('./dynamoUtil');
 const { logger } = require('./logger');
 const { DateTime } = require('luxon');
-const AWS = require('aws-sdk');
 const { CustomError } = require('./responseUtil');
+const AWS = require('aws-sdk');
+const options = {
+  region: process.env.AWS_REGION || 'ca-central-1'
+};
+const sqs = new AWS.SQS(options);
 
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
 
+/**
+ * Sends a template message.
+ * @param {string} templateId - The ID of the template.
+ * @param {object} personalisation - The personalisation data for the template.
+ * @param {object} passObject - The pass object.
+ * @returns {object} - The updated pass object.
+ */
+async function sendTemplateSQS(facilityType, personalisation, passObject) {
+  let gcNotifyTemplate;
+  // Parking?
+  if (facilityType === 'Parking') {
+    gcNotifyTemplate = process.env.GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID;
+  } else {
+    gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
+  }
+  const gcnData = {
+    email_address: passObject.email,
+    template_id: gcNotifyTemplate,
+    personalisation: personalisation
+  };
+
+  // Push this email job onto the queue so we can return quickly to the front-end
+  logger.info('Sending to SQS');
+  await sendSQSMessage('GCN', gcnData);
+  logger.info('Sent');
+
+  logger.info(
+    `Pass successfully created. Registration number: ${JSON.stringify(
+      passObject?.Item['registrationNumber']
+    )}, Orcs: ${passObject.Item.pk}`
+  );
+  return passObject;
+};
+
+async function sendSQSMessage(service, payload) {
+  logger.info("SQSQUEUE:", process.env.SQSQUEUENAME);
+  try {
+    const params = {
+      MessageBody: `SQS Message at ${(new Date()).toISOString()}`,
+      QueueUrl: process.env.SQSQUEUENAME,
+      MessageAttributes: {
+        "email_address": {
+          DataType: "String",
+          StringValue: payload?.email_address
+        },
+        "template_id": {
+          DataType: "String",
+          StringValue: payload?.template_id
+        },
+        "personalisation": {
+          DataType: "String",
+          StringValue: JSON.stringify(payload?.personalisation)
+        },
+        "service": {
+          DataType: "String",
+          StringValue: service
+        }
+      }
+    };
+    logger.info("Sending SQS");
+    await sqs.sendMessage(params).promise();
+  } catch (e) {
+    logger.error(e);
+  }
+}
 
 async function getPersonalizationAttachment(parkIdentifier, registrationNumber, qrCode = false) {
   if (qrCode) {
@@ -67,6 +136,11 @@ async function isBookingAllowed(orcs, facilitySk, date, type) {
     Intl.DateTimeFormat().resolvedOptions().timeZone || 'undefined',
     `(${DateTime.now().toISO()})`
   );
+
+  // Check if date is a valid date
+  if (!DateTime.fromISO(date).isValid) {
+    throw new CustomError('Invalid booking date.', 400);
+  }
 
   // Get park.
   logger.debug('Get park:', orcs);
@@ -181,9 +255,11 @@ function to12hTimeString(hour) {
 
 
 module.exports = {
+  checkIfPassExists,
   getAdminLinkToPass,
   getAdminPortalURL,
   getPersonalizationAttachment,
-  checkIfPassExists,
-  isBookingAllowed
+  isBookingAllowed,
+  sendSQSMessage,
+  sendTemplateSQS
 };
