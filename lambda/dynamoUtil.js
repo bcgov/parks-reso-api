@@ -198,6 +198,7 @@ async function getParks() {
 // if not authenticated, invisible facilities will not be returned.
 async function getFacility(parkSk, sk, authenticated = false) {
   const facility = await getOne(`facility::${parkSk}`, sk);
+  console.log("facility:", facility)
   if (!authenticated && !facility.visible.BOOL) {
     return {};
   };

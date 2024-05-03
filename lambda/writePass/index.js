@@ -104,6 +104,7 @@ async function handleCommitPass(newObject, isAdmin) {
   let pass;
   let decodedToken;
   let bookingPSTDateTime;
+  let bookingPSTShortDate;
   let type;
   let facilityName;
 
@@ -120,6 +121,7 @@ async function handleCommitPass(newObject, isAdmin) {
       facilityName = decodedToken.facilityName;
 
       bookingPSTDateTime = DateTime.fromISO(decodedToken.date);
+      bookingPSTShortDate = bookingPSTDateTime.toISODate();
       type = decodedToken.type;
 
       // Try to find this token in the database, if not it's not a valid token
@@ -127,9 +129,10 @@ async function handleCommitPass(newObject, isAdmin) {
       if (jwt && Object.keys(jwt).length > 0) {
         // The JWT is found, therefore continue with the request.
         logger.info('JWT found.');
-
+        console.log(jwt);
         // Check if the JWT is expired
-        console.log('checking jwt expiry', decodedToken);
+        logger.info('checking jwt expiry');
+        logger.debug(JSON.stringify(decodedToken));
         const jwtExpiry = DateTime.fromISO(jwt.expiry);
         console.log(jwtExpiry);
         if (jwtExpiry < DateTime.now().setZone(TIMEZONE)) {
@@ -152,9 +155,9 @@ async function handleCommitPass(newObject, isAdmin) {
       // Does the pass already exist in the database?
       logger.info('Checking if the pass already exists in the database');
       await checkPassExists(decodedToken.facilityName,
-                                   email,
-                                   decodedToken.type,
-                                   bookingPSTDateTime.toISODate());
+                            email,
+                            decodedToken.type,
+                            bookingPSTShortDate);
 
       // Update the pass in the database
       logger.info('Updating the pass in the database');
@@ -174,6 +177,8 @@ async function handleCommitPass(newObject, isAdmin) {
     }
   }
 
+  logger.info('generateCancellationLink');
+  console.log(pass.registrationNumber, email, parkOrcs, bookingPSTShortDate, type);
   const encodedCancellationLink = generateCancellationLink(pass.registrationNumber,
                                                            email,
                                                            parkOrcs,
@@ -182,13 +187,18 @@ async function handleCommitPass(newObject, isAdmin) {
 
   const formattedBookingDate = bookingPSTDateTime.toLocaleString(dateOptions);
 
+  const parkData = await getPark(decodedToken.parkOrcs);
+  console.log('parkData', parkData)
+  const facilityData = await getFacility(decodedToken.parkOrcs, facilityName, false);
+  console.log('facilityData', facilityData)
+  console.log('personaliazation')
   let personalisation = {
     firstName: firstName,
     lastName: lastName,
     date: formattedBookingDate,
     type: type === 'DAY' ? 'ALL DAY' : type,
     facilityName: facilityName,
-    numberOfGuests: numberOfGuests.toString(),
+    numberOfGuests: decodedToken.numberOfGuests.toString(),
     registrationNumber: pass.registrationNumber,
     cancellationLink: encodedCancellationLink,
     parkName: parkData.name,
@@ -208,7 +218,6 @@ async function handleCommitPass(newObject, isAdmin) {
       )}`
     );
     logger.error(err.response?.data || err);
-    errRes['err'] = 'Email Failed to Send';
     return sendResponse(200, pass);
   }
   // TODO: Remove JWT from hold pass area in database.
