@@ -81,6 +81,14 @@ exports.handler = async (event, context) => {
   }
 };
 
+/**
+ * Handles the commit of a pass.
+ *
+ * @param {Object} newObject - The new object containing pass information.
+ * @param {boolean} isAdmin - Indicates whether the user is an admin.
+ * @returns {Promise} - A promise that resolves when the pass is committed.
+ * @throws {CustomError} - If there is an error during the commit process.
+ */
 async function handleCommitPass(newObject, isAdmin) {
   const {
     parkOrcs,
@@ -206,8 +214,15 @@ async function handleCommitPass(newObject, isAdmin) {
   // TODO: Remove JWT from hold pass area in database.
 }
 
-// if the window is already active, activate the pass.
-// check if booking same-day
+/**
+ * Checks the pass status based on the current time and booking time. If the window is already active, activate the pass
+ * check if booking same-day
+ *
+ * @param {Moment} currentPSTDateTime - The current Pacific Standard Time (PST) date and time.
+ * @param {Moment} bookingPSTDateTime - The booking Pacific Standard Time (PST) date and time.
+ * @param {string} type - The type of pass ('AM' or 'PM').
+ * @returns {string} - The pass status ('active' or 'reserved').
+ */
 function checkPassStatusBasedOnCurrentTime(currentPSTDateTime, bookingPSTDateTime, type) {
   let openingHour = DEFAULT_AM_OPENING_HOUR;
   if (currentPSTDateTime.get('day') === bookingPSTDateTime.get('day')) {
@@ -221,6 +236,16 @@ function checkPassStatusBasedOnCurrentTime(currentPSTDateTime, bookingPSTDateTim
   return 'reserved';
 }
 
+/**
+ * Generates a cancellation link for a pass.
+ *
+ * @param {string} registrationNumber - The registration number of the pass.
+ * @param {string} email - The email associated with the pass.
+ * @param {string} parkOrcs - The park orcs associated with the pass.
+ * @param {string} bookingPSTShortDate - The booking date of the pass in PST short format.
+ * @param {string} type - The type of the pass.
+ * @returns {string} - The generated cancellation link.
+ */
 function generateCancellationLink(registrationNumber, email, parkOrcs, bookingPSTShortDate, type) {
   return encodeURI(process.env.PUBLIC_FRONTEND +
     process.env.PASS_CANCELLATION_ROUTE +
@@ -236,6 +261,14 @@ function generateCancellationLink(registrationNumber, email, parkOrcs, bookingPS
     type);
 }
 
+/**
+ * Handles the process of holding a pass.
+ *
+ * @param {Object} newObject - The new object containing pass details.
+ * @param {boolean} isAdmin - Indicates whether the user is an admin.
+ * @returns {Promise<Object>} - A promise that resolves to the response object.
+ * @throws {CustomError} - If an error occurs during the process.
+ */
 async function handleHoldPass(newObject, isAdmin) {
   logger.debug('newObject:', newObject);
   try {
@@ -366,10 +399,15 @@ async function handleHoldPass(newObject, isAdmin) {
   } catch (error) {
     logger.info('Operation Failed');
     logger.error('err', error.message);
-    return sendResponse(error.statusCode, { msg: error.message, twhiitle: 'Operation Failed' });
+    return sendResponse(error.statusCode, { msg: error.message, title: 'Operation Failed' });
   }
 };
 
+/**
+ * Stores the holdPassJwt in DynamoDB.
+ * @param {string} holdPassJwt - The holdPassJwt to be stored.
+ * @throws {CustomError} If failed to store JWT in DynamoDB.
+ */
 async function storeHoldPassJwt(holdPassJwt) {
   try {
     let retries = 0;
@@ -394,6 +432,14 @@ async function storeHoldPassJwt(holdPassJwt) {
   }
 }
 
+/**
+ * Executes a transaction write operation with retries.
+ *
+ * @param {Object} transactionObj - The transaction object to be written.
+ * @param {number} [maxRetries=3] - The maximum number of retries in case of failure.
+ * @returns {Promise} - A promise that resolves with the result of the transaction write operation.
+ * @throws {CustomError} - If the transaction fails after the maximum number of retries.
+ */
 async function transactWriteWithRetries(transactionObj, maxRetries = 3) {
   let retryCount = 0;
   let res;

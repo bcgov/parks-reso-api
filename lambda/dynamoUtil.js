@@ -2,6 +2,8 @@ const AWS = require('aws-sdk');
 const { logger } = require('./logger');
 const { DateTime } = require('luxon');
 const { CustomError } = require('./responseUtil');
+const { DynamoDB } = require('@aws-sdk/client-dynamodb');
+const { Converter } = require('csvtojson/v2/Converter');
 
 const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 const META_TABLE_NAME = process.env.META_TABLE_NAME || 'parksreso-meta';
@@ -34,7 +36,12 @@ const dynamodb = new AWS.DynamoDB(options);
 
 exports.dynamodb = new AWS.DynamoDB();
 
-
+/**
+ * Sets the status of passes in the given array.
+ * @param {Array} passes - The array of passes.
+ * @param {string} status - The status to set for the passes.
+ * @returns {Promise<void>} - A promise that resolves when the status is set for all passes.
+ */
 async function setStatus(passes, status) {
   const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
   const currentTimeISO = currentPSTDateTime.toUTC().toISO();
@@ -216,7 +223,13 @@ const expressionBuilder = function (operator, existingExpression, newFilterExpre
   }
 };
 
-const getPassesByStatus = async function (status, filterExpression = undefined) {
+/**
+ * Retrieves passes by status from the DynamoDB table.
+ * @param {string} status - The status of the passes to retrieve.
+ * @param {object} filterExpression - Optional filter expression for additional filtering of the results.
+ * @returns {Promise<Array>} - A promise that resolves to an array of passes.
+ */
+async function getPassesByStatus(status, filterExpression = undefined) {
   logger.info(`Loading passes`, filterExpression);
 
   const passesQuery = {
@@ -254,7 +267,14 @@ const getPassesByStatus = async function (status, filterExpression = undefined) 
   return results;
 }
 
-const storeObject = async function (object, tableName = TABLE_NAME) {
+/**
+ * Stores an object in the specified DynamoDB table.
+ * @param {Object} object - The object to be stored.
+ * @param {string} [tableName=TABLE_NAME] - The name of the DynamoDB table.
+ * @returns {Promise<void>} - A promise that resolves when the object is successfully stored.
+ * @throws {Error} - If there is an error storing the object.
+ */
+async function storeObject(object, tableName = TABLE_NAME) {
   console.log('storeObject:', object);
   const params = {
     TableName: tableName,
@@ -271,7 +291,14 @@ const storeObject = async function (object, tableName = TABLE_NAME) {
   }
 }
 
-const visibleFilter = function (queryObj, isAdmin) {
+/**
+ * Filters the query object based on visibility.
+ *
+ * @param {Object} queryObj - The query object to filter.
+ * @param {boolean} isAdmin - Indicates whether the user is an admin.
+ * @returns {Object} - The filtered query object.
+ */
+function visibleFilter(queryObj, isAdmin) {
   logger.info('visibleFilter:', queryObj, isAdmin);
   if (!isAdmin) {
     queryObj.ExpressionAttributeValues[':visible'] = { BOOL: true };
@@ -280,6 +307,15 @@ const visibleFilter = function (queryObj, isAdmin) {
   return queryObj;
 };
 
+/**
+ * Checks if a pass exists for the given parameters.
+ *
+ * @param {string} facilityName - The name of the facility.
+ * @param {string} email - The email associated with the pass.
+ * @param {string} type - The type of pass.
+ * @param {string} bookingPSTShortDate - The short date of the booking in PST timezone (YYYY-MM-DD).
+ * @throws {CustomError} Throws an error if the booking date is invalid or if a reservation already exists.
+ */
 async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
   const existingPassCheckObject = {
     TableName: TABLE_NAME,
@@ -326,6 +362,18 @@ async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
   logger.debug('No existing pass found.');
 }
 
+/**
+ * Converts a pass to reserved status and updates the pass details in DynamoDB.
+ *
+ * @param {object} decodedToken - The decoded token containing parkOrcs and registrationNumber.
+ * @param {string} passStatus - The new status of the pass.
+ * @param {string} firstName - The first name of the pass holder.
+ * @param {string} lastName - The last name of the pass holder.
+ * @param {string} email - The email address of the pass holder.
+ * @param {string} phoneNumber - The phone number of the pass holder.
+ * @returns {object} - The updated pass details.
+ * @throws {CustomError} - If the operation fails.
+ */
 async function convertPassToReserved(decodedToken, passStatus, firstName, lastName, email, phoneNumber) {
   const updateParams = {
     TableName: TABLE_NAME,
@@ -375,6 +423,67 @@ async function convertPassToReserved(decodedToken, passStatus, firstName, lastNa
   return AWS.DynamoDB.Converter.unmarshall(res.Attributes);
 };
 
+/**
+ * Retrieves all stored JWTs from DynamoDB.
+ * @returns {Promise<Array>} An array of stored JWTs.
+ * @throws {CustomError} If there is an error querying DynamoDB.
+ */
+async function getAllStoredJWTs() {
+  const params = {
+    TableName: TABLE_NAME,
+    KeyConditionExpression: 'pk = :pk',
+    ExpressionAttributeValues: {
+      ':pk': { S: 'jwt' },
+    },
+  };
+
+  try {
+    let items = [];
+    let data;
+    do {
+      console.log('Querying DynamoDB...');
+      console.log('params:', params )
+      data = await dynamodb.query(params).promise();
+      for(const item of data.Items) {
+        items.push(AWS.DynamoDB.Converter.unmarshall(item));
+      }
+      params.ExclusiveStartKey = data.LastEvaluatedKey;
+    } while (typeof data.LastEvaluatedKey != "undefined");
+
+    logger.info('Length of all stored JWTs:', items.length);
+    logger.debug(items);
+    return items;
+  } catch (error) {
+    logger.error('Error querying DynamoDB:', error);
+    throw new CustomError('Error querying DynamoDB', error);
+  }
+}
+
+/**
+ * Deletes a JWT from the DynamoDB table.
+ *
+ * @param {string} pk - The partition key of the item to delete.
+ * @param {string} sk - The sort key of the item to delete.
+ * @throws {CustomError} If there is an error deleting the JWT.
+ */
+async function deleteJWT(pk, sk) {
+  const params = {
+    TableName: TABLE_NAME,
+    Key: {
+      pk: { S: pk },
+      sk: { S: sk }
+    }
+  };
+
+  try {
+    await dynamodb.deleteItem(params).promise();
+    logger.info(`Deleted JWT: ${sk}`);
+  } catch (error) {
+    logger.error('Error deleting JWT:', error);
+    throw new CustomError('Error deleting JWT', error);
+  }
+}
+
 module.exports = {
   ACTIVE_STATUS,
   DEFAULT_BOOKING_DAYS_AHEAD,
@@ -392,7 +501,9 @@ module.exports = {
   METRICS_TABLE_NAME,
   convertPassToReserved,
   checkPassExists,
+  deleteJWT,
   dynamodb,
+  getAllStoredJWTs,
   setStatus,
   runQuery,
   runScan,
