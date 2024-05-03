@@ -518,40 +518,6 @@ function checkFacilityData(facilityData, numberOfGuests) {
 }
 
 /**
- * Sends a template message and deletes the audit item.
- * @param {string} templateId - The ID of the template.
- * @param {object} personalisation - The personalisation data for the template.
- * @param {object} passObject - The pass object.
- * @returns {object} - The updated pass object.
- */
-async function sendTemplateSQS(facilityType, personalisation, passObject) {
-  let gcNotifyTemplate;
-  // Parking?
-  if (facilityType === 'Parking') {
-    gcNotifyTemplate = process.env.GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID;
-  } else {
-    gcNotifyTemplate = process.env.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID;
-  }
-  const gcnData = {
-    email_address: passObject.Item['email'].S,
-    template_id: gcNotifyTemplate,
-    personalisation: personalisation
-  };
-
-  // Push this email job onto the queue so we can return quickly to the front-end
-  logger.info('Sending to SQS');
-  await sendSQSMessage('GCN', gcnData);
-  logger.info('Sent');
-
-  logger.info(
-    `Pass successfully created. Registration number: ${JSON.stringify(
-      passObject?.Item['registrationNumber']
-    )}, Orcs: ${passObject.Item.pk}`
-  );
-  return passObject;
-};
-
-/**
  * Creates a pass object with the provided data.
  *
  * @param {Object} parkData - The park data object.
