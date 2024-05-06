@@ -129,12 +129,10 @@ async function handleCommitPass(newObject, isAdmin) {
       if (jwt && Object.keys(jwt).length > 0) {
         // The JWT is found, therefore continue with the request.
         logger.info('JWT found.');
-        console.log(jwt);
         // Check if the JWT is expired
         logger.info('checking jwt expiry');
         logger.debug(JSON.stringify(decodedToken));
         const jwtExpiry = DateTime.fromISO(jwt.expiry);
-        console.log(jwtExpiry);
         if (jwtExpiry < DateTime.now().setZone(TIMEZONE)) {
           // The JWT is expired, therefore reject this request.
           logger.info('JWT is expired.');
@@ -178,7 +176,6 @@ async function handleCommitPass(newObject, isAdmin) {
   }
 
   logger.info('generateCancellationLink');
-  console.log(pass.registrationNumber, email, parkOrcs, bookingPSTShortDate, type);
   const encodedCancellationLink = generateCancellationLink(pass.registrationNumber,
                                                            email,
                                                            parkOrcs,
@@ -188,10 +185,10 @@ async function handleCommitPass(newObject, isAdmin) {
   const formattedBookingDate = bookingPSTDateTime.toLocaleString(dateOptions);
 
   const parkData = await getPark(decodedToken.parkOrcs);
-  console.log('parkData', parkData)
+  logger.debug('parkData', parkData)
   const facilityData = await getFacility(decodedToken.parkOrcs, facilityName, false);
-  console.log('facilityData', facilityData)
-  console.log('personaliazation')
+  logger.debug('facilityData', facilityData)
+  logger.info('personaliazation')
   let personalisation = {
     firstName: firstName,
     lastName: lastName,
