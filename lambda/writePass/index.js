@@ -391,8 +391,7 @@ async function handleHoldPass(newObject, isAdmin) {
 
     logger.info('Transaction complete');
 
-    // delete passObject.Item['audit'];
-    // return sendResponse(200, AWS.DynamoDB.Converter.unmarshall(passObject.Item));
+    delete passObject.Item['audit'];
 
     // Return the jwt'd pass object for the front end with a 7 minute expiry time.
     passObject.Item['parkOrcs'] = { S: parkOrcs };
