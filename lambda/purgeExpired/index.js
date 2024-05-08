@@ -12,8 +12,8 @@ exports.handler = async (event, context) => {
       if(item.expiration){
           try {
               console.log(item)
-              await dynamoUtil.deleteJWT(item.pk, item.sk)
-              const token = jwt.decode(item.sk)
+              await dynamoUtil.deleteJWT(item.pk, item.sk);
+              const token = jwt.decode(item.sk);
               const orcNumber = token.pk.replace(/^0+/, '');
               await dynamoUtil.restoreAvailablePass(orcNumber, token.shortPassDate, token.facilityName, token.numberOfGuests, token.type)
           } catch (error) {
