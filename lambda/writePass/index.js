@@ -22,7 +22,7 @@ const {
   storeObject
 } = require('../dynamoUtil');
 const { sendResponse, checkWarmup, CustomError } = require('../responseUtil');
-const { decodeJWT, resolvePermissions, validateToken, verifyHoldToken } = require('../permissionUtil');
+const { decodeJWT, resolvePermissions, validateToken, verifyHoldToken, getExpiryTime } = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
 const { createNewReservationsObj } = require('../reservationObjUtils');
@@ -30,7 +30,8 @@ const {
   getAdminLinkToPass,
   getPersonalizationAttachment,
   isBookingAllowed,
-  sendTemplateSQS
+  sendTemplateSQS,
+  sendExpirationSQS
 } = require('../passUtils');
 
 const { generateRegistrationNumber } = require('../jwtUtil');
@@ -400,8 +401,19 @@ async function handleHoldPass(newObject, isAdmin) {
                                  SECRET,
                                  { algorithm: ALGORITHM, expiresIn: '7m'});
 
+    let expirationTime = getExpiryTime(holdPassJwt)
     // Store the jwt, as well as the registration number, and the expiry time in DynamoDB
-    await storeHoldPassJwt(holdPassJwt);
+    await storeHoldPassJwt(holdPassJwt, expirationTime);
+
+    //Send message to expiration queue
+    try {
+      logger.info('Posting to expirationQueue');
+      await sendExpirationSQS();
+    } catch (err) {
+      logger.info(`Error with the ExpirationSQS`);
+      logger.error(err.response?.data || err);
+    }
+
 
     // TODO: Setup a job to prune JWTs from the database after 7m. Remove the held passes (pk::xxxx, sk: 112345)
     return sendResponse(200, holdPassJwt);
@@ -417,7 +429,7 @@ async function handleHoldPass(newObject, isAdmin) {
  * @param {string} holdPassJwt - The holdPassJwt to be stored.
  * @throws {CustomError} If failed to store JWT in DynamoDB.
  */
-async function storeHoldPassJwt(holdPassJwt) {
+async function storeHoldPassJwt(holdPassJwt, expirationTime) {
   try {
     let retries = 0;
     let success = false;
@@ -425,7 +437,8 @@ async function storeHoldPassJwt(holdPassJwt) {
       try {
         await storeObject({
           'pk': 'jwt',
-          'sk': holdPassJwt
+          'sk': holdPassJwt,
+          'expiration': expirationTime
         });
         success = true;
       } catch (error) {

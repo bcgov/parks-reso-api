@@ -12,9 +12,8 @@ const DB_ENDPOINT_OVERRIDE = process.env.DB_ENDPOINT_OVERRIDE || 'http://localho
 const options = {
   region: 'ca-central-1'
 };
-
 if (process.env.IS_OFFLINE) {
-  options.endpoint = DB_ENDPOINT_OVERRIDE;
+  options["endpoint"] = DB_ENDPOINT_OVERRIDE;
 }
 const ACTIVE_STATUS = 'active';
 const RESERVED_STATUS = 'reserved';
@@ -32,9 +31,13 @@ const PASS_TYPE_EXPIRY_HOURS = {
 };
 const DEFAULT_BOOKING_DAYS_AHEAD = 3;
 
+//Leaving in the AWS.DynamoDB for functions still using sdkV2 Format. 
 const dynamodb = new AWS.DynamoDB(options);
-
 exports.dynamodb = new AWS.DynamoDB();
+
+//Uses SDKV3 - No .promise()
+const dynamodb1 = new DynamoDB(options);
+exports.dynamodb1 = new DynamoDB();
 
 /**
  * Sets the status of passes in the given array.
@@ -429,22 +432,37 @@ async function convertPassToReserved(decodedToken, passStatus, firstName, lastNa
  * @returns {Promise<Array>} An array of stored JWTs.
  * @throws {CustomError} If there is an error querying DynamoDB.
  */
-async function getAllStoredJWTs() {
-  const params = {
-    TableName: TABLE_NAME,
-    KeyConditionExpression: 'pk = :pk',
-    ExpressionAttributeValues: {
-      ':pk': { S: 'jwt' },
-    },
-  };
-
+async function getAllStoredJWTs(expired = false) { //optional if expired or all or whatever we need... make it filtered by
+  const currentTime = Math.floor(Date.now() / 1000);
+  let params;
+  if (expired) {
+    // If expired parameter is true only get the expired jwtss
+    params = {
+      TableName: TABLE_NAME,
+      KeyConditionExpression: 'pk = :pk',
+      FilterExpression: 'expiration < :currentTime',
+      ExpressionAttributeValues: {
+        ':pk': { S: 'jwt' },
+        ':currentTime': { N: currentTime.toString() }
+      },
+    };
+  } else {
+    // get all jwt if not looking for expired (same as before)
+    params = {
+      TableName: TABLE_NAME,
+      KeyConditionExpression: 'pk = :pk',
+      ExpressionAttributeValues: {
+        ':pk': { S: 'jwt' },
+      },
+    };
+  }
   try {
     let items = [];
     let data;
     do {
       console.log('Querying DynamoDB...');
       console.log('params:', params )
-      data = await dynamodb.query(params).promise();
+      data = await dynamodb1.query(params);
       for(const item of data.Items) {
         items.push(AWS.DynamoDB.Converter.unmarshall(item));
       }
@@ -485,6 +503,32 @@ async function deleteJWT(pk, sk) {
   }
 }
 
+async function restoreAvailablePass(orcNumber, shortPassDate, facilityName, numberOfGuests, type){
+  const params = {
+    TableName: TABLE_NAME,
+    Key: {
+      pk: { S: `reservations::${orcNumber}::${facilityName}` },
+      sk: { S: shortPassDate }
+    },
+    ExpressionAttributeValues: {
+      ':inc': AWS.DynamoDB.Converter.input(numberOfGuests)
+    },
+    ExpressionAttributeNames: {
+      '#type': type,
+      '#availablePasses': 'availablePasses'
+    },
+    UpdateExpression: 'SET capacities.#type.#availablePasses = capacities.#type.#availablePasses + :inc',
+    ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
+  }
+  try{
+    await dynamodb.updateItem(params).promise();
+    logger.info(`added: ${numberOfGuests} back to ${facilityName}`);
+  } catch (error) {
+    logger.error('Error updating available passes:', error);
+    throw new CustomError('Error updating pass', error);
+  }
+
+}
 module.exports = {
   ACTIVE_STATUS,
   DEFAULT_BOOKING_DAYS_AHEAD,
@@ -517,5 +561,6 @@ module.exports = {
   getPassesByStatus,
   expressionBuilder,
   storeObject,
-  visibleFilter
+  visibleFilter,
+  restoreAvailablePass
 };
