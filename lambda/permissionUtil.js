@@ -49,6 +49,24 @@ exports.decodeJWT = async function (event) {
   }
 };
 
+exports.getExpiryTime = function (token) {
+  try {
+    // grab the public stuff from jwt
+    const decodedJWT = jwt.decode(token);
+    if (decodedJWT && decodedJWT.iat) { 
+      const expiryTime = decodedJWT.exp
+      //Return the unix value of the epiry
+      return expiryTime;
+    } else {
+      // If no created time return false 
+      return { decoded: false };
+    }
+  } catch (e) {
+    // Return if cant decode 
+    return { decoded: false };
+  }
+};
+
 exports.verifyHoldToken = function (token, secret) {
   console.log("verifyHoldToken", token, secret);
   let decodedToken;

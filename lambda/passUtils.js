@@ -46,6 +46,20 @@ async function sendTemplateSQS(facilityType, personalisation, passObject) {
   return passObject;
 };
 
+async function sendExpirationSQS(){
+  logger.info("SQSQUE: ", process.env.SQSEXPIRY_QUEUE)
+  try {
+    const params = {
+      MessageBody: `SQS Message at ${(new Date()).toISOString()}`,
+      QueueUrl: process.env.SQSEXPIRY_QUEUE,
+    };
+    logger.info("Sending SQS");
+    await sqs.sendMessage(params).promise();
+  } catch (e) {
+    logger.error(e);
+  }
+
+}
 async function sendSQSMessage(service, payload) {
   logger.info("SQSQUEUE:", process.env.SQSQUEUENAME);
   try {
@@ -261,5 +275,6 @@ module.exports = {
   getPersonalizationAttachment,
   isBookingAllowed,
   sendSQSMessage,
-  sendTemplateSQS
+  sendTemplateSQS,
+  sendExpirationSQS
 };
