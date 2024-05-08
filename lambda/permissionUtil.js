@@ -53,9 +53,8 @@ exports.getExpiryTime = function (token) {
   try {
     // grab the public stuff from jwt
     const decodedJWT = jwt.decode(token);
-    if (decodedJWT && decodedJWT.iat) {
-      //Plus 7 min 3seconds to the issuedAT time
-      const expiryTime = decodedJWT.iat + 423;
+    if (decodedJWT && decodedJWT.iat) { 
+      const expiryTime = decodedJWT.exp
       //Return the unix value of the epiry
       return expiryTime;
     } else {

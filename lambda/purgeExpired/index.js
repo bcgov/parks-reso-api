@@ -14,7 +14,7 @@ exports.handler = async (event, context) => {
               console.log(item)
               await dynamoUtil.deleteJWT(item.pk, item.sk)
               const token = jwt.decode(item.sk)
-              const orcNumber = token.pk.substring(token.pk.length - 4)
+              const orcNumber = token.pk.replace(/^0+/, '');
               await dynamoUtil.restoreAvailablePass(orcNumber, token.shortPassDate, token.facilityName, token.numberOfGuests, token.type)
           } catch (error) {
               console.error('Error Deleting JWT:', error);  
