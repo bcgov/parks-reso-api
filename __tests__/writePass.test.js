@@ -846,7 +846,7 @@ describe('Pass Successes', () => {
 
   test('400 pass exists according to token check.', async () => {
     const theDate = '2022-01-01T00:00:00Z';
-    const holdToken = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJvcmNzIjoiVGVzdCBQYXJrIDEiLCJyZWdpc3RyYXRpb25OdW1iZXIiOiIxMTExMTExMTE1IiwiaWF0IjoxNzE0NTE3NzgzfQ.ovhpT0z3US0cw4CjgvwNRsebmBZjXrm28q7stkHSquGZaBxS7Hq2T3nRyDQtOVR8';
+    const holdToken = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwicmVnaXN0cmF0aW9uTnVtYmVyIjoiMTExMTExMTExNSIsImlhdCI6MTcxNDUxNzc4M30.-o1oviP-UwfgFkMhKrmZNvr2SptNOrxyaKOlx-rhoRqZp7KXW8E1F_NXYvi8x6qm';
     jest.mock('../lambda/permissionUtil', () => {
       return {
         validateToken: jest.fn(event => {
@@ -854,7 +854,7 @@ describe('Pass Successes', () => {
         }),
         decodeJWT: jest.fn(event => {
           return {
-            orcs: 'Test Park 1',
+            parkOrcs: 'Test Park 1',
             registrationNumber: '1111111115',
             firstName: 'Jest',
             lastName: 'User',
@@ -871,7 +871,7 @@ describe('Pass Successes', () => {
         }),
         verifyHoldToken: jest.fn(event => {
           return {
-            orcs: 'Test Park 1',
+            parkOrcs: 'Test Park 1',
             registrationNumber: '1111111115',
             firstName: 'Jest',
             lastName: 'User',
@@ -927,7 +927,7 @@ describe('Pass Successes', () => {
       .put({
         TableName: TABLE_NAME,
         Item: {
-          sk: 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJvcmNzIjoiVGVzdCBQYXJrIDEiLCJyZWdpc3RyYXRpb25OdW1iZXIiOiIxMTExMTExMTE1IiwiaWF0IjoxNzE0NTE3NzgzfQ.ovhpT0z3US0cw4CjgvwNRsebmBZjXrm28q7stkHSquGZaBxS7Hq2T3nRyDQtOVR8',
+          sk: 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwicmVnaXN0cmF0aW9uTnVtYmVyIjoiMTExMTExMTExNSIsImlhdCI6MTcxNDUxNzc4M30.-o1oviP-UwfgFkMhKrmZNvr2SptNOrxyaKOlx-rhoRqZp7KXW8E1F_NXYvi8x6qm',
           pk: 'jwt'
         }
       })
