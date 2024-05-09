@@ -846,7 +846,7 @@ describe('Pass Successes', () => {
 
   test('400 pass exists according to token check.', async () => {
     const theDate = '2022-01-01T00:00:00Z';
-    const holdToken = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwicmVnaXN0cmF0aW9uTnVtYmVyIjoiMTExMTExMTExNSIsImlhdCI6MTcxNDUxNzc4M30.-o1oviP-UwfgFkMhKrmZNvr2SptNOrxyaKOlx-rhoRqZp7KXW8E1F_NXYvi8x6qm';
+    const holdToken = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwiZmFjaWxpdHlOYW1lIjoidHJhaWwgQiIsInJlZ2lzdHJhdGlvbk51bWJlciI6IjExMTExMTExMTUiLCJpYXQiOjE3MTQ1MTc3ODN9.xPlr-ED6nj8uFhElJSOGIR6vG6Sn76ibTrXvjBBM6ohOiUkZxHbQ5N51LHDocJpu';
     jest.mock('../lambda/permissionUtil', () => {
       return {
         validateToken: jest.fn(event => {
@@ -927,7 +927,7 @@ describe('Pass Successes', () => {
       .put({
         TableName: TABLE_NAME,
         Item: {
-          sk: 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwicmVnaXN0cmF0aW9uTnVtYmVyIjoiMTExMTExMTExNSIsImlhdCI6MTcxNDUxNzc4M30.-o1oviP-UwfgFkMhKrmZNvr2SptNOrxyaKOlx-rhoRqZp7KXW8E1F_NXYvi8x6qm',
+          sk: 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwiZmFjaWxpdHlOYW1lIjoidHJhaWwgQiIsInJlZ2lzdHJhdGlvbk51bWJlciI6IjExMTExMTExMTUiLCJpYXQiOjE3MTQ1MTc3ODN9.xPlr-ED6nj8uFhElJSOGIR6vG6Sn76ibTrXvjBBM6ohOiUkZxHbQ5N51LHDocJpu',
           pk: 'jwt'
         }
       })
