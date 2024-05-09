@@ -200,6 +200,8 @@ async function getParks() {
 // get a single facility by park name & facility sk.
 // if not authenticated, invisible facilities will not be returned.
 async function getFacility(parkSk, sk, authenticated = false) {
+  console.log("Getting facility");
+  console.log(parkSk, sk, authenticated);
   const facility = await getOne(`facility::${parkSk}`, sk);
   console.log("facility:", facility)
   if (!authenticated && !facility.visible.BOOL) {
