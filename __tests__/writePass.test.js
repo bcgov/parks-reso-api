@@ -1066,6 +1066,7 @@ async function databaseOperation(version, mode) {
             pk: 'pass::0015',
             sk: '523456789',
             parkName: 'Test Park 1',
+            parkOrcs: 'Test Park 1',
             firstName: 'First',
             searchFirstName: 'first',
             lastName: 'Last',
@@ -1092,6 +1093,7 @@ async function databaseOperation(version, mode) {
           TableName: TABLE_NAME,
           Item: {
             pk: 'facility::Test Park 1',
+            parkOrcs: 'Test Park 1',
             sk: 'Parking lot A',
             name: 'Parking lot A',
             description: 'A Parking Lot!',
@@ -1129,6 +1131,7 @@ async function databaseOperation(version, mode) {
           Item: {
             pk: 'facility::Test Park 1',
             sk: 'Trail B',
+            parkOrcs: 'Test Park 1',
             name: 'Trail B',
             description: 'A Trail!',
             qrcode: true,
