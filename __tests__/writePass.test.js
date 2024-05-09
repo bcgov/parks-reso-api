@@ -14,7 +14,7 @@ const ddb = new DocumentClient({
 
 const jwt = require('jsonwebtoken');
 const { TIMEZONE } = require('../lambda/dynamoUtil');
-const { verifyHoldToken } = require('../lambda/permissionUtil');
+const { verifyHoldToken, getExpiryTime } = require('../lambda/permissionUtil');
 
 describe('Pass Fails', () => {
   beforeEach(async () => {
@@ -468,6 +468,9 @@ describe('Pass Successes', () => {
             roles: [''],
             isAuthenticated: false
           };
+        }),
+        getExpiryTime: jest.fn(() => {
+          return new Date().toISOString();
         })
       };
     });
