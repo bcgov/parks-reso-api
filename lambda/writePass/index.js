@@ -397,7 +397,7 @@ async function handleHoldPass(newObject, isAdmin) {
                                  SECRET,
                                  { algorithm: ALGORITHM, expiresIn: '7m'});
 
-    let expirationTime = getExpiryTime(holdPassJwt)
+    let expirationTime = getExpiryTime(holdPassJwt);
     // Store the jwt, as well as the registration number, and the expiry time in DynamoDB
     await storeHoldPassJwt(holdPassJwt, expirationTime);
 
