@@ -528,7 +528,7 @@ describe('Pass Successes', () => {
             numberOfGuests: 1,
             phoneNumber: '2505555555',
             facilityType: 'Parking',
-            mapLink: 'http://maps.google.com',
+            mapLink: 'https://maps.google.com',
             commit: true
           };
         }),
@@ -545,7 +545,7 @@ describe('Pass Successes', () => {
             numberOfGuests: 1,
             phoneNumber: '2505555555',
             facilityType: 'Parking',
-            mapLink: 'http://maps.google.com',
+            mapLink: 'https://maps.google.com',
             commit: true
           };
         }),
@@ -573,7 +573,7 @@ describe('Pass Successes', () => {
       numberOfGuests: 1,
       phoneNumber: '2505555555',
       facilityType: 'Parking',
-      mapLink: 'http://maps.google.com',
+      mapLink: 'https://maps.google.com',
       commit: true
     },
     'defaultSecret',
@@ -597,7 +597,7 @@ describe('Pass Successes', () => {
         numberOfGuests: 1,
         phoneNumber: '2505555555',
         facilityType: 'Parking',
-        mapLink: 'http://maps.google.com',
+        mapLink: 'https://maps.google.com',
         commit: true,
         token: token
       })
@@ -617,7 +617,7 @@ describe('Pass Successes', () => {
           type: 'DAY',
           numberOfGuests: 1,
           facilityType: 'Parking',
-          mapLink: 'http://maps.google.com'
+          mapLink: 'https://maps.google.com'
         }
       })
       .promise();
@@ -865,7 +865,7 @@ describe('Pass Successes', () => {
             numberOfGuests: 1,
             phoneNumber: '2505555555',
             facilityType: 'Parking',
-            mapLink: 'http://maps.google.com',
+            mapLink: 'https://maps.google.com',
             commit: true
           };
         }),
@@ -882,7 +882,7 @@ describe('Pass Successes', () => {
             numberOfGuests: 1,
             phoneNumber: '2505555555',
             facilityType: 'Parking',
-            mapLink: 'http://maps.google.com',
+            mapLink: 'https://maps.google.com',
             commit: true
           };
         }),
@@ -916,7 +916,7 @@ describe('Pass Successes', () => {
         numberOfGuests: 1,
         phoneNumber: '2505555555',
         facilityType: 'Parking',
-        mapLink: 'http://maps.google.com',
+        mapLink: 'https://maps.google.com',
         token: holdToken,
         commit: true
       })
@@ -951,7 +951,7 @@ describe('Pass Successes', () => {
           numberOfGuests: 1,
           phoneNumber: '2505555555',
           facilityType: 'Parking',
-          mapLink: 'http://maps.google.com',
+          mapLink: 'https://maps.google.com',
           commit: true
         }
       })
