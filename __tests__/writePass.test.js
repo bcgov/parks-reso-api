@@ -13,8 +13,6 @@ const ddb = new DocumentClient({
 });
 
 const jwt = require('jsonwebtoken');
-const { TIMEZONE } = require('../lambda/dynamoUtil');
-const { verifyHoldToken, getExpiryTime } = require('../lambda/permissionUtil');
 
 describe('Pass Fails', () => {
   beforeEach(async () => {
@@ -845,7 +843,7 @@ describe('Pass Successes', () => {
   });
 
   test('400 pass exists according to token check.', async () => {
-    const theDate = '2022-01-01T00:00:00Z';
+    const theDate = '2022-01-01T12:00:00Z';
     const holdToken = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwiZmFjaWxpdHlOYW1lIjoiUGFya2luZyBsb3QgQiIsInJlZ2lzdHJhdGlvbk51bWJlciI6IjExMTExMTExMTUiLCJpYXQiOjE3MTQ1MTc3ODN9.VbeNekaVj6gjqSI6GdtFmz6YI2oevMmcZM0QjXgy8m-agEDPZDmg-9VOSKSVz7mG';
     jest.mock('../lambda/permissionUtil', () => {
       return {
@@ -860,7 +858,7 @@ describe('Pass Successes', () => {
             lastName: 'User',
             facilityName: 'Parking lot B',
             email: 'testEmail2@test.ca',
-            date: '2022-01-01T00:00:00Z',
+            date: '2022-01-01T12:00:00Z',
             type: 'DAY',
             numberOfGuests: 1,
             phoneNumber: '2505555555',
@@ -877,7 +875,7 @@ describe('Pass Successes', () => {
             lastName: 'User',
             facilityName: 'Parking lot B',
             email: 'testEmail2@test.ca',
-            date: '2022-01-01T00:00:00Z',
+            date: '2022-01-01T12:00:00Z',
             type: 'DAY',
             numberOfGuests: 1,
             phoneNumber: '2505555555',
@@ -911,6 +909,7 @@ describe('Pass Successes', () => {
         lastName: 'User',
         facilityName: 'Parking lot B',
         email: 'testEmail2@test.ca',
+        registrationNumber: '1111111115',
         date: theDate,
         type: 'DAY',
         numberOfGuests: 1,
@@ -945,7 +944,7 @@ describe('Pass Successes', () => {
           facilityName: 'Parking lot B',
           email: 'testEmail2@test.ca',
           date: theDate,
-          shortPassDate: '2021-12-31',
+          shortPassDate: '2022-01-01',
           type: 'DAY',
           passStatus: 'reserved',
           numberOfGuests: 1,
