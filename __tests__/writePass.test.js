@@ -136,7 +136,7 @@ describe('Pass Fails', () => {
     const token = jwt.sign(
       {
         registrationNumber: '1111111111',
-        facility: 'Trail B',
+        facility: 'Parking lot B',
         bookingDate: '2022-01-01',
         passType: 'DAY',
         orcs: 'Test Park 1'
@@ -154,7 +154,7 @@ describe('Pass Fails', () => {
         parkOrcs: 'Test Park 1',
         firstName: '',
         lastName: '',
-        facilityName: 'Trail B',
+        facilityName: 'Parking lot B',
         email: '',
         date: '',
         type: '',
@@ -185,7 +185,7 @@ describe('Pass Fails', () => {
             parkOrcs: 'Test Park 1',
             firstName: '',
             lastName: '',
-            facilityName: 'Trail B',
+            facilityName: 'Parking lot B',
             email: 'test@example.nowhere',
             date: '',
             type: 'DAY',
@@ -205,7 +205,7 @@ describe('Pass Fails', () => {
     const writePassHandler = require('../lambda/writePass/index');
     const parkObject = {
       registrationNumber: '1111111112',
-      facility: 'Trail B',
+      facility: 'Parking lot B',
       email: 'test@example.nowhere',
       orcs: 'Test Park 1',
       bookingDate: '2022-01-01',
@@ -302,7 +302,7 @@ describe('Pass Fails', () => {
     const token = jwt.sign(
       {
         registrationNumber: '1111111114',
-        facility: 'Trail B',
+        facility: 'Parking lot B',
         orcs: 'Test Park 1',
         bookingDate: '2022-01-01',
         passType: 'DAY',
@@ -454,7 +454,7 @@ describe('Pass Successes', () => {
             parkOrcs: 'Test Park 1',
             firstName: '',
             lastName: '',
-            facilityName: 'Trail B',
+            facilityName: 'Parking lot B',
             email: 'test@example.nowhere',
             date: '',
             type: 'DAY',
@@ -665,7 +665,7 @@ describe('Pass Successes', () => {
   test('Handler - 400 Number of guests cannot be less than 1.', async () => {
     const writePassHandler = require('../lambda/writePass/index');
     const parkObject = {
-      facility: 'Trail B',
+      facility: 'Parking lot B',
       email: 'test@example.nowhere',
       orcs: 'Test Park 1',
       bookingDate: '2022-01-01',
@@ -675,7 +675,7 @@ describe('Pass Successes', () => {
     const token = jwt.sign(
       {
         registrationNumber: '1111111117',
-        facility: 'Trail B',
+        facility: 'Parking lot B',
         orcs: 'Test Park 1'
       },
       'defaultSecret',
@@ -846,7 +846,7 @@ describe('Pass Successes', () => {
 
   test('400 pass exists according to token check.', async () => {
     const theDate = '2022-01-01T00:00:00Z';
-    const holdToken = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwiZmFjaWxpdHlOYW1lIjoidHJhaWwgQiIsInJlZ2lzdHJhdGlvbk51bWJlciI6IjExMTExMTExMTUiLCJpYXQiOjE3MTQ1MTc3ODN9.xPlr-ED6nj8uFhElJSOGIR6vG6Sn76ibTrXvjBBM6ohOiUkZxHbQ5N51LHDocJpu';
+    const holdToken = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwiZmFjaWxpdHlOYW1lIjoiUGFya2luZyBsb3QgQiIsInJlZ2lzdHJhdGlvbk51bWJlciI6IjExMTExMTExMTUiLCJpYXQiOjE3MTQ1MTc3ODN9.VbeNekaVj6gjqSI6GdtFmz6YI2oevMmcZM0QjXgy8m-agEDPZDmg-9VOSKSVz7mG';
     jest.mock('../lambda/permissionUtil', () => {
       return {
         validateToken: jest.fn(event => {
@@ -927,7 +927,7 @@ describe('Pass Successes', () => {
       .put({
         TableName: TABLE_NAME,
         Item: {
-          sk: 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwiZmFjaWxpdHlOYW1lIjoidHJhaWwgQiIsInJlZ2lzdHJhdGlvbk51bWJlciI6IjExMTExMTExMTUiLCJpYXQiOjE3MTQ1MTc3ODN9.xPlr-ED6nj8uFhElJSOGIR6vG6Sn76ibTrXvjBBM6ohOiUkZxHbQ5N51LHDocJpu',
+          sk: 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwiZmFjaWxpdHlOYW1lIjoiUGFya2luZyBsb3QgQiIsInJlZ2lzdHJhdGlvbk51bWJlciI6IjExMTExMTExMTUiLCJpYXQiOjE3MTQ1MTc3ODN9.VbeNekaVj6gjqSI6GdtFmz6YI2oevMmcZM0QjXgy8m-agEDPZDmg-9VOSKSVz7mG',
           pk: 'jwt'
         }
       })
@@ -1094,6 +1094,7 @@ async function databaseOperation(version, mode) {
           Item: {
             pk: 'facility::Test Park 1',
             parkOrcs: 'Test Park 1',
+            facilityName: 'Parking lot A',
             sk: 'Parking lot A',
             name: 'Parking lot A',
             description: 'A Parking Lot!',
@@ -1130,9 +1131,9 @@ async function databaseOperation(version, mode) {
           TableName: TABLE_NAME,
           Item: {
             pk: 'facility::Test Park 1',
-            sk: 'Trail B',
+            sk: 'Parking lot B',
             parkOrcs: 'Test Park 1',
-            name: 'Trail B',
+            name: 'Parking lot B',
             description: 'A Trail!',
             qrcode: true,
             isUpdating: false,
