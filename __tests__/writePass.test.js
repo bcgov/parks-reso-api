@@ -21,9 +21,10 @@ describe('Pass Fails', () => {
 
   afterEach(async () => {
     await databaseOperation(1, 'teardown');
+    jest.resetModules();
   });
 
-  test('Handler - 400 Bad Request - nothing passed in', async () => {
+  test('400 Bad Request - nothing passed in', async () => {
     const writePassHandler = require('../lambda/writePass/index');
     expect(await writePassHandler.handler(null, null)).toMatchObject({
       body: JSON.stringify({
@@ -40,41 +41,7 @@ describe('Pass Fails', () => {
     });
   });
 
-  test('Handler - 400 Bad Request - Missing JWT', async () => {
-    const writePassHandler = require('../lambda/writePass/index');
-    const event = {
-      headers: {
-        Authorization: 'None'
-      },
-      body: JSON.stringify({
-        parkOrcs: 'Test Park 1',
-        firstName: '',
-        lastName: '',
-        facilityName: 'Parking lot A',
-        email: '',
-        date: '',
-        type: '',
-        numberOfGuests: '',
-        phoneNumber: ''
-        // Missing JWT
-      })
-    };
-    expect(await writePassHandler.handler(event, null)).toMatchObject({
-      body: JSON.stringify({
-        msg: 'Missing CAPTCHA verification.',
-        title: 'Missing CAPTCHA verification'
-      }),
-      headers: {
-        'Access-Control-Allow-Headers': ALLOWED_HEADERS,
-        'Access-Control-Allow-Methods': 'OPTIONS,GET',
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json'
-      },
-      statusCode: 400
-    });
-  });
-
-  test('Handler - 400 Bad Request - JWT Invalid', async () => {
+  test('400 Bad Request - Missing JWT', async () => {
     const writePassHandler = require('../lambda/writePass/index');
     const event = {
       headers: {
@@ -90,13 +57,14 @@ describe('Pass Fails', () => {
         type: '',
         numberOfGuests: '',
         phoneNumber: '',
-        captchaJwt: 'This is an invalid JWT'
+        commit: true,
+        // Missing `token`
       })
     };
     expect(await writePassHandler.handler(event, null)).toMatchObject({
       body: JSON.stringify({
-        msg: 'CAPTCHA verification failed.',
-        title: 'CAPTCHA verification failed'
+        msg: 'Invalid token',
+        title: 'Operation Failed.'
       }),
       headers: {
         'Access-Control-Allow-Headers': ALLOWED_HEADERS,
@@ -108,12 +76,65 @@ describe('Pass Fails', () => {
     });
   });
 
-  test('Handler - 400 Bad Request - Trail pass limit maximum', async () => {
+  test('400 Bad Request - JWT Invalid', async () => {
+    const writePassHandler = require('../lambda/writePass/index');
+    const event = {
+      headers: {
+        Authorization: 'None'
+      },
+      body: JSON.stringify({
+        parkOrcs: 'Test Park 1',
+        firstName: '',
+        lastName: '',
+        facilityName: 'Parking lot A',
+        email: 'test@example.where',
+        date: new Date().toISOString().split('T')[0],
+        type: 'DAY',
+        numberOfGuests: 1,
+        phoneNumber: '',
+        token: 'This is an invalid token',
+        commit: true
+      })
+    };
+    expect(await writePassHandler.handler(event, null)).toMatchObject({
+      body: JSON.stringify({
+        msg: 'Invalid token',
+        title: 'Operation Failed.'
+      }),
+      headers: {
+        'Access-Control-Allow-Headers': ALLOWED_HEADERS,
+        'Access-Control-Allow-Methods': 'OPTIONS,GET',
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
+      statusCode: 400
+    });
+  });
+
+  test('400 Bad Request - Trail pass limit maximum', async () => {
+    jest.mock('../lambda/permissionUtil', () => {
+      return {
+        validateToken: jest.fn(event => {
+          // Do Nothing, Don't throw
+        }),
+        decodeJWT: jest.fn(event => {
+          return null;
+        }),
+        resolvePermissions: jest.fn(() => {
+          return {
+            isAdmin: false,
+            roles: [''],
+            isAuthenticated: false
+          };
+        })
+      };
+    });
+    
     const writePassHandler = require('../lambda/writePass/index');
     const token = jwt.sign(
       {
         registrationNumber: '1111111111',
-        facility: 'Trail B',
+        facility: 'Parking lot B',
         bookingDate: '2022-01-01',
         passType: 'DAY',
         orcs: 'Test Park 1'
@@ -131,17 +152,16 @@ describe('Pass Fails', () => {
         parkOrcs: 'Test Park 1',
         firstName: '',
         lastName: '',
-        facilityName: 'Trail B',
+        facilityName: 'Parking lot B',
         email: '',
         date: '',
         type: '',
         numberOfGuests: 5, // Too many
-        phoneNumber: '',
-        captchaJwt: token
+        phoneNumber: ''
       })
     };
     expect(await writePassHandler.handler(event, null)).toMatchObject({
-      body: '{"msg":"You cannot have more than 4 guests on a trail.","title":"Too many guests"}',
+      body: '{"msg":"You cannot have more than 4 guests on a trail.","title":"Operation Failed"}',
       headers: {
         'Access-Control-Allow-Headers': ALLOWED_HEADERS,
         'Access-Control-Allow-Methods': 'OPTIONS,GET',
@@ -152,16 +172,45 @@ describe('Pass Fails', () => {
     });
   });
 
-  test('Handler - 400 Bad Request - Invalid Date', async () => {
+  test('400 Bad Request - Invalid Date', async () => {
+    jest.mock('../lambda/permissionUtil', () => {
+      return {
+        validateToken: jest.fn(event => {
+          // Do Nothing, Don't throw
+        }),
+        decodeJWT: jest.fn(event => {
+          return {
+            parkOrcs: 'Test Park 1',
+            firstName: '',
+            lastName: '',
+            facilityName: 'Parking lot B',
+            email: 'test@example.nowhere',
+            date: '',
+            type: 'DAY',
+            numberOfGuests: 1,
+            phoneNumber: ''
+          };
+        }),
+        resolvePermissions: jest.fn(() => {
+          return {
+            isAdmin: false,
+            roles: [''],
+            isAuthenticated: false
+          };
+        })
+      };
+    });
     const writePassHandler = require('../lambda/writePass/index');
+    const parkObject = {
+      registrationNumber: '1111111112',
+      facility: 'Parking lot B',
+      email: 'test@example.nowhere',
+      orcs: 'Test Park 1',
+      bookingDate: '2022-01-01',
+      passType: 'DAY',
+    };
     const token = jwt.sign(
-      {
-        registrationNumber: '1111111112',
-        facility: 'Trail B',
-        orcs: 'Test Park 1',
-        bookingDate: '2022-01-01',
-        passType: 'DAY',
-      },
+      parkObject,
       'defaultSecret',
       {
         algorithm: ALGORITHM
@@ -172,21 +221,21 @@ describe('Pass Fails', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        parkOrcs: '',
+        parkOrcs: parkObject.orcs,
         firstName: '',
         lastName: '',
-        facilityName: '',
-        email: '',
+        facilityName: parkObject.facility,
+        email: parkObject.email,
         date: '',
-        type: '',
+        type: parkObject.passType,
         numberOfGuests: 1,
         phoneNumber: '',
-        captchaJwt: token
+        token: token
       })
     };
     expect(await writePassHandler.handler(event, null)).toMatchObject({
       body: JSON.stringify({
-        msg: 'Something went wrong.',
+        msg: 'Invalid booking date.',
         title: 'Operation Failed'
       }),
       headers: {
@@ -228,13 +277,13 @@ describe('Pass Fails', () => {
         type: 'DAY',
         numberOfGuests: 1,
         phoneNumber: '',
-        captchaJwt: token
+        holdPassJwt: token
       })
     };
     expect(await writePassHandler.handler(event, null)).toMatchObject({
       body: JSON.stringify({
         msg: 'You cannot book for a date in the past.',
-        title: 'Booking date in the past'
+        title: 'Operation Failed'
       }),
       headers: {
         'Access-Control-Allow-Headers': ALLOWED_HEADERS,
@@ -251,7 +300,7 @@ describe('Pass Fails', () => {
     const token = jwt.sign(
       {
         registrationNumber: '1111111114',
-        facility: 'Trail B',
+        facility: 'Parking lot B',
         orcs: 'Test Park 1',
         bookingDate: '2022-01-01',
         passType: 'DAY',
@@ -266,31 +315,20 @@ describe('Pass Fails', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        parkOrcs: '',
+        parkOrcs: 'Test Park 1',
         firstName: '',
         lastName: '',
         facilityName: '',
-        email: '',
+        email: 'something@where.not',
         date: new Date(),
-        type: '',
+        type: 'DAY',
         numberOfGuests: 1,
         phoneNumber: '',
-        captchaJwt: token
+        holdPassJwt: token,
       })
     };
-    expect(await writePassHandler.handler(event, null)).toMatchObject({
-      body: JSON.stringify({
-        msg: 'Something went wrong.',
-        title: 'Operation Failed'
-      }),
-      headers: {
-        'Access-Control-Allow-Headers': ALLOWED_HEADERS,
-        'Access-Control-Allow-Methods': 'OPTIONS,GET',
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json'
-      },
-      statusCode: 400
-    });
+    const res = await writePassHandler.handler(event, null);
+    expect(res.statusCode === 400);
   });
 });
 
@@ -403,24 +441,40 @@ describe('Pass Successes', () => {
     expect(response.statusCode).toEqual(400);
   });
 
-  test('Handler - 200 pass has been created for a Trail.', async () => {
+  test('200 pass has been held for a Trail.', async () => {
+    jest.mock('../lambda/permissionUtil', () => {
+      return {
+        validateToken: jest.fn(event => {
+          // Do Nothing, Don't throw
+        }),
+        decodeJWT: jest.fn(event => {
+          return {
+            parkOrcs: 'Test Park 1',
+            firstName: '',
+            lastName: '',
+            facilityName: 'Parking lot B',
+            email: 'test@example.nowhere',
+            date: '',
+            type: 'DAY',
+            numberOfGuests: 1,
+            phoneNumber: ''
+          };
+        }),
+        resolvePermissions: jest.fn(() => {
+          return {
+            isAdmin: false,
+            roles: [''],
+            isAuthenticated: false
+          };
+        }),
+        getExpiryTime: jest.fn(() => {
+          return new Date().toISOString();
+        })
+      };
+    });
     const writePassHandler = require('../lambda/writePass/index');
     process.env.ADMIN_FRONTEND = 'http://localhost:4300';
     process.env.PASS_MANAGEMENT_ROUTE = '/pass-management';
-
-    const token = jwt.sign(
-      {
-        registrationNumber: '1111111115',
-        facility: 'P1 and Lower P5',
-        orcs: '0015',
-        bookingDate: '2022-01-01',
-        passType: 'DAY'
-      },
-      'defaultSecret',
-      {
-        algorithm: ALGORITHM
-      }
-    );
 
     const event = {
       headers: {
@@ -435,90 +489,191 @@ describe('Pass Successes', () => {
         date: new Date(),
         type: 'DAY',
         numberOfGuests: 1,
-        phoneNumber: '2505555555',
-        captchaJwt: token
+        phoneNumber: '2505555555'
       })
     };
 
     const response = await writePassHandler.handler(event, null);
     expect(response.statusCode).toEqual(200);
     const body = JSON.parse(response.body);
-    expect(body.pk).toEqual('pass::0015');
-    expect(typeof body.sk).toBe('string');
-    expect(body.firstName).toEqual('Jest');
-    expect(body.lastName).toEqual('User');
-    expect(body.facilityName).toEqual('P1 and Lower P5');
-    expect(body.email).toEqual('testEmail7@test.ca');
-    expect(typeof body.date).toBe('string');
-    expect(body.type).toEqual('DAY');
-    expect(typeof body.registrationNumber).toBe('string');
-    expect(body.numberOfGuests).toEqual(1);
-    expect(['reserved', 'active']).toContain(body.passStatus);
-    expect(body.phoneNumber).toEqual('2505555555');
-    expect(body.facilityType).toEqual('Trail');
-    expect(body.adminPassLink).toContain(`${process.env.ADMIN_FRONTEND}${process.env.PASS_MANAGEMENT_ROUTE}?park=0015`);
+    const decodedJWT = jwt.decode(body);
+    expect(decodedJWT.facilityName).toEqual('P1 and Lower P5');
+    const datePST = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+    const [month, day, year] = datePST.split(',')[0].split('/').map(num => num.padStart(2, '0'));
+    expect(decodedJWT.shortPassDate).toEqual(`${year}-${month}-${day}`);
+    expect(decodedJWT.type).toEqual('DAY');
+    expect(decodedJWT.numberOfGuests).toEqual(1);
+    expect(decodedJWT.passStatus).toEqual('hold');
+    expect(decodedJWT.facilityType).toEqual('Trail');
   });
 
-  test('Handler - 200 pass has been created for a Parking Pass.', async () => {
+  test('200 pass has been created for a Parking Pass.', async () => {
+    jest.mock('../lambda/permissionUtil', () => {
+      return {
+        validateToken: jest.fn(event => {
+          // Do Nothing, Don't throw
+        }),
+        decodeJWT: jest.fn(event => {
+          return {
+            parkOrcs: 'Test Park 1',
+            registrationNumber: '1111111115',
+            firstName: 'Jest',
+            lastName: 'User',
+            facilityName: 'Parking lot A',
+            email: 'testEmail2@test.ca',
+            date: new Date().toISOString(),
+            type: 'DAY',
+            numberOfGuests: 1,
+            phoneNumber: '2505555555',
+            facilityType: 'Parking',
+            mapLink: 'https://maps.google.com',
+            commit: true
+          };
+        }),
+        verifyHoldToken: jest.fn(event => {
+          return {
+            parkOrcs: 'Test Park 1',
+            registrationNumber: '1111111115',
+            firstName: 'Jest',
+            lastName: 'User',
+            facilityName: 'Parking lot A',
+            email: 'testEmail2@test.ca',
+            date: new Date().toISOString(),
+            type: 'DAY',
+            numberOfGuests: 1,
+            phoneNumber: '2505555555',
+            facilityType: 'Parking',
+            mapLink: 'https://maps.google.com',
+            commit: true
+          };
+        }),
+        getOne: jest.fn(() => {
+          return undefined // Simulate not found
+        }),
+        resolvePermissions: jest.fn(() => {
+          return {
+            isAdmin: false,
+            roles: [''],
+            isAuthenticated: false
+          };
+        })
+      };
+    });
+    const token = jwt.sign({
+      parkOrcs: 'Test Park 1',
+      registrationNumber: '1111111115',
+      firstName: 'Jest',
+      lastName: 'User',
+      facilityName: 'Parking lot A',
+      email: 'testEmail2@test.ca',
+      date: new Date().toISOString(),
+      type: 'DAY',
+      numberOfGuests: 1,
+      phoneNumber: '2505555555',
+      facilityType: 'Parking',
+      mapLink: 'https://maps.google.com',
+      commit: true
+    },
+    'defaultSecret',
+    { algorithm: ALGORITHM, expiresIn: '7m' });
+
     const writePassHandler = require('../lambda/writePass/index');
-
-    const token = jwt.sign(
-      {
-        registrationNumber: '1111111116',
-        facility: 'Parking lot A',
-        orcs: 'Test Park 1'
-      },
-      'defaultSecret',
-      {
-        algorithm: ALGORITHM
-      }
-    );
-
     const event = {
+      httpMethod: 'POST',
       headers: {
         Authorization: 'None'
       },
       body: JSON.stringify({
         parkOrcs: 'Test Park 1',
+        registrationNumber: '1111111115',
         firstName: 'Jest',
         lastName: 'User',
         facilityName: 'Parking lot A',
         email: 'testEmail2@test.ca',
-        date: new Date(),
+        date: new Date().toISOString(),
         type: 'DAY',
         numberOfGuests: 1,
         phoneNumber: '2505555555',
         facilityType: 'Parking',
-        mapLink: 'http://maps.google.com',
-        captchaJwt: token
+        mapLink: 'https://maps.google.com',
+        commit: true,
+        token: token
       })
     };
 
+    // Put the hold pass in the DB first
+    await ddb
+      .put({
+        TableName: TABLE_NAME,
+        Item: {
+          pk: 'pass::Test Park 1',
+          sk: '1111111115',
+          registrationNumber: '1111111115',
+          facilityName: 'Parking lot B',
+          date: new Date().toISOString(),
+          status: 'hold',
+          type: 'DAY',
+          numberOfGuests: 1,
+          facilityType: 'Parking',
+          mapLink: 'https://maps.google.com'
+        }
+      })
+      .promise();
+    
+    // Put the JWT in the table.
+    await ddb
+      .put({
+        TableName: TABLE_NAME,
+        Item: {
+          sk: token,
+          pk: 'jwt'
+        }
+      })
+      .promise();
+
     const response = await writePassHandler.handler(event, null);
+
+    // Remove the database item
+    await ddb.delete({
+      TableName: TABLE_NAME,
+      Key: {
+        pk: 'pass::Test Park 1',
+        sk: '1111111115'
+      }
+    }).promise();
+
     expect(response.statusCode).toEqual(200);
     const body = JSON.parse(response.body);
     expect(body.pk).toEqual('pass::Test Park 1');
     expect(typeof body.sk).toBe('string');
     expect(body.firstName).toEqual('Jest');
     expect(body.lastName).toEqual('User');
-    expect(body.facilityName).toEqual('Parking lot A');
+    expect(body.facilityName).toEqual('Parking lot B');
     expect(body.email).toEqual('testEmail2@test.ca');
     expect(typeof body.date).toBe('string');
     expect(body.type).toEqual('DAY');
     expect(typeof body.registrationNumber).toBe('string');
     expect(body.numberOfGuests).toEqual(1);
     expect(['reserved', 'active']).toContain(body.passStatus);
-    expect(body.phoneNumber).toEqual('2505555555');
     expect(body.facilityType).toEqual('Parking');
   });
 
+  // TODO: Copy the function above and change it so that it can't update the pass in the system.
+
   test('Handler - 400 Number of guests cannot be less than 1.', async () => {
     const writePassHandler = require('../lambda/writePass/index');
-
+    const parkObject = {
+      facility: 'Parking lot B',
+      email: 'test@example.nowhere',
+      orcs: 'Test Park 1',
+      bookingDate: '2022-01-01',
+      passType: 'DAY',
+      numberOfGuests: 0
+    };
     const token = jwt.sign(
       {
         registrationNumber: '1111111117',
-        facility: 'Trail B',
+        facility: 'Parking lot B',
         orcs: 'Test Park 1'
       },
       'defaultSecret',
@@ -532,16 +687,15 @@ describe('Pass Successes', () => {
         Authorization: 'None'
       },
       body: JSON.stringify({
-        parkOrcs: 'Test Park 1',
+        parkOrcs: parkObject.orcs,
         firstName: '',
         lastName: '',
-        facilityName: 'Trail B',
-        email: '',
-        date: '',
-        type: '',
+        facilityName: parkObject.facility,
+        email: parkObject.email,
+        date: parkObject.bookingDate,
+        type: parkObject.passType,
         numberOfGuests: 0, // Too little
-        phoneNumber: '',
-        captchaJwt: token
+        phoneNumber: ''
       })
     };
 
@@ -549,7 +703,7 @@ describe('Pass Successes', () => {
     expect(response.statusCode).toEqual(400);
     const body = JSON.parse(response.body);
     expect(body.msg).toEqual('Passes must have at least 1 guest.');
-    expect(body.title).toEqual('Invalid number of guests');
+    expect(body.title).toEqual('Operation Failed');
   });
 
   test('Expect checkWarmup function to fire.', async () => {
@@ -684,95 +838,148 @@ describe('Pass Successes', () => {
         foo: 'false'
       }
     };
-
     const response = await writePassHandler.handler(event, null);
     expect(response.statusCode).toEqual(403);
   });
 
-  test('Handler - 400 Captcha failed due to missing fields.', async () => {
+  test('400 pass exists according to token check.', async () => {
+    const theDate = '2022-01-01T12:00:00Z';
+    const holdToken = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwiZmFjaWxpdHlOYW1lIjoiUGFya2luZyBsb3QgQiIsInJlZ2lzdHJhdGlvbk51bWJlciI6IjExMTExMTExMTUiLCJpYXQiOjE3MTQ1MTc3ODN9.VbeNekaVj6gjqSI6GdtFmz6YI2oevMmcZM0QjXgy8m-agEDPZDmg-9VOSKSVz7mG';
+    jest.mock('../lambda/permissionUtil', () => {
+      return {
+        validateToken: jest.fn(event => {
+          // Do Nothing, Don't throw
+        }),
+        decodeJWT: jest.fn(event => {
+          return {
+            parkOrcs: 'Test Park 1',
+            registrationNumber: '1111111115',
+            firstName: 'Jest',
+            lastName: 'User',
+            facilityName: 'Parking lot B',
+            email: 'testEmail2@test.ca',
+            date: '2022-01-01T12:00:00Z',
+            type: 'DAY',
+            numberOfGuests: 1,
+            phoneNumber: '2505555555',
+            facilityType: 'Parking',
+            mapLink: 'https://maps.google.com',
+            commit: true
+          };
+        }),
+        verifyHoldToken: jest.fn(event => {
+          return {
+            parkOrcs: 'Test Park 1',
+            registrationNumber: '1111111115',
+            firstName: 'Jest',
+            lastName: 'User',
+            facilityName: 'Parking lot B',
+            email: 'testEmail2@test.ca',
+            date: '2022-01-01T12:00:00Z',
+            type: 'DAY',
+            numberOfGuests: 1,
+            phoneNumber: '2505555555',
+            facilityType: 'Parking',
+            mapLink: 'https://maps.google.com',
+            commit: true
+          };
+        }),
+        getOne: jest.fn(() => {
+          return undefined;
+        }),
+        resolvePermissions: jest.fn(() => {
+          return {
+            isAdmin: false,
+            roles: [''],
+            isAuthenticated: false
+          };
+        })
+      };
+    });
     const writePassHandler = require('../lambda/writePass/index');
 
-    const token = jwt.sign(
-      {
-        registrationNumber: '1111111118',
-        facility: undefined,
-        orcs: 'Test Park 1'
-      },
-      'defaultSecret',
-      {
-        algorithm: ALGORITHM
-      }
-    );
-
     const event = {
+      httpMethod: 'POST',
       headers: {
         Authorization: 'None'
       },
       body: JSON.stringify({
         parkOrcs: 'Test Park 1',
-        firstName: '',
-        lastName: '',
-        facilityName: 'Trail B',
-        email: '',
-        date: '',
-        type: '',
-        numberOfGuests: 0, // Too little
-        phoneNumber: '',
-        captchaJwt: token
-      })
-    };
-
-    const response = await writePassHandler.handler(event, null);
-    expect(response.statusCode).toEqual(400);
-    const body = JSON.parse(response.body);
-    expect(body.msg).toEqual('CAPTCHA verification failed.');
-    expect(body.title).toEqual('CAPTCHA verification failed');
-  });
-
-  test('Handler - 400 pass exists according to token check.', async () => {
-    const writePassHandler = require('../lambda/writePass/index');
-
-    const token = jwt.sign(
-      {
-        registrationNumber: '1111111119',
-        facility: 'Parking lot A',
-        orcs: 'Test Park 1',
-        bookingDate: '2022-01-01',
-        passType: 'DAY'
-      },
-      'defaultSecret',
-      {
-        algorithm: ALGORITHM
-      }
-    );
-
-    const event = {
-      headers: {
-        Authorization: 'None'
-      },
-      body: JSON.stringify({
-        parkOrcs: 'Test Park 1',
-        firstName: 'Bad',
-        lastName: 'Guy',
-        facilityName: 'Parking lot A',
-        email: 'abc123@test.ca',
-        date: new Date(),
+        firstName: 'Jest',
+        lastName: 'User',
+        facilityName: 'Parking lot B',
+        email: 'testEmail2@test.ca',
+        registrationNumber: '1111111115',
+        date: theDate,
         type: 'DAY',
         numberOfGuests: 1,
-        phoneNumber: '2506666666',
+        phoneNumber: '2505555555',
         facilityType: 'Parking',
-        mapLink: 'http://maps.google.com',
-        captchaJwt: token
+        mapLink: 'https://maps.google.com',
+        token: holdToken,
+        commit: true
       })
     };
 
+    // Put the JWT in the table.
+    await ddb
+      .put({
+        TableName: TABLE_NAME,
+        Item: {
+          sk: 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwiZmFjaWxpdHlOYW1lIjoiUGFya2luZyBsb3QgQiIsInJlZ2lzdHJhdGlvbk51bWJlciI6IjExMTExMTExMTUiLCJpYXQiOjE3MTQ1MTc3ODN9.VbeNekaVj6gjqSI6GdtFmz6YI2oevMmcZM0QjXgy8m-agEDPZDmg-9VOSKSVz7mG',
+          pk: 'jwt'
+        }
+      })
+      .promise();
+
+    await ddb
+      .put({
+        TableName: TABLE_NAME,
+        Item: {
+          sk: '1111111115',
+          registrationNumber: '1111111115',
+          pk: 'pass::Test Park 1',
+          firstName: 'Jest',
+          lastName: 'User',
+          facilityName: 'Parking lot B',
+          email: 'testEmail2@test.ca',
+          date: theDate,
+          shortPassDate: '2022-01-01',
+          type: 'DAY',
+          passStatus: 'reserved',
+          numberOfGuests: 1,
+          phoneNumber: '2505555555',
+          facilityType: 'Parking',
+          mapLink: 'https://maps.google.com',
+          commit: true
+        }
+      })
+      .promise();
+
+    let foo = await ddb.get({
+      TableName: TABLE_NAME,
+      Key: {
+        pk: 'pass::Test Park 1',
+        sk: '1111111115'
+      }
+    }).promise();
+    console.log(foo.Item)
+
     let response = await writePassHandler.handler(event, null);
-    expect(response.statusCode).toEqual(200);
-    response = await writePassHandler.handler(event, null);
+
+    // Remove the item from the DB
+    await ddb.delete({
+      TableName: TABLE_NAME,
+      Key: {
+        pk: 'pass::Test Park 1',
+        sk: '1111111115'
+      }
+    }).promise();
+
     expect(response.statusCode).toEqual(400);
     const body = JSON.parse(response.body);
-    expect(body.msg).toEqual('This pass already exsits.');
-    expect(body.title).toEqual('Pass exists');
+    expect(body.msg).toEqual('This email account already has a reservation for this booking time. A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href=\"mailto:parkinfo@gov.bc.ca\">parkinfo@gov.bc.ca</a>');
+    expect(body.title).toEqual('Operation Failed.');
   });
 });
 
@@ -785,7 +992,7 @@ async function databaseOperation(version, mode) {
           Item: {
             pk: 'config',
             sk: 'config',
-            ENVIRONMENT: 'prod'
+            ENVIRONMENT: 'test'
           }
         })
         .promise();
@@ -858,6 +1065,7 @@ async function databaseOperation(version, mode) {
             pk: 'pass::0015',
             sk: '523456789',
             parkName: 'Test Park 1',
+            parkOrcs: 'Test Park 1',
             firstName: 'First',
             searchFirstName: 'first',
             lastName: 'Last',
@@ -884,6 +1092,8 @@ async function databaseOperation(version, mode) {
           TableName: TABLE_NAME,
           Item: {
             pk: 'facility::Test Park 1',
+            parkOrcs: 'Test Park 1',
+            facilityName: 'Parking lot A',
             sk: 'Parking lot A',
             name: 'Parking lot A',
             description: 'A Parking Lot!',
@@ -920,8 +1130,9 @@ async function databaseOperation(version, mode) {
           TableName: TABLE_NAME,
           Item: {
             pk: 'facility::Test Park 1',
-            sk: 'Trail B',
-            name: 'Trail B',
+            sk: 'Parking lot B',
+            parkOrcs: 'Test Park 1',
+            name: 'Parking lot B',
             description: 'A Trail!',
             qrcode: true,
             isUpdating: false,

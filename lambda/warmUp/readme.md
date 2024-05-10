@@ -11,8 +11,6 @@ One part of the solution was to create a way to warm up relevant Lambda function
 readConfig
 readPark
 readFacility
-generateCaptcha
-verifyCaptcha
 writePass
 ```
 

@@ -2,12 +2,14 @@ const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
 const SSO_ISSUER = process.env.SSO_ISSUER || 'https://dev.loginproxy.gov.bc.ca/auth/realms/bcparks-service-transformation';
 const SSO_JWKSURI = process.env.SSO_JWKSURI || 'https://dev.loginproxy.gov.bc.ca/auth/realms/bcparks-service-transformation/protocol/openid-connect/certs';
+const CF_SECRET_KEY = process.env.CF_SECRET_KEY;
 const INVALID_TOKEN = {
-        decoded: false,
-        data: null
-      };
+  decoded: false,
+  data: null
+};
 const { logger } = require('./logger');
 const { runQuery, TABLE_NAME } = require('./dynamoUtil');
+const { CustomError } = require('./responseUtil');
 
 exports.decodeJWT = async function (event) {
   const token = event.headers.Authorization;
@@ -45,6 +47,42 @@ exports.decodeJWT = async function (event) {
     logger.error('err p:', e);
     return INVALID_TOKEN;
   }
+};
+
+exports.getExpiryTime = function (token) {
+  try {
+    // grab the public stuff from jwt
+    const decodedJWT = jwt.decode(token);
+    if (decodedJWT && decodedJWT.iat) { 
+      const expiryTime = decodedJWT.exp;
+      //Return the unix value of the epiry
+      return expiryTime;
+    } else {
+      // If no created time return false 
+      return { decoded: false };
+    }
+  } catch (e) {
+    // Return if cant decode 
+    return { decoded: false };
+  }
+};
+
+exports.verifyHoldToken = function (token, secret) {
+  console.log("verifyHoldToken", token, secret);
+  let decodedToken;
+  try {
+    decodedToken = jwt.verify(token, secret);
+    if (!decodedToken) {
+      throw new CustomError('Invalid token', 400);
+    }
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      throw new CustomError('Token has expired', 400);
+    } else {
+      throw new CustomError('Invalid token', 400);
+    }
+  }
+  return decodedToken;
 };
 
 const verifyToken = function (token, callback, sendError) {
@@ -123,13 +161,13 @@ async function roleFilter(records, roles) {
       } else {
         return false;
       }
-    })
+    });
     resolve(data);
-  })
+  });
 };
 exports.roleFilter = roleFilter;
 
-exports.resolvePermissions = function(token) {
+exports.resolvePermissions = function (token) {
   let roles = ['public'];
   let isAdmin = false;
   let isAuthenticated = false;
@@ -141,9 +179,9 @@ exports.resolvePermissions = function(token) {
     // an admin of some sort
     isAuthenticated = true;
 
-    logger.debug(JSON.stringify(roles))
+    logger.debug(JSON.stringify(roles));
     if (roles.includes('sysadmin')) {
-      logger.debug("ISADMIN")
+      logger.debug("ISADMIN");
       isAdmin = true;
     }
   } catch (e) {
@@ -155,8 +193,8 @@ exports.resolvePermissions = function(token) {
     roles: roles,
     isAdmin: isAdmin,
     isAuthenticated: isAuthenticated
-  }
-}
+  };
+};
 
 exports.getParkAccess = async function getParkAccess(park, permissionObject) {
   let queryObj = {
@@ -177,4 +215,24 @@ exports.getParkAccess = async function getParkAccess(park, permissionObject) {
     // They are not authorized.
     throw { msg: "Unauthorized Access." };
   }
-}
+};
+
+exports.validateToken = async function (token) {
+  // Validate the token by calling the
+  // "/siteverify" API endpoint.
+  let formData = new FormData();
+  formData.append('secret', CF_SECRET_KEY);
+  formData.append('response', token);
+
+  const url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+  const result = await fetch(url, {
+    body: formData,
+    method: 'POST',
+  });
+
+  const res = await result.json();
+  logger.debug(res);
+  if (!res.success) {
+    throw new CustomError('Invalid token.', 400);
+  }
+};
