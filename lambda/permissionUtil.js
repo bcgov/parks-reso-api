@@ -220,14 +220,18 @@ exports.getParkAccess = async function getParkAccess(park, permissionObject) {
 exports.validateToken = async function (token) {
   // Validate the token by calling the
   // "/siteverify" API endpoint.
-  let formData = new FormData();
-  formData.append('secret', CF_SECRET_KEY);
-  formData.append('response', token);
+  const body = JSON.stringify({
+    secret: CF_SECRET_KEY,
+    response: token
+  });
 
   const url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
   const result = await fetch(url, {
-    body: formData,
+    body: body,
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
   });
 
   const res = await result.json();
