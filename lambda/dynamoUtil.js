@@ -3,7 +3,6 @@ const { logger } = require('./logger');
 const { DateTime } = require('luxon');
 const { CustomError } = require('./responseUtil');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
-const { Converter } = require('csvtojson/v2/Converter');
 
 const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 const META_TABLE_NAME = process.env.META_TABLE_NAME || 'parksreso-meta';
