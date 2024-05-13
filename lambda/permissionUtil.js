@@ -3,6 +3,7 @@ const jwksClient = require('jwks-rsa');
 const SSO_ISSUER = process.env.SSO_ISSUER || 'https://dev.loginproxy.gov.bc.ca/auth/realms/bcparks-service-transformation';
 const SSO_JWKSURI = process.env.SSO_JWKSURI || 'https://dev.loginproxy.gov.bc.ca/auth/realms/bcparks-service-transformation/protocol/openid-connect/certs';
 const CF_SECRET_KEY = process.env.CF_SECRET_KEY;
+const fetch = require('fetch');
 const INVALID_TOKEN = {
   decoded: false,
   data: null
