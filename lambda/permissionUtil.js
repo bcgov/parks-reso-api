@@ -3,6 +3,7 @@ const jwksClient = require('jwks-rsa');
 const SSO_ISSUER = process.env.SSO_ISSUER || 'https://dev.loginproxy.gov.bc.ca/auth/realms/bcparks-service-transformation';
 const SSO_JWKSURI = process.env.SSO_JWKSURI || 'https://dev.loginproxy.gov.bc.ca/auth/realms/bcparks-service-transformation/protocol/openid-connect/certs';
 const CF_SECRET_KEY = process.env.CF_SECRET_KEY;
+const axios = require('axios');
 const INVALID_TOKEN = {
   decoded: false,
   data: null
@@ -220,19 +221,23 @@ exports.getParkAccess = async function getParkAccess(park, permissionObject) {
 exports.validateToken = async function (token) {
   // Validate the token by calling the
   // "/siteverify" API endpoint.
-  let formData = new FormData();
-  formData.append('secret', CF_SECRET_KEY);
-  formData.append('response', token);
-
-  const url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
-  const result = await fetch(url, {
-    body: formData,
-    method: 'POST',
+  const body = JSON.stringify({
+    secret: CF_SECRET_KEY,
+    response: token
   });
 
-  const res = await result.json();
-  logger.debug(res);
-  if (!res.success) {
+  const url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+  const res = await axios({
+    method: 'post',
+    url: url,
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    data: body
+  });
+
+  logger.debug(res.data);
+  if (!res.status == 200) {
     throw new CustomError('Invalid token.', 400);
   }
 };

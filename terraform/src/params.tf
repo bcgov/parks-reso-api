@@ -105,3 +105,7 @@ data "aws_ssm_parameter" "gc_notify_sms_template_id" {
 data "aws_ssm_parameter" "gc_notify_api_sms_path" {
   name = "/parks-reso-api/gc-notify-api-sms-path"
 }
+
+data "aws_ssm_parameter" "cf_secret_key" {
+  name = "/parks-reso-api/cf_secret_key"
+}
