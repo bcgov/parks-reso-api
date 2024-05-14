@@ -8,6 +8,7 @@
 const AWS = require('aws-sdk');
 const SECRET = process.env.JWT_SECRET || 'defaultSecret';
 const ALGORITHM = process.env.ALGORITHM || 'HS384';
+CONST HOLD_PASS_TIMEOUT = process.env.HOLD_PASS_TIMEOUT || '7m';
 const {
   DEFAULT_PM_OPENING_HOUR,
   PASS_HOLD_STATUS,
@@ -395,7 +396,7 @@ async function handleHoldPass(newObject, isAdmin) {
     passObject.Item['parkOrcs'] = { S: parkOrcs };
     const holdPassJwt = jwt.sign(AWS.DynamoDB.Converter.unmarshall(passObject.Item),
                                  SECRET,
-                                 { algorithm: ALGORITHM, expiresIn: '7m'});
+                                 { algorithm: ALGORITHM, expiresIn: HOLD_PASS_TIMEOUT});
 
     let expirationTime = getExpiryTime(holdPassJwt);
     // Store the jwt, as well as the registration number, and the expiry time in DynamoDB
