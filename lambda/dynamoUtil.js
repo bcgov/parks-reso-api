@@ -280,12 +280,13 @@ async function getPassesByStatus(status, filterExpression = undefined) {
  * @throws {Error} - If there is an error storing the object.
  */
 async function storeObject(object, tableName = TABLE_NAME) {
-  console.log('storeObject:', object);
+  logger.info('storObject');
+  logger.debug(object);
   const params = {
     TableName: tableName,
     Item: AWS.DynamoDB.Converter.marshall(object)
   };
-  console.log('params:', params)
+  logger.debug(params);
   try {
     await dynamodb.putItem(params).promise();
     logger.info(`Stored object: ${object.sk}`);
@@ -444,7 +445,7 @@ async function getAllStoredJWTs(expired = false) { //optional if expired or all 
       FilterExpression: 'expiration < :currentTime',
       ExpressionAttributeValues: {
         ':pk': { S: 'jwt' },
-        ':currentTime': { N: currentTime.toString() }
+        ':expiration': { N: currentTime.toString() }
       },
     };
   } else {
@@ -480,56 +481,56 @@ async function getAllStoredJWTs(expired = false) { //optional if expired or all 
 }
 
 /**
- * Deletes a JWT from the DynamoDB table.
- *
- * @param {string} pk - The partition key of the item to delete.
- * @param {string} sk - The sort key of the item to delete.
- * @throws {CustomError} If there is an error deleting the JWT.
+ * Restores the available passes for a reservation and deletes the reservation jwt.
+ * @param {string} pk - The partition key of the reservation.
+ * @param {string} sk - The sort key of the reservation.
+ * @param {string} orcNumber - The ORC number of the reservation.
+ * @param {string} shortPassDate - The short pass date of the reservation.
+ * @param {string} facilityName - The name of the facility.
+ * @param {number} numberOfGuests - The number of guests to be added back to the available passes.
+ * @param {string} type - The type of the facility.
+ * @throws {CustomError} - If there is an error updating the available passes.
  */
-async function deleteJWT(pk, sk) {
-  const params = {
-    TableName: TABLE_NAME,
-    Key: {
-      pk: { S: pk },
-      sk: { S: sk }
-    }
-  };
-
-  try {
-    await dynamodb.deleteItem(params).promise();
-    logger.info(`Deleted JWT: ${sk}`);
-  } catch (error) {
-    logger.error('Error deleting JWT:', error);
-    throw new CustomError('Error deleting JWT', error);
-  }
-}
-
-async function restoreAvailablePass(orcNumber, shortPassDate, facilityName, numberOfGuests, type){
-  const params = {
-    TableName: TABLE_NAME,
-    Key: {
-      pk: { S: `reservations::${orcNumber}::${facilityName}` },
-      sk: { S: shortPassDate }
-    },
-    ExpressionAttributeValues: {
-      ':inc': AWS.DynamoDB.Converter.input(numberOfGuests)
-    },
-    ExpressionAttributeNames: {
-      '#type': type,
-      '#availablePasses': 'availablePasses'
-    },
-    UpdateExpression: 'SET capacities.#type.#availablePasses = capacities.#type.#availablePasses + :inc',
-    ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
-  }
+async function restoreAvailablePass(pk, sk, orcNumber, shortPassDate, facilityName, numberOfGuests, type){
   try{
-    await dynamodb.updateItem(params).promise();
+    // Add the number of guests back to the available passes, and delete the reservation jwt.
+    const transactionParams = {
+      TransactItems: [{
+        Update: {
+        TableName: TABLE_NAME,
+        Key: {
+          pk: { S: `reservations::${orcNumber}::${facilityName}` },
+          sk: { S: shortPassDate }
+        },
+        ExpressionAttributeValues: {
+          ':inc': AWS.DynamoDB.Converter.input(numberOfGuests)
+        },
+        ExpressionAttributeNames: {
+          '#type': type,
+          '#availablePasses': 'availablePasses'
+        },
+        UpdateExpression: 'SET capacities.#type.#availablePasses = capacities.#type.#availablePasses + :inc',
+        ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
+        }
+      },
+      {
+        Delete: {
+          TableName: TABLE_NAME,
+          Key: {
+            pk: { S: pk },
+            sk: { S: sk }
+          }
+        }
+      }]
+    };
+    await dynamodb.transactWriteItems(transactionParams).promise();
     logger.info(`added: ${numberOfGuests} back to ${facilityName}`);
   } catch (error) {
     logger.error('Error updating available passes:', error);
     throw new CustomError('Error updating pass', error);
   }
+};
 
-}
 module.exports = {
   ACTIVE_STATUS,
   DEFAULT_BOOKING_DAYS_AHEAD,
@@ -547,7 +548,6 @@ module.exports = {
   METRICS_TABLE_NAME,
   convertPassToReserved,
   checkPassExists,
-  deleteJWT,
   dynamodb,
   getAllStoredJWTs,
   setStatus,
