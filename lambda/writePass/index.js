@@ -8,7 +8,7 @@
 const AWS = require('aws-sdk');
 const SECRET = process.env.JWT_SECRET || 'defaultSecret';
 const ALGORITHM = process.env.ALGORITHM || 'HS384';
-CONST HOLD_PASS_TIMEOUT = process.env.HOLD_PASS_TIMEOUT || '7m';
+const HOLD_PASS_TIMEOUT = process.env.HOLD_PASS_TIMEOUT || '7m';
 const {
   DEFAULT_PM_OPENING_HOUR,
   PASS_HOLD_STATUS,
