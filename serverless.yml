@@ -214,6 +214,14 @@ functions:
         - node_modules/**
         - lambda/*.js
 
+  expirySQSProcessor:
+    handler: lambda/purgeExpired/index.handler
+    package:
+      include:
+        - lambda/purgeExpired/**
+        - node_modules/**
+        - lambda/*.js
+
   ###########
   # Export
   ###########
