@@ -33,7 +33,7 @@ resource "aws_sns_topic" "expiry_sqs_topic" {
   name = "expiry-sqs-topic${var.env_identifier}"
 }
 
-data "aws_iam_policy_document" "sns-email-topic-policy" {
+data "aws_iam_policy_document" "sns-q-expiry-topic-policy" {
   policy_id = "__default_policy_ID"
 
   statement {
@@ -83,7 +83,7 @@ data "aws_iam_policy_document" "sns-email-topic-policy" {
 
 resource "aws_sns_topic_policy" "expiry-sqs-topic-policy" {
   arn    = aws_sns_topic.expiry_sqs_topic.arn
-  policy = data.aws_iam_policy_document.sns-email-topic-policy.json
+  policy = data.aws_iam_policy_document.sns-q-expiry-topic-policy.json
 }
 
 resource "aws_sns_topic_subscription" "expiry_sqs_subscription" {
@@ -99,7 +99,7 @@ resource "aws_lambda_event_source_mapping" "expiry_sqs_event_source_mapping" {
   batch_size       = 1
 }
 
-resource "aws_sqs_queue_policy" "sqs_email_queue_policy" {
+resource "aws_sqs_queue_policy" "sqs_q_expiry_queue_policy" {
   queue_url = aws_sqs_queue.expiry_queue.id
 
   policy = <<POLICY
