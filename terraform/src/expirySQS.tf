@@ -5,7 +5,7 @@ resource "aws_lambda_function" "expiry_sqs_processor" {
   source_code_hash = filebase64sha256("artifacts/expirySQSProcessor.zip")
 
   handler = "lambda/purgeExpired/index.handler"
-  runtime = "nodejs20.x"
+  runtime = "nodejs18.x"
   timeout = 300
   publish = "true"
 
@@ -26,7 +26,7 @@ resource "aws_lambda_alias" "expiry_sqs_processor_latest" {
 
 resource "aws_sqs_queue" "expiry_queue" {
   name = "expiry-queue${var.env_identifier}"
-  visibility_timeout_seconds = 60
+  visibility_timeout_seconds = 300
 }
 
 resource "aws_sns_topic" "expiry_sqs_topic" {
