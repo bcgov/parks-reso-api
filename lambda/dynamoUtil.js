@@ -523,7 +523,7 @@ async function restoreAvailablePass(pk, sk, orcNumber, shortPassDate, facilityNa
         }
       }]
     };
-    console.log(transactionParams);
+    console.log(JSON.stringify(transactionParams));
     await dynamodb.transactWriteItems(transactionParams).promise();
     logger.info(`added: ${numberOfGuests} back to ${facilityName}`);
   } catch (error) {
