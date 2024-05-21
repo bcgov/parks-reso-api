@@ -442,7 +442,7 @@ async function getAllStoredJWTs(expired = false) { //optional if expired or all 
     params = {
       TableName: TABLE_NAME,
       KeyConditionExpression: 'pk = :pk',
-      FilterExpression: 'expiration < :currentTime',
+      FilterExpression: 'expiration < :expiration',
       ExpressionAttributeValues: {
         ':pk': { S: 'jwt' },
         ':expiration': { N: currentTime.toString() }
