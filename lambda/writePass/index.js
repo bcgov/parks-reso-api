@@ -23,7 +23,14 @@ const {
   storeObject
 } = require('../dynamoUtil');
 const { sendResponse, checkWarmup, CustomError } = require('../responseUtil');
-const { decodeJWT, resolvePermissions, validateToken, verifyHoldToken, getExpiryTime } = require('../permissionUtil');
+const {
+  decodeJWT,
+  deleteHoldToken,
+  getExpiryTime,
+  resolvePermissions,
+  validateToken,
+  verifyHoldToken
+} = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
 const { createNewReservationsObj } = require('../reservationObjUtils');
@@ -175,6 +182,10 @@ async function handleCommitPass(newObject, isAdmin) {
       logger.error(error);
       return sendResponse(error.statusCode, { msg: error.message, title: 'Operation Failed.' });
     }
+
+    // Delete the JWT from the database
+    logger.info('Deleting the JWT from the database');
+    await deleteHoldToken(token);
   }
 
   logger.info('generateCancellationLink');
