@@ -6,7 +6,7 @@ resource "aws_lambda_function" "expiry_sqs_processor" {
 
   handler = "lambda/purgeExpired/index.handler"
   runtime = "nodejs18.x"
-  timeout = 300
+  timeout = 60
   publish = "true"
 
   environment {
@@ -26,7 +26,7 @@ resource "aws_lambda_alias" "expiry_sqs_processor_latest" {
 
 resource "aws_sqs_queue" "expiry_queue" {
   name = "expiry-queue${var.env_identifier}"
-  visibility_timeout_seconds = 300
+  delay_seconds = 425 # Slightly more than the pass expiration.
 }
 
 resource "aws_sns_topic" "expiry_sqs_topic" {
