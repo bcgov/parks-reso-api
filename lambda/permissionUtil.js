@@ -86,6 +86,22 @@ exports.verifyHoldToken = function (token, secret) {
   return decodedToken;
 };
 
+exports.deleteHoldToken = async function (token) {
+  try {
+    await dynamodb.deleteItem({
+      Key: {
+        pk: { S: 'jwt' },
+        sk: { S: token }
+      },
+      TableName: TABLE_NAME
+    }).promise();
+  } catch (error) {
+    // Handle the error here
+    logger.error('Error deleting hold token:');
+    logger.debug(error);
+  }
+};
+
 const verifyToken = function (token, callback, sendError) {
   logger.debug('verifying token');
   logger.debug('token:', token);

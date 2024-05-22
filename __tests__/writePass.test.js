@@ -547,6 +547,9 @@ describe('Pass Successes', () => {
             commit: true
           };
         }),
+        deleteHoldToken:jest.fn(() => {
+          return;
+        }),
         getOne: jest.fn(() => {
           return undefined // Simulate not found
         }),
