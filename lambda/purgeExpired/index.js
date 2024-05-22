@@ -16,10 +16,9 @@ exports.handler = async (event, context) => {
     try {
       logger.debug(item);
       const token = jwt.decode(item.sk);
-      const orcNumber = token.pk.replace(/^0+/, '');
       await dynamoUtil.restoreAvailablePass(item.pk,
                                             item.sk,
-                                            orcNumber,
+                                            token.parkOrcs,
                                             token.shortPassDate,
                                             token.facilityName,
                                             token.numberOfGuests,
