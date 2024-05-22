@@ -6,7 +6,7 @@ resource "aws_lambda_function" "expiry_sqs_processor" {
 
   handler = "lambda/purgeExpired/index.handler"
   runtime = "nodejs18.x"
-  timeout = 60
+  timeout = 30
   publish = "true"
 
   environment {
