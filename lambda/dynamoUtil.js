@@ -491,7 +491,7 @@ async function getAllStoredJWTs(expired = false) { //optional if expired or all 
  * @param {string} type - The type of the facility.
  * @throws {CustomError} - If there is an error updating the available passes.
  */
-async function restoreAvailablePass(pk, sk, orcNumber, shortPassDate, facilityName, numberOfGuests, type){
+async function restoreAvailablePass(pk, sk, orcNumber, shortPassDate, facilityName, numberOfGuests, type, passPk, passSk){
   try{
     // Add the number of guests back to the available passes, and delete the reservation jwt.
     const transactionParams = {
@@ -513,15 +513,25 @@ async function restoreAvailablePass(pk, sk, orcNumber, shortPassDate, facilityNa
         ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
         }
       },
-      {
-        Delete: {
-          TableName: TABLE_NAME,
-          Key: {
-            pk: { S: pk },
-            sk: { S: sk }
+        {
+          Delete: {
+            TableName: TABLE_NAME,
+            Key: {
+              pk: { S: pk },
+              sk: { S: sk }
+            }
           }
-        }
-      }]
+        },
+        ,
+        {
+          Delete: {
+            TableName: TABLE_NAME,
+            Key: {
+              pk: { S: passPk },
+              sk: { S: passSk }
+            }
+          }
+        }]
     };
     console.log(JSON.stringify(transactionParams));
     await dynamodb.transactWriteItems(transactionParams).promise();

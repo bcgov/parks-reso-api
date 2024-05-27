@@ -22,7 +22,9 @@ exports.handler = async (event, context) => {
                                             token.shortPassDate,
                                             token.facilityName,
                                             token.numberOfGuests,
-                                            token.type);
+                                            token.type,
+                                            token.pk,
+                                            token.sk);
     } catch (error) {
       logger.error('Error Deleting JWT:');
       logger.error(error);
