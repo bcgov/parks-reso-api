@@ -488,19 +488,25 @@ async function transactWriteWithRetries(transactionObj, maxRetries = 3) {
         cancellationReasons = cancellationReasons.slice(0, -1);
         cancellationReasons = cancellationReasons.split(', ');
         let message = error.message;
-        if (cancellationReasons[0] != 'None') {
-          logger.info('Facility is currently locked');
-          message = 'An error has occured, please try again.';
-          if (cancellationReasons[1] != 'None') {
-            logger.info(`Sold out of passes: ${parkData.name} / ${facilityName}`);
-            message =
-              'We have sold out of allotted passes for this time, please check back on the site from time to time as new passes may come available.';
-            throw new CustomError(message, 400);
-          } else if (cancellationReasons[2] != 'None') {
-            message = 'Error creating pass.';
-            logger.info(message);
-            throw new CustomError(message, 400);
+        let reasonIndex = this.cancellationReasons.findIndex((i) => i !== 'None');
+        if (reasonIndex > -1) {
+          switch (reasonIndex) {
+            case 0:
+              logger.info('Facility is currently locked');
+              message = 'An error has occured, please try again.';
+              break;
+            case 1:
+              logger.info(`Sold out of passes: ${parkData.name} / ${facilityName}`);
+              message =
+                'We have sold out of allotted passes for this time, please check back on the site from time to time as new passes may come available.';
+              break;
+            case 2:
+            default:
+              message = 'Error creating pass.';
+              logger.info(message);
+              break;
           }
+          throw new CustomError(message, 400);
         }
         if (retryCount === maxRetries) {
           logger.info('Retry limit reached');

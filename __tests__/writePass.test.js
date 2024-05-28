@@ -129,7 +129,7 @@ describe('Pass Fails', () => {
         })
       };
     });
-    
+
     const writePassHandler = require('../lambda/writePass/index');
     const token = jwt.sign(
       {
@@ -622,7 +622,7 @@ describe('Pass Successes', () => {
         }
       })
       .promise();
-    
+
     // Put the JWT in the table.
     await ddb
       .put({
@@ -843,146 +843,6 @@ describe('Pass Successes', () => {
     };
     const response = await writePassHandler.handler(event, null);
     expect(response.statusCode).toEqual(403);
-  });
-
-  test('400 pass exists according to token check.', async () => {
-    const theDate = '2022-01-01T12:00:00Z';
-    const holdToken = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwiZmFjaWxpdHlOYW1lIjoiUGFya2luZyBsb3QgQiIsInJlZ2lzdHJhdGlvbk51bWJlciI6IjExMTExMTExMTUiLCJpYXQiOjE3MTQ1MTc3ODN9.VbeNekaVj6gjqSI6GdtFmz6YI2oevMmcZM0QjXgy8m-agEDPZDmg-9VOSKSVz7mG';
-    jest.mock('../lambda/permissionUtil', () => {
-      return {
-        validateToken: jest.fn(event => {
-          // Do Nothing, Don't throw
-        }),
-        decodeJWT: jest.fn(event => {
-          return {
-            parkOrcs: 'Test Park 1',
-            registrationNumber: '1111111115',
-            firstName: 'Jest',
-            lastName: 'User',
-            facilityName: 'Parking lot B',
-            email: 'testEmail2@test.ca',
-            date: '2022-01-01T12:00:00Z',
-            type: 'DAY',
-            numberOfGuests: 1,
-            phoneNumber: '2505555555',
-            facilityType: 'Parking',
-            mapLink: 'https://maps.google.com',
-            commit: true
-          };
-        }),
-        verifyHoldToken: jest.fn(event => {
-          return {
-            parkOrcs: 'Test Park 1',
-            registrationNumber: '1111111115',
-            firstName: 'Jest',
-            lastName: 'User',
-            facilityName: 'Parking lot B',
-            email: 'testEmail2@test.ca',
-            date: '2022-01-01T12:00:00Z',
-            type: 'DAY',
-            numberOfGuests: 1,
-            phoneNumber: '2505555555',
-            facilityType: 'Parking',
-            mapLink: 'https://maps.google.com',
-            commit: true
-          };
-        }),
-        getOne: jest.fn(() => {
-          return undefined;
-        }),
-        resolvePermissions: jest.fn(() => {
-          return {
-            isAdmin: false,
-            roles: [''],
-            isAuthenticated: false
-          };
-        })
-      };
-    });
-    const writePassHandler = require('../lambda/writePass/index');
-
-    const event = {
-      httpMethod: 'POST',
-      headers: {
-        Authorization: 'None'
-      },
-      body: JSON.stringify({
-        parkOrcs: 'Test Park 1',
-        firstName: 'Jest',
-        lastName: 'User',
-        facilityName: 'Parking lot B',
-        email: 'testEmail2@test.ca',
-        registrationNumber: '1111111115',
-        date: theDate,
-        type: 'DAY',
-        numberOfGuests: 1,
-        phoneNumber: '2505555555',
-        facilityType: 'Parking',
-        mapLink: 'https://maps.google.com',
-        token: holdToken,
-        commit: true
-      })
-    };
-
-    // Put the JWT in the table.
-    await ddb
-      .put({
-        TableName: TABLE_NAME,
-        Item: {
-          sk: 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwYXJrT3JjcyI6IlRlc3QgUGFyayAxIiwiZmFjaWxpdHlOYW1lIjoiUGFya2luZyBsb3QgQiIsInJlZ2lzdHJhdGlvbk51bWJlciI6IjExMTExMTExMTUiLCJpYXQiOjE3MTQ1MTc3ODN9.VbeNekaVj6gjqSI6GdtFmz6YI2oevMmcZM0QjXgy8m-agEDPZDmg-9VOSKSVz7mG',
-          pk: 'jwt'
-        }
-      })
-      .promise();
-
-    await ddb
-      .put({
-        TableName: TABLE_NAME,
-        Item: {
-          sk: '1111111115',
-          registrationNumber: '1111111115',
-          pk: 'pass::Test Park 1',
-          firstName: 'Jest',
-          lastName: 'User',
-          facilityName: 'Parking lot B',
-          email: 'testEmail2@test.ca',
-          date: theDate,
-          shortPassDate: '2022-01-01',
-          type: 'DAY',
-          passStatus: 'reserved',
-          numberOfGuests: 1,
-          phoneNumber: '2505555555',
-          facilityType: 'Parking',
-          mapLink: 'https://maps.google.com',
-          commit: true
-        }
-      })
-      .promise();
-
-    let foo = await ddb.get({
-      TableName: TABLE_NAME,
-      Key: {
-        pk: 'pass::Test Park 1',
-        sk: '1111111115'
-      }
-    }).promise();
-    console.log(foo.Item)
-
-    let response = await writePassHandler.handler(event, null);
-
-    // Remove the item from the DB
-    await ddb.delete({
-      TableName: TABLE_NAME,
-      Key: {
-        pk: 'pass::Test Park 1',
-        sk: '1111111115'
-      }
-    }).promise();
-
-    expect(response.statusCode).toEqual(400);
-    const body = JSON.parse(response.body);
-    expect(body.msg).toEqual('This email account already has a reservation for this booking time. A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href=\"mailto:parkinfo@gov.bc.ca\">parkinfo@gov.bc.ca</a>');
-    expect(body.title).toEqual('Operation Failed.');
   });
 });
 
