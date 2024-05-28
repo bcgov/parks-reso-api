@@ -47,14 +47,16 @@ exports.handler = async (event, context) => {
         queryObj.IndexName = 'manualLookup-index';
         queryObj.ExpressionAttributeValues[':shortPassDate'] = { S: shortDate };
         queryObj.ExpressionAttributeValues[':facilityName'] = { S: event.queryStringParameters.facilityName };
+        queryObj.ExpressionAttributeValues[':passStatus'] = AWS.DynamoDB.Converter.input('hold');
         queryObj.KeyConditionExpression = 'shortPassDate =:shortPassDate AND facilityName =:facilityName';
-        queryObj.FilterExpression = '';
+        queryObj.FilterExpression = 'passStatus <> :passStatus';
       } else {
         queryObj.ExpressionAttributeValues = {};
         queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
         queryObj.ExpressionAttributeValues[':facilityName'] = { S: event.queryStringParameters.facilityName };
+        queryObj.ExpressionAttributeValues[':passStatus'] = AWS.DynamoDB.Converter.input('hold');
         queryObj.KeyConditionExpression = 'pk =:pk';
-        queryObj.FilterExpression = 'facilityName =:facilityName';
+        queryObj.FilterExpression = 'facilityName =:facilityName and passStatus <> :passStatus';
       }
 
       if (event.queryStringParameters.passType) {
