@@ -9,7 +9,7 @@ const INVALID_TOKEN = {
   data: null
 };
 const { logger } = require('./logger');
-const { runQuery, TABLE_NAME } = require('./dynamoUtil');
+const { runQuery, dynamodb, TABLE_NAME } = require('./dynamoUtil');
 const { CustomError } = require('./responseUtil');
 
 exports.decodeJWT = async function (event) {
@@ -54,7 +54,7 @@ exports.getExpiryTime = function (token) {
   try {
     // grab the public stuff from jwt
     const decodedJWT = jwt.decode(token);
-    if (decodedJWT && decodedJWT.iat) { 
+    if (decodedJWT && decodedJWT.iat) {
       const expiryTime = decodedJWT.exp;
       //Return the unix value of the epiry
       return expiryTime;
