@@ -488,7 +488,7 @@ async function transactWriteWithRetries(transactionObj, maxRetries = 3) {
         cancellationReasons = cancellationReasons.slice(0, -1);
         cancellationReasons = cancellationReasons.split(', ');
         let message = error.message;
-        let reasonIndex = this.cancellationReasons.findIndex((i) => i !== 'None');
+        let reasonIndex = cancellationReasons.findIndex((i) => i !== 'None');
         if (reasonIndex > -1) {
           switch (reasonIndex) {
             case 0:
