@@ -2,7 +2,7 @@ const AWS = require('aws-sdk');
 const jwt = require('jsonwebtoken');
 
 const { dynamodb, runQuery, TABLE_NAME, TIMEZONE } = require('../dynamoUtil');
-const { sendResponse } = require('../responseUtil');
+const { sendResponse, PASS_HOLD_STATUS, PASS_CANCELLED_STATUS } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
@@ -59,7 +59,8 @@ exports.handler = async (event, context) => {
           sk: { S: decodedToken.passId }
         },
         ExpressionAttributeValues: {
-          ':cancelled': { S: 'cancelled' },
+          ':cancelled': { S: PASS_CANCELLED_STATUS },
+          ':holdStatus': { S: PASS_HOLD_STATUS },
           ':dateUpdated': { S: currentTimeISO },
           ':empty_list': { "L": [] },  // For pass objects which do not have an audit property.
           ':audit_val': {
@@ -70,7 +71,7 @@ exports.handler = async (event, context) => {
                     "S": "public"
                   },
                   "passStatus": {
-                    "S": 'cancelled'
+                    "S": PASS_CANCELLED_STATUS
                   }
                   ,
                   "dateUpdated": {
@@ -83,7 +84,7 @@ exports.handler = async (event, context) => {
         },
         // If the pass is already cancelled, error so that we don't decrement the available
         // count multiple times.
-        ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk) AND (NOT passStatus = :cancelled)',
+        ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk) AND (NOT passStatus = :cancelled) AND (NOT passStatus = :holdStatus)',
         UpdateExpression: 'SET passStatus = :cancelled, audit = list_append(if_not_exists(audit, :empty_list), :audit_val), dateUpdated = :dateUpdated',
         TableName: TABLE_NAME
       };
