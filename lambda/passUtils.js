@@ -40,14 +40,14 @@ async function sendTemplateSQS(facilityType, personalisation, passObject) {
 
   logger.info(
     `Pass successfully created. Registration number: ${JSON.stringify(
-      passObject?.Item['registrationNumber']
-    )}, Orcs: ${passObject.Item.pk}`
+      passObject?.registrationNumber
+    )}, Orcs: ${passObject?.pk}`
   );
   return passObject;
 };
 
 async function sendExpirationSQS(){
-  logger.info("SQSQUE: ", process.env.SQSEXPIRY_QUEUE)
+  logger.info("SQSQUE: ", process.env.SQSEXPIRY_QUEUE);
   try {
     const params = {
       MessageBody: `SQS Message at ${(new Date()).toISOString()}`,
