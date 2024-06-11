@@ -7,22 +7,22 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [20.x]
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       ### Install if no cache exists ###
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'yarn'
       - run: yarn install --silent --frozen-lockfile
 
       - name: Setup DynamoDB Local
-        uses: rrainn/dynamodb-action@v3.0.0
+        uses: rrainn/dynamodb-action@v4.0.0
         with:
           sharedDb: true
           port: 8000
