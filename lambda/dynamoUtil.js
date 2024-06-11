@@ -17,6 +17,7 @@ if (process.env.IS_OFFLINE) {
 const ACTIVE_STATUS = 'active';
 const RESERVED_STATUS = 'reserved';
 const PASS_HOLD_STATUS = 'hold';
+const PASS_CANCELLED_STATUS = 'cancelled';
 const EXPIRED_STATUS = 'expired';
 const PASS_TYPE_AM = 'AM';
 const PASS_TYPE_PM = 'PM';
@@ -513,25 +514,24 @@ async function restoreAvailablePass(pk, sk, orcNumber, shortPassDate, facilityNa
         ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
         }
       },
-        {
-          Delete: {
-            TableName: TABLE_NAME,
-            Key: {
-              pk: { S: pk },
-              sk: { S: sk }
-            }
+      {
+        Delete: {
+          TableName: TABLE_NAME,
+          Key: {
+            pk: { S: pk },
+            sk: { S: sk }
           }
-        },
-        ,
-        {
-          Delete: {
-            TableName: TABLE_NAME,
-            Key: {
-              pk: { S: passPk },
-              sk: { S: passSk }
-            }
+        }
+      },
+      {
+        Delete: {
+          TableName: TABLE_NAME,
+          Key: {
+            pk: { S: passPk },
+            sk: { S: passSk }
           }
-        }]
+        }
+      }]
     };
     console.log(JSON.stringify(transactionParams));
     await dynamodb.transactWriteItems(transactionParams).promise();
@@ -546,6 +546,7 @@ module.exports = {
   ACTIVE_STATUS,
   DEFAULT_BOOKING_DAYS_AHEAD,
   EXPIRED_STATUS,
+  PASS_CANCELLED_STATUS,
   PASS_HOLD_STATUS,
   PASS_TYPE_AM,
   PASS_TYPE_PM,
