@@ -124,7 +124,7 @@ async function handleCommitPass(newObject, isAdmin) {
     try {
       // Check if the user has a valid token, ensuring it has not expired
       logger.info('Checking if the user has a valid token, ensuring it has not expired.');
-      decodedToken =  verifyHoldToken(token, SECRET);
+      decodedToken = verifyHoldToken(token, SECRET);
       logger.info('Decoded Token');
 
       facilityName = decodedToken.facilityName;
@@ -157,23 +157,23 @@ async function handleCommitPass(newObject, isAdmin) {
       const currentPSTDateTime = DateTime.now().setZone(TIMEZONE);
       logger.info('Checking pass status based on current time');
       const passStatus = checkPassStatusBasedOnCurrentTime(currentPSTDateTime,
-                                                           bookingPSTDateTime,
-                                                           type);
+        bookingPSTDateTime,
+        type);
       // Does the pass already exist in the database?
       logger.info('Checking if the pass already exists in the database');
       await checkPassExists(decodedToken.facilityName,
-                            email,
-                            decodedToken.type,
-                            bookingPSTShortDate);
+        email,
+        decodedToken.type,
+        bookingPSTShortDate);
 
       // Update the pass in the database
       logger.info('Updating the pass in the database');
       pass = await convertPassToReserved(decodedToken,
-                                         passStatus,
-                                         firstName,
-                                         lastName,
-                                         email,
-                                         phoneNumber);
+        passStatus,
+        firstName,
+        lastName,
+        email,
+        phoneNumber);
       logger.debug(JSON.stringify(pass));
 
       // delete the audit property before returning back to FE.
@@ -190,18 +190,18 @@ async function handleCommitPass(newObject, isAdmin) {
 
   logger.info('generateCancellationLink');
   const encodedCancellationLink = generateCancellationLink(pass.registrationNumber,
-                                                           email,
-                                                           parkOrcs,
-                                                           bookingPSTShortDate,
-                                                           type);
+    email,
+    parkOrcs,
+    bookingPSTShortDate,
+    type);
 
   const formattedBookingDate = bookingPSTDateTime.toLocaleString(dateOptions);
 
   const parkData = await getPark(decodedToken.parkOrcs);
-  logger.debug('parkData', parkData)
+  logger.debug('parkData', parkData);
   const facilityData = await getFacility(decodedToken.parkOrcs, facilityName, false);
-  logger.debug('facilityData', facilityData)
-  logger.info('personaliazation')
+  logger.debug('facilityData', facilityData);
+  logger.info('personaliazation');
   let personalisation = {
     firstName: firstName,
     lastName: lastName,
@@ -228,8 +228,8 @@ async function handleCommitPass(newObject, isAdmin) {
       )}`
     );
     logger.error(err.response?.data || err);
-    return sendResponse(200, pass);
   }
+  return sendResponse(200, pass);
   // TODO: Remove JWT from hold pass area in database.
 }
 
@@ -406,8 +406,8 @@ async function handleHoldPass(newObject, isAdmin) {
     // Return the jwt'd pass object for the front end with a 7 minute expiry time.
     passObject.Item['parkOrcs'] = { S: parkOrcs };
     const holdPassJwt = jwt.sign(AWS.DynamoDB.Converter.unmarshall(passObject.Item),
-                                 SECRET,
-                                 { algorithm: ALGORITHM, expiresIn: HOLD_PASS_TIMEOUT});
+      SECRET,
+      { algorithm: ALGORITHM, expiresIn: HOLD_PASS_TIMEOUT });
 
     let expirationTime = getExpiryTime(holdPassJwt);
     // Store the jwt, as well as the registration number, and the expiry time in DynamoDB
@@ -488,7 +488,7 @@ async function transactWriteWithRetries(transactionObj, maxRetries = 3) {
         cancellationReasons = cancellationReasons.slice(0, -1);
         cancellationReasons = cancellationReasons.split(', ');
         let message = error.message;
-        let reasonIndex = this.cancellationReasons.findIndex((i) => i !== 'None');
+        let reasonIndex = cancellationReasons.findIndex((i) => i !== 'None');
         if (reasonIndex > -1) {
           switch (reasonIndex) {
             case 0:
@@ -564,20 +564,20 @@ function checkFacilityData(facilityData, numberOfGuests) {
  * @returns {Object} The pass object.
  */
 function createPassObject(parkData,
-                          registrationNumber,
-                          firstName,
-                          lastName,
-                          facilityName,
-                          email,
-                          bookingPSTDateTime,
-                          bookingPSTShortDate,
-                          type,
-                          numberOfGuests,
-                          status,
-                          phoneNumber,
-                          facilityData,
-                          currentPSTDateTime
-                        ) {
+  registrationNumber,
+  firstName,
+  lastName,
+  facilityName,
+  email,
+  bookingPSTDateTime,
+  bookingPSTShortDate,
+  type,
+  numberOfGuests,
+  status,
+  phoneNumber,
+  facilityData,
+  currentPSTDateTime
+) {
   const passObject = {
     TableName: TABLE_NAME,
     ConditionExpression: 'attribute_not_exists(sk)'
@@ -586,7 +586,7 @@ function createPassObject(parkData,
   passObject.Item['pk'] = { S: 'pass::' + parkData.sk };
   passObject.Item['sk'] = { S: registrationNumber };
   passObject.Item['parkName'] = { S: parkData.name };
-  
+
   if (firstName != null) {
     passObject.Item['firstName'] = { S: firstName };
     passObject.Item['searchFirstName'] = { S: firstName.toLowerCase() };
@@ -669,7 +669,7 @@ function checkForHardCodeAdjustment(newObject) {
  * @returns {Object} - The transaction object.
  */
 function generateTrasactionObject(parkData, facilityName, reservationsObjectPK, bookingPSTShortDate, type, numberOfGuests, passObject = undefined) {
-  
+
   let TransactItems = [
     {
       ConditionCheck: {

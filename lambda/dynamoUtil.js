@@ -520,7 +520,8 @@ async function restoreAvailablePass(pk, sk, orcNumber, shortPassDate, facilityNa
           Key: {
             pk: { S: pk },
             sk: { S: sk }
-          }
+          },
+          ConditionExpression: 'attribute_exists (pk) AND attribute_exists (sk)'
         }
       },
       {
@@ -529,7 +530,8 @@ async function restoreAvailablePass(pk, sk, orcNumber, shortPassDate, facilityNa
           Key: {
             pk: { S: passPk },
             sk: { S: passSk }
-          }
+          },
+          ConditionExpression: 'attribute_exists (pk) AND attribute_exists (sk)'
         }
       }]
     };
