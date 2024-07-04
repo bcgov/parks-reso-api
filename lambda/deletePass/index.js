@@ -1,8 +1,8 @@
 const AWS = require('aws-sdk');
 const jwt = require('jsonwebtoken');
 
-const { dynamodb, runQuery, TABLE_NAME, TIMEZONE } = require('../dynamoUtil');
-const { sendResponse, PASS_HOLD_STATUS, PASS_CANCELLED_STATUS } = require('../responseUtil');
+const { dynamodb, runQuery, TABLE_NAME, TIMEZONE, PASS_HOLD_STATUS, PASS_CANCELLED_STATUS } = require('../dynamoUtil');
+const { sendResponse } = require('../responseUtil');
 const { decodeJWT, resolvePermissions } = require('../permissionUtil');
 const { DateTime } = require('luxon');
 const { logger } = require('../logger');
