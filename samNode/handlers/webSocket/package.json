@@ -1,7 +1,7 @@
 {
-    "name": "WebSocketFunction",
-    "version": "1.0.0",
-    "author": "Digitalspace <contact@digitalspace.ca>",
+  "name": "WebSocketFunction",
+  "version": "0.0.1",
+  "author": "Team Osprey",
   "license": "MIT",
     "dependencies": {
         "@aws-sdk/client-apigatewaymanagementapi": "^3.44.0"

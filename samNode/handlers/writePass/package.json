@@ -1,10 +1,10 @@
 {
 	"name": "writePassFunction",
-	"version": "1.0.0",
-	"author": "Digitalspace <contact@digitalspace.ca>",
-  "license": "MIT",
-	"dependencies": {
-		"luxon": "3.4.4",
-		"jsonwebtoken": "9.0.2"
-	}
+	"version": "0.0.1",
+	"author": "Team Osprey",
+	"license": "MIT",
+		"dependencies": {
+			"luxon": "3.4.4",
+			"jsonwebtoken": "9.0.2"
+		}
 }
