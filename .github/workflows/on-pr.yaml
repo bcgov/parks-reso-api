@@ -1,4 +1,4 @@
-name: PR Checks
+name: Run Tests
 
 on: [pull_request]
 
@@ -8,19 +8,42 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x]
-
+    defaults:
+      run:
+        working-directory: "./samNode"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      ### Install if no cache exists ###
+      # Install if no cache exists
       - name: Setup node
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'yarn'
-      - run: yarn install --silent --frozen-lockfile
+          cache: "npm"
+          cache-dependency-path: "samNode/package-lock.json"
+      - run: npm install
 
+      # Setup AWS SAM
+      - name: Setup AWS SAM
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      # SAM Build
+      - name: Cache SAM Build
+        id: cache-sam-build
+        uses: actions/cache@v3
+        with:
+          path: |
+            samNode/.aws-sam
+          key: ${{ github.sha }}-dup-api-sam-cache
+      - name: Run sam build
+        if: steps.cache-sam-build.outputs.cache-hit != 'true'
+        run: |
+          sam build --cached --parallel
+
+      # Set up DynamoDB local
       - name: Setup DynamoDB Local
         uses: rrainn/dynamodb-action@v3.0.0
         with:
@@ -28,9 +51,19 @@ jobs:
           port: 8000
           cors: '*'
 
-      - run: yarn test
+      - name: Sleep so DynamoDB has time to wake up
+        uses: GuillaumeFalourd/wait-sleep-action@v1
+        with:
+          time: '15' # for 15 seconds
+
+      # Run Tests
+      - name: Run Tests
         env:
+          TABLE_NAME: parksreso-tests
           IS_OFFLINE: true
+          ENDPOINT: http://localhost:8000
           AWS_REGION: local-env
           AWS_ACCESS_KEY_ID: notused
           AWS_SECRET_ACCESS_KEY: notused
+        run: ./node_modules/jest/bin/jest.js --coverage --runInBand
+        working-directory: ./samNode

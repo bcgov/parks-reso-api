@@ -73,7 +73,7 @@ samNode$ sam local start-api
 samNode$ curl http://localhost:3000/
 ```
 
-You can also use `yarn build` & `yarn start-full` to build and start the API locally.
+You can also use `npm run build` & `npm run start-full` to build and start the API locally.
 
 ## Connecting to remote AWS DynamoDB endpoints (for migrations, etc)
 
@@ -112,15 +112,15 @@ The SAM CLI reads the application template to determine the API's routes and the
             Method: get
 ```
 
-Run the suite of unit tests with `yarn test`:
+Run the suite of unit tests with `npm run test`:
 
 ```bash
-samNode$ yarn test
+samNode$ npm run test
 ```
 
 With SAM, Lambda and layer dependencies are stored in their respective `nodejs` folder upon running `sam build`, not the common `node_modules` folder. Since Jest looks for dependencies in the `node_modules` folder, a symlink is created in the build step so Jest can find layer dependencies outside of a SAM docker container environment.
 
-Because of this, dependency mapping does not exist prior to `sam build` and therefore `sam build` is included in the `yarn test` script.
+Because of this, dependency mapping does not exist prior to `sam build` and therefore `sam build` is included in the `npm run test` script.
 
 Additionally, Lambdas with layer dependencies import the layer using `require`:
 

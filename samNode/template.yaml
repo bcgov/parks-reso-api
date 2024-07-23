@@ -6,7 +6,7 @@ Description: >
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 40
+    Timeout: 30
     Environment:
       Variables:
         SSO_ISSUER: !Ref SSOIssuerUrl
@@ -21,7 +21,7 @@ Parameters:
     Default: "HS384"
   AdminFrontEnd:
     Type: String
-    Default: "String"
+    Default: "http://localhost:4200/dayuse"
   AWSAccountList:
     Type: String
     Default: 'default'
@@ -33,7 +33,7 @@ Parameters:
     Default: '1x0000000000000000000000000000000AA'
   DataRegisterApiPath:
     Type: String
-    Default: 'String'
+    Default: 'https://data.bcparks.ca/api'
   DataRegisterApiKey:
     Type: String
     Default: 'String'
@@ -54,16 +54,16 @@ Parameters:
     Default: 'DUP_EXPORT'
   GCNotifyApiBulkPath:
     Type: String
-    Default: 'String'
+    Default: 'https://api.notification.canada.ca/v2/notifications/bulk'
   GCNotifyApiKey:
     Type: String
     Default: 'String'
   GCNotifyApiPath:
     Type: String
-    Default: 'String'
+    Default: 'https://api.notification.canada.ca/v2/notifications/email'
   GCNotifyApiSMSPath:
     Type: String
-    Default: 'String'
+    Default: 'https://api.notification.canada.ca/v2/notifications/sms'
   GCNotifyCancelTemplateID:
     Type: String
     Default: 'String'
@@ -72,7 +72,7 @@ Parameters:
     Default: 'true'
   GCNotifyIsSendingSurveys:
     Type: String
-    Default: 'NO'
+    Default: 'true'
   GCNotifyParkingReceiptTemplateID:
     Type: String
     Default: 'String'
@@ -82,9 +82,6 @@ Parameters:
   GCNotifyPassManagementRoute:
     Type: String
     Default: '/pass-management/check-in'
-  GCNotifyPublicFrontend:
-    Type: String
-    Default: 'http://localhost:4300/dayuse'
   GCNotifyReminderTemplateID:
     Type: String
     Default: 'SSSSSS'
@@ -105,7 +102,7 @@ Parameters:
     Default: 'String'
   LogLevel:
     Type: String
-    Default: 'debug'
+    Default: 'error'
   LowCapacityThreshold:
     Type: String
     Default: '0.25'
@@ -121,6 +118,9 @@ Parameters:
   PassShortDateIndex:
     Type: String
     Default: 'shortPassDate-index'
+  PublicFrontend:
+    Type: String
+    Default: 'http://localhost:4300/dayuse'
   S3BucketData:
     Type: String
     Default: 'parks-dup-assets-tools'
@@ -132,13 +132,13 @@ Parameters:
     Default: 'https://dev.loginproxy.gov.bc.ca/auth/realms/bcparks-service-transformation/protocol/openid-connect/certs'
   Stage:
     Type: String
-    Default: 'dev'
+    Default: 'api'
   SqsGCNQueueName:
     Type: String
-    Default: 'https://sqs.ca-central-1.amazonaws.com/039380614566/gcn-email-queue-sam'
+    Default: 'gcn-email-queue-sam'
   SqsExpiryQueueName:
     Type: String
-    Default: 'https://sqs.ca-central-1.amazonaws.com/039380614566/expiry-queue-sam'
+    Default: 'expiry-queue-sam'
   TableNameParks:
     Type: String
     Default: 'ParksDUP'
@@ -157,7 +157,7 @@ Resources:
       Description: Utilities Base Layer
       ContentUri: layers/baseLayer/
       CompatibleRuntimes:
-        - nodejs18.x
+        - nodejs20.x
       LicenseInfo: 'Apache-2.0'
       RetentionPolicy: Retain
     Metadata:
@@ -170,7 +170,7 @@ Resources:
       Description: Data Register Utilities Layer
       ContentUri: layers/dataRegisterLayer/
       CompatibleRuntimes:
-        - nodejs18.x
+        - nodejs20.x
       LicenseInfo: 'Apache-2.0'
       RetentionPolicy: Retain
     Metadata:
@@ -183,7 +183,7 @@ Resources:
       Description: Data Register Utilities Layer
       ContentUri: layers/exportAllPassLayer/
       CompatibleRuntimes:
-        - nodejs18.x
+        - nodejs20.x
       LicenseInfo: 'Apache-2.0'
       RetentionPolicy: Retain
     Metadata:
@@ -196,7 +196,7 @@ Resources:
       Description: Facility Utilities Layer
       ContentUri: layers/facilityLayer/
       CompatibleRuntimes:
-        - nodejs18.x
+        - nodejs20.x
       LicenseInfo: 'Apache-2.0'
       RetentionPolicy: Retain
     Metadata:
@@ -209,7 +209,7 @@ Resources:
       Description: GC Notify Utilities Layer
       ContentUri: layers/gcNotifyLayer/
       CompatibleRuntimes:
-        - nodejs18.x
+        - nodejs20.x
       LicenseInfo: 'Apache-2.0'
       RetentionPolicy: Retain
     Metadata:
@@ -222,7 +222,7 @@ Resources:
       Description: Utilities JWT Layer
       ContentUri: layers/jwtLayer/
       CompatibleRuntimes:
-        - nodejs18.x
+        - nodejs20.x
       LicenseInfo: 'Apache-2.0'
       RetentionPolicy: Retain
     Metadata:
@@ -235,7 +235,7 @@ Resources:
       Description: Metrics Utilities Layer
       ContentUri: layers/metricsLayer/
       CompatibleRuntimes:
-        - nodejs18.x
+        - nodejs20.x
       LicenseInfo: 'Apache-2.0'
       RetentionPolicy: Retain
     Metadata:
@@ -248,7 +248,7 @@ Resources:
       Description: Pass Utilities Layer
       ContentUri: layers/passLayer/
       CompatibleRuntimes:
-        - nodejs18.x
+        - nodejs20.x
       LicenseInfo: 'Apache-2.0'
       RetentionPolicy: Retain
     Metadata:
@@ -261,7 +261,7 @@ Resources:
       Description: Permission Utilities layer
       ContentUri: layers/permissionLayer/
       CompatibleRuntimes:
-        - nodejs18.x
+        - nodejs20.x
       LicenseInfo: 'Apache-2.0'
       RetentionPolicy: Retain
     Metadata:
@@ -274,7 +274,7 @@ Resources:
       Description: Reservation Utilities layer
       ContentUri: layers/reservationLayer/
       CompatibleRuntimes:
-        - nodejs18.x
+        - nodejs20.x
       LicenseInfo: 'Apache-2.0'
       RetentionPolicy: Retain
     Metadata:
@@ -287,7 +287,7 @@ Resources:
       Description: SMS Utilities Layer
       ContentUri: layers/smsLayer/
       CompatibleRuntimes:
-        - nodejs18.x
+        - nodejs20.x
       LicenseInfo: 'Apache-2.0'
       RetentionPolicy: Retain
     Metadata:
@@ -300,7 +300,7 @@ Resources:
       Description: Parks Data Register WebHook Layer
       ContentUri: layers/webHookLayer/
       CompatibleRuntimes:
-        - nodejs18.x
+        - nodejs20.x
       LicenseInfo: 'Apache-2.0'
       RetentionPolicy: Retain
     Metadata:
@@ -314,7 +314,7 @@ Resources:
     Properties:
       CodeUri: handlers/checkActivation/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           TABLE_NAME: !Ref TableNameParks
@@ -339,7 +339,7 @@ Resources:
     Properties:
       CodeUri: handlers/checkExpiry/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           TABLE_NAME: !Ref TableNameParks
@@ -366,7 +366,7 @@ Resources:
     Properties:
       CodeUri: handlers/cloudWatchAlarm/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           AWS_ACCOUNT_LIST: !Ref AWSAccountList
@@ -399,7 +399,7 @@ Resources:
     Properties: 
       CodeUri: handlers/deletePass/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           ALGORITHM: !Ref Algorithm
@@ -437,7 +437,7 @@ Resources:
     Properties:
       CodeUri: handlers/exportAllPass/GET
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           EXPORT_FUNCTION_NAME: !Ref ExportFunctionName
@@ -484,7 +484,7 @@ Resources:
     Properties:
       Handler: index.handler
       CodeUri: handlers/exportAllPass/invokable/
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       FunctionName: !Ref ExportFunctionName
       Environment:
         Variables:
@@ -513,7 +513,7 @@ Resources:
     Properties: 
       CodeUri: handlers/exportPass/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           S3_BUCKET_DATA: !Ref S3BucketData
@@ -556,7 +556,7 @@ Resources:
     Properties:
       CodeUri: handlers/purgeExpired/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           TABLE_NAME: !Ref TableNameParks
@@ -587,7 +587,7 @@ Resources:
     Properties: 
       CodeUri: handlers/readConfig/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           TABLE_NAME: !Ref TableNameParks
@@ -629,7 +629,7 @@ Resources:
     Properties: 
       CodeUri: handlers/readFacility/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           SSO_ISSUER: !Ref SSOIssuerUrl
@@ -674,7 +674,7 @@ Resources:
     Properties: 
       CodeUri: handlers/readFaq/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           TABLE_NAME: !Ref TableNameParks
@@ -715,7 +715,7 @@ Resources:
     Properties: 
       CodeUri: handlers/readMetrics/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           SSO_ISSUER: !Ref SSOIssuerUrl
@@ -757,7 +757,7 @@ Resources:
     Properties: 
       CodeUri: handlers/readPark/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           SSO_ISSUER: !Ref SSOIssuerUrl
@@ -802,12 +802,12 @@ Resources:
     Properties: 
       CodeUri: handlers/readPass/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           ALGORITHM: !Ref Algorithm
           JWT_SECRET: !Ref JWTSecret
-          PUBLIC_FRONTEND: !Ref GCNotifyPublicFrontend
+          PUBLIC_FRONTEND: !Ref PublicFrontend
           PASS_CANCELLATION_ROUTE: !Ref GCNotifyPassCancellationRoute
           GC_NOTIFY_API_PATH: !Ref GCNotifyApiPath
           GC_NOTIFY_API_KEY: !Ref GCNotifyApiKey
@@ -854,7 +854,7 @@ Resources:
     Properties: 
       CodeUri: handlers/readReservation/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           LOW_CAPACITY_THRESHOLD: !Ref LowCapacityThreshold
@@ -902,7 +902,7 @@ Resources:
     Properties:
       CodeUri: handlers/sendReminder/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           GC_NOTIFY_IS_SENDING_REMINDERS: !Ref GCNotifyIsSendingReminders
@@ -911,7 +911,7 @@ Resources:
           GC_NOTIFY_API_BULK_PATH: !Ref GCNotifyApiBulkPath
           GC_NOTIFY_API_KEY: !Ref GCNotifyApiKey
           WEBHOOK_URL: !Ref WebHookURL
-          PUBLIC_FRONTEND: !Ref GCNotifyPublicFrontend
+          PUBLIC_FRONTEND: !Ref PublicFrontend
           PASS_CANCELLATION_ROUTE: !Ref GCNotifyPassCancellationRoute
           GC_NOTIFY_SMS_TEMPLATE_ID: !Ref GCNotifySMSTemplateID
           GC_NOTIFY_API_SMS_PATH: !Ref GCNotifyApiSMSPath
@@ -942,7 +942,7 @@ Resources:
     Properties:
       CodeUri: handlers/sendSurvey/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           PASS_SHORTDATE_INDEX: !Ref PassShortDateIndex
@@ -976,7 +976,7 @@ Resources:
     Properties:
       CodeUri: handlers/sqsProcessor/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           GC_NOTIFY_API_PATH: !Ref GCNotifyApiPath
@@ -1005,7 +1005,7 @@ Resources:
     Properties:
       CodeUri: handlers/updateParkName/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           DATA_REGISTER_URL: !Ref DataRegisterApiPath
@@ -1030,7 +1030,7 @@ Resources:
     Properties:
       CodeUri: handlers/warmup/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           TABLE_NAME: !Ref TableNameParks
@@ -1052,7 +1052,7 @@ Resources:
     Properties:
       CodeUri: handlers/writeConfig/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           TABLE_NAME: !Ref TableNameParks
@@ -1081,7 +1081,7 @@ Resources:
     Properties:
       CodeUri: handlers/writeMetrics/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           LOW_CAPACITY_THRESHOLD: !Ref LowCapacityThreshold
@@ -1112,7 +1112,7 @@ Resources:
     Properties:
       CodeUri: handlers/writeModifier/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           MODERATE_CAPACITY_THRESHOLD: !Ref ModerateCapacityThreshold
@@ -1149,7 +1149,7 @@ Resources:
     Properties:
       CodeUri: handlers/writePark/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           SSO_ISSUER: !Ref SSOIssuerUrl
@@ -1188,7 +1188,7 @@ Resources:
     Properties:
       CodeUri: handlers/writeFacility/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           LOW_CAPACITY_THRESHOLD: !Ref LowCapacityThreshold
@@ -1231,7 +1231,7 @@ Resources:
     Properties: 
       CodeUri: handlers/writeFaq/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           SSO_ISSUER: !Ref SSOIssuerUrl
@@ -1264,7 +1264,7 @@ Resources:
     Properties: 
       CodeUri: handlers/writePass/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           ALGORITHM: !Ref Algorithm
@@ -1322,18 +1322,6 @@ Resources:
             Auth:
               Authorizer: NONE
               OverrideApiAuth: true
-        # sqsGCNEmailEvent:
-        #   Type: SQS
-        #   Properties:
-        #     Queue: !GetAtt SqsGcnEmailQueue.Arn
-        # sqsExpiryEvent:
-        #   Type: SQS
-        #   Properties:
-        #     Queue: !GetAtt SqsExpiryQueue.Arn
-
-
-
-            
 
   #################
   # DynamoDB Tables
@@ -1464,7 +1452,7 @@ Resources:
     Properties:
       CodeUri: handlers/authorizer/
       Handler: index.handler
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Environment:
         Variables:
           SSO_ISSUER: !Ref SSOIssuerUrl
@@ -1519,29 +1507,6 @@ Resources:
     Properties:
       QueueName: !Ref SqsExpiryQueueName
       
-      
-  ##############
-  # SQS Policies
-  ##############
-  # SQSPolicy:
-  #   Type: AWS::SQS::QueuePolicy
-  #   Properties:
-  #     PolicyDocument:
-  #       Version: '2012-10-17'
-  #       Statement:
-  #         - Effect: Allow
-  #           Action:
-  #             - SQS:SendMessage
-  #             - SQS:DeleteMessage
-  #           Resource: 
-  #             - !GetAtt SqsGcnEmailQueue.Arn
-  #             - !GetAtt SqsExpiryQueue.Arn
-  #           Principal:
-  #             Service: !Sub 'lambda.${AWS::Region}.amazonaws.com'
-  #     Queues:
-  #       - !Ref SqsGcnEmailQueue
-  #       - !Ref SqsExpiryQueue
-
 Outputs:
   ApiDeployment:
     Description: 'API Gateway endpoint URL for Stage for Config function'

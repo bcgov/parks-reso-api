@@ -1,9 +1,9 @@
 {
 	"scripts": {
 		"start": "sam local start-api --env-vars vars.json --debug",
-		"start-full": "yarn build && yarn start",
+		"start-full": "npm run build && npm run start",
 		"build": "sam build",
-		"test": "export AWS_REGION=local-env &&  yarn build && jest --coverage"
+		"test": "export AWS_REGION=local-env &&  npm run build && jest --coverage"
 	},
 	"jest": {
 		"verbose": true,
