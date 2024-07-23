@@ -1,0 +1,9 @@
+{
+	"name": "SQSProcessorFunction",
+	"version": "0.0.1",
+	"author": "Team Osprey",
+	"license": "MIT",
+		"dependencies": {
+			"axios": "1.6.7"
+		}
+}

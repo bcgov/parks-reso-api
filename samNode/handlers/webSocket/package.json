@@ -1,0 +1,9 @@
+{
+  "name": "WebSocketFunction",
+  "version": "0.0.1",
+  "author": "Team Osprey",
+  "license": "MIT",
+    "dependencies": {
+        "@aws-sdk/client-apigatewaymanagementapi": "^3.44.0"
+    }
+  }

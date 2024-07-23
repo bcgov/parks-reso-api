@@ -8,8 +8,6 @@ terraform/src/.terraform
 yarn-error.log
 coverage/
 
-**/package-lock.json
-
 artifacts
 .serverless
 

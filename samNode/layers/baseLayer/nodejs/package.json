@@ -1,0 +1,16 @@
+{
+  "name": "dup-api-base-layer",
+  "version": "0.0.1",
+  "author": "Team Osprey",
+  "license": "MIT",
+  "dependencies": {
+    "luxon": "3.4.4",
+    "winston": "^3.7.2",
+    "@aws-sdk/client-dynamodb": "^3.54.0",
+    "@aws-sdk/client-s3": "^3.54.0",
+    "@aws-sdk/client-sqs": "^3.54.0",
+    "@aws-sdk/client-lambda": "^3.54.0",
+    "@aws-sdk/util-dynamodb": "^3.54.0",
+    "@aws-sdk/s3-request-presigner": "^3.54.0"
+  }
+}

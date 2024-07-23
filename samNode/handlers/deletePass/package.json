@@ -1,0 +1,10 @@
+{
+	"name": "deletePassFunction",
+	"version": "0.0.1",
+	"author": "Team Osprey",
+	"license": "MIT",
+	"dependencies": {
+		"luxon": "3.4.4",
+		"jsonwebtoken": "^9.0.0"
+	}
+}
