@@ -1,8 +1,8 @@
 {
-"name": "dup-api-exportAllPass-layer",
-"version": "0.0.1",
-"author": "Team Osprey",
-"license": "MIT",
+  "name": "dup-api-exportAllPass-layer",
+  "version": "0.0.1",
+  "author": "Team Osprey",
+  "license": "MIT",
   "dependencies": {
     "crypto":"1.0.1"
   }
