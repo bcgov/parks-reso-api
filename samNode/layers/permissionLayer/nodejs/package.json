@@ -1,0 +1,11 @@
+{
+  "name": "permissionLayer",
+  "version": "0.0.1",
+  "author": "Team Osprey",
+  "license": "MIT",
+  "dependencies": {
+    "jsonwebtoken": "9.0.2",
+    "jwks-rsa": "^3.0.0",
+    "axios":"1.6.7"
+  }
+}

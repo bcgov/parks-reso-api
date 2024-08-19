@@ -1,0 +1,10 @@
+{
+   "name": "PassLayer",
+   "version": "0.0.1",
+    "author": "Team Osprey",
+    "license": "MIT",
+    "dependencies": {
+        "luxon": "^3.2.1",
+        "qrcode": "^1.5.1"
+    }
+}

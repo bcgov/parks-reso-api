@@ -1,5 +1,6 @@
 {
 	"scripts": {
+<<<<<<< HEAD
 		"start": "sam local start-api --env-vars vars.json --skip-pull-image 2>&1 | tr '\r' '\n'",
 		"start-full": "yarn build && yarn start",
 		"build": "sam build",
@@ -12,12 +13,52 @@
 	"dependencies": {
 		"aws-lambda": "^1.0.7",
 		"aws-sdk": "^2.1441.0",
+=======
+		"start": "sam local start-api --env-vars vars.json --debug",
+		"start-full": "npm run build && npm run start",
+		"build": "sam build",
+		"test": "export AWS_REGION=local-env &&  npm run build && jest --coverage"
+	},
+	"jest": {
+		"verbose": true,
+		"modulePathIgnorePatterns": [
+			"<rootDir>/__tests__",
+			"<rootDir>/.aws-sam/"
+		],
+		"moduleNameMapper": {
+			"^/opt/baseLayer": "<rootDir>/.aws-sam/build/BaseLayer/baseLayer",
+			"^/opt/dataRegisterLayer": "<rootDir>/.aws-sam/build/DataRegisterLayer/dataRegisterLayer",
+			"^/opt/dynamodbLayer": "<rootDir>/.aws-sam/build/DynamodbLayer/dynamodbLayer",
+			"^/opt/exportAllPassLayer": "<rootDir>/.aws-sam/build/ExportAllPassLayer/exportAllPassLayer",
+			"^/opt/facilityLayer": "<rootDir>/.aws-sam/build/FacilityLayer/facilityLayer",
+			"^/opt/gcNotifyLayer": "<rootDir>/.aws-sam/build/GCNotifyLayer/gcNotifyLayer",
+			"^/opt/jwtLayer": "<rootDir>/.aws-sam/build/JWTLayer/jwtLayer",
+			"^/opt/metricLayer": "<rootDir>/.aws-sam/build/MetricLayer/metricLayer",
+			"^/opt/passLayer": "<rootDir>/.aws-sam/build/PassLayer/passLayer",
+			"^/opt/permissionLayer": "<rootDir>/.aws-sam/build/PermissionLayer/permissionLayer",
+			"^/opt/reservationLayer": "<rootDir>/.aws-sam/build/ReservationLayer/reservationLayer",
+			"^/opt/smsLayer": "<rootDir>/.aws-sam/build/SmsLayer/smsLayer",
+			"^/opt/sqsLayer": "<rootDir>/.aws-sam/build/SqsLayer/sqsLayer",
+			"^/opt/webHookLayer": "<rootDir>/.aws-sam/build/WebHookLayer/webHookLayer"
+		}
+  	},
+	"devDependencies": {
+		"@digitalspace/dynamodb-migrate": "^1.0.6",
+		"aws-sdk-mock": "^5.4.0",
+		"cross-env": "^7.0.3",
+		"jest": "^29.3.1",
+		"mockdate": "^3.0.5",
+		"read-excel-file": "^5.3.4"
+	},
+	"dependencies": {
+>>>>>>> 00b1f9f... Sam Build Files
 		"winston": "^3.7.2",
 		"luxon": "3.4.4",
 		"jsonwebtoken": "9.0.2",
 		"jwks-rsa": "^3.0.0",
 		"axios": "1.6.7",
 		"crypto": "1.0.1",
+<<<<<<< HEAD
 		"@aws-sdk/client-dynamodb": "^3.44.0",
 		"aws-sdk-mock": "^5.4.0",
 		"node-jose": "~2.2.0",
@@ -25,3 +66,17 @@
 		"qrcode": "^1.5.1"
 	}
 }
+=======
+		"aws-sdk-mock": "^5.4.0",
+		"node-jose": "~2.2.0",
+		"svg-captcha": "^1.4.0",
+		"qrcode": "^1.5.1",
+		"@aws-sdk/client-dynamodb": "^3.44.0",
+    	"@aws-sdk/client-s3": "^3.44.0",
+    	"@aws-sdk/client-sqs": "^3.44.0",
+    	"@aws-sdk/client-lambda": "^3.44.0",
+		"@aws-sdk/util-dynamodb": "^3.44.0"
+		
+	}
+}
+>>>>>>> 00b1f9f... Sam Build Files

@@ -1,4 +1,7 @@
 {
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
     "name": "api-base-layer",
     "version": "0.0.1",
     "author": "?/////.",
@@ -9,3 +12,44 @@
       "winston": "^3.7.2"
     }
   }
+=======
+  "name": "dup-api-base-layer",
+    "version": "1.0.0",
+  "author": "Digitalspace <contact@digitalspace.ca>",
+=======
+  "name": "dup-api-base-layer",
+  "version": "0.0.1",
+  "author": "Team Osprey",
+>>>>>>> 29a2062... convert to use npm, update github actions
+  "license": "MIT",
+  "dependencies": {
+    "luxon": "3.4.4",
+    "winston": "^3.7.2",
+    "@aws-sdk/client-dynamodb": "^3.54.0",
+    "@aws-sdk/client-s3": "^3.54.0",
+    "@aws-sdk/client-sqs": "^3.54.0",
+    "@aws-sdk/client-lambda": "^3.54.0",
+    "@aws-sdk/util-dynamodb": "^3.54.0",
+    "@aws-sdk/s3-request-presigner": "^3.54.0"
+  }
+<<<<<<< HEAD
+=======
+"name": "dup-api-base-layer",
+"version": "0.0.1",
+"author": "Team Osprey",
+"license": "MIT",
+"dependencies": {
+  "luxon": "3.4.4",
+  "winston": "^3.7.2",
+  "@aws-sdk/client-dynamodb": "^3.54.0",
+  "@aws-sdk/client-s3": "^3.54.0",
+  "@aws-sdk/client-sqs": "^3.54.0",
+  "@aws-sdk/client-lambda": "^3.54.0",
+  "@aws-sdk/util-dynamodb": "^3.54.0",
+  "@aws-sdk/s3-request-presigner": "^3.54.0"
+}
+>>>>>>> d3d301e... Updated package.json version numbers
+=======
+>>>>>>> 29a2062... convert to use npm, update github actions
+}
+>>>>>>> 00b1f9f... Sam Build Files
