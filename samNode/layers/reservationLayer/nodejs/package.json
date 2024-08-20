@@ -1,0 +1,16 @@
+{
+  "name": "dup-api-reservation-layer",
+  "version": "0.0.1",
+  "author": "Team Osprey",
+    "license": "MIT",
+    "dependencies": {
+      "luxon": "^3.2.1"
+  },
+  "scripts": {
+    "test": "mocha tests/unit/"
+  },
+  "devDependencies": {
+    "chai": "^4.3.6",
+    "mocha": "^10.1.0"
+  }
+}

@@ -1,6 +1,6 @@
 const AWS = require('aws-sdk');
 const fs = require('fs');
-const TABLE_NAME = 'parksreso';
+const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
 const { updateConsoleProgress } = require('./pksk-migration/parks/common');
 
 let startTime = new Date().getTime();

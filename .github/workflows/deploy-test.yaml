@@ -4,15 +4,13 @@ run-name: Deploying ${{ github.ref_name }} to test
 
 on:
   push:
-    tags:
+    tags: 
       - '*'
-
-env:
-  TF_VERSION: 0.14.7
-  TG_VERSION: 0.37.1
-  TG_SRC_PATH: terraform
-  TFC_WORKSPACE: test
-  TARGET_ENV: test
+  workflow_dispatch:
+    inputs:
+      releaseTag:
+        description: "Tag of version to be promoted to test"
+        required: true
 
 permissions:
   id-token: write
@@ -20,69 +18,92 @@ permissions:
 
 jobs:
   ci:
-    name: Push to AWS Lambda
+    name: Build and Deploy
     runs-on: ubuntu-latest
     environment: test
+    strategy:
+      matrix:
+        node-version: [18.x]
 
+    defaults:
+      run:
+        working-directory: "samNode"
     steps:
-      - name: Attempt to checkout tag
+      - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.ref }}
 
+      - shell: bash
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: |
+          curl -X POST -H 'Content-Type: application/json' $WEBHOOK_URL --data '{"text":" DUP API deploy Test"}'
+
+      # Tag not found
       - name: Tag not found
         if: ${{ failure() }}
         run: |
           echo "::error::Git Tag not found, please double check input"
           exit 1
 
-      ### Install if no cache exists ###
-      - name: Setup node
-        uses: actions/setup-node@v3
+      # Setup AWS SAM
+      - name: Setup AWS SAM
+        uses: aws-actions/setup-sam@v2
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'yarn'
-      - run: yarn install --silent --frozen-lockfile
+          use-installer: true
 
-      ### Build if no cache exists ###
-      - name: Cache Build
-        id: cache-build
+      # Assume AWS IAM Role
+      - name: Get AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # SAM Build
+      - name: Cache SAM Build
+        id: cache-sam-build
         uses: actions/cache@v3
         with:
           path: |
-            **/terraform/src/artifacts
-          key: ${{ github.sha }}-artifacts
-      - name: Run Build
-        if: steps.cache-build.outputs.cache-hit != 'true'
+            **samNode/.aws-sam
+          key: ${{ github.sha }}-dup-api-sam-cache
+      - name: Run sam build
+        if: steps.cache-sam-build.outputs.cache-hit != 'true'
         run: |
-          sudo prlimit --pid $$ --nofile=1048576:1048576
-          sudo sysctl fs.inotify.max_user_instances=1280
-          sudo sysctl fs.inotify.max_user_watches=655360
-          yarn build-ci
+          sam build --cached
 
-      ### Get environment variables from AWS Parameter Store ###
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: ${{ vars.AWS_ROLE_ARN_TO_USE }}
-          role-duration-seconds: 900
-          role-session-name: parks-reso-api-sandbox-gh-action
-          role-skip-session-tagging: true
-
-      ### Run Terragrunt ###
-      - name: Setup terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
-
-      - name: Setup Terragrunt
-        uses: autero1/action-terragrunt@v1.3.0
-        with:
-          terragrunt_version: ${{ env.TG_VERSION }}
-
-      - name: Terragrunt Apply
-        working-directory: ${{ env.TG_SRC_PATH }}/${{ env.TFC_WORKSPACE }}
+      # Prevent prompts and failure when the stack is unchanged
+      - name: SAM deploy
         env:
-          aws_region: ${{ secrets.AWS_REGION }}
-        run: terragrunt apply -auto-approve --terragrunt-non-interactive -var target_aws_account_id=${{ vars.ACCOUNT_ID }} -var target_env=test
+          ADMIN_FRONTEND: ${{ vars.ADMIN_FRONTEND }}
+          AWS_ACCOUNT_LIST: ${{ vars.AWS_ACCOUNT_LIST }}
+          CF_SECRET_KEY: ${{ secrets.CF_SECRET_KEY }}
+          DATA_REGISTER_API_KEY: ${{ secrets.DATA_REGISTER_API_KEY }}
+          FEEDBACK_SURVEY_URL: ${{ secrets.FEEDBACK_SURVEY_URL }}
+          GC_NOTIFY_API_KEY: ${{ secrets.GC_NOTIFY_API_KEY }}
+          GC_NOTIFY_CANCEL_TEMPLATE_ID: ${{ vars.GC_NOTIFY_CANCEL_TEMPLATE_ID }}  
+          GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID: ${{ vars.GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID }}
+          GC_NOTIFY_REMINDER_TEMPLATE_ID: ${{ vars.GC_NOTIFY_REMINDER_TEMPLATE_ID }}
+          GC_NOTIFY_SMS_TEMPLATE_ID: ${{ vars.GC_NOTIFY_SMS_TEMPLATE_ID }}
+          GC_NOTIFY_SURVEY_TEMPLATE_ID: ${{ vars.GC_NOTIFY_SURVEY_TEMPLATE_ID }}
+          GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID: ${{ vars.GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID }}
+          HOLD_PASS_TIMEOUT: ${{ vars.HOLD_PASS_TIMEOUT }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          LOW_CAPACITY_THRESHOLD: ${{ vars.LOW_CAPACITY_THRESHOLD }}
+          MODERATE_CAPACITY_THRESHOLD: ${{ vars.MODERATE_CAPACITY_THRESHOLD }}
+          PUBLIC_FRONTEND: ${{ vars.PUBLIC_FRONTEND }}
+          S3_BUCKET_DATA: ${{ vars.S3_BUCKET_DATA }}
+          SSO_ISSUER_URL: ${{ vars.SSO_ISSUER_URL }}
+          SSO_JWKS_URI: ${{ vars.SSO_JWKS_URI }}
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+ 
+        run: |
+          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides "AdminFrontEnd=$ADMIN_FRONTEND" "AWSAccountList=$AWS_ACCOUNT_LIST" "CFSecretKey=$CF_SECRET_KEY" "DataRegisterApiKey=$DATA_REGISTER_API_KEY" "FeedbackSurveyUrl=$FEEDBACK_SURVEY_URL" "GCNotifyApiKey=$GC_NOTIFY_API_KEY" "GCNotifyCancelTemplateID=$GC_NOTIFY_CANCEL_TEMPLATE_ID" "GCNotifyParkingReceiptTemplateID=$GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID" "PublicFrontend=$PUBLIC_FRONTEND" "GCNotifyReminderTemplateID=$GC_NOTIFY_REMINDER_TEMPLATE_ID" "GCNotifySMSTemplateID=$GC_NOTIFY_SMS_TEMPLATE_ID" "GCNotifySurveyTemplateID=$GC_NOTIFY_SURVEY_TEMPLATE_ID" "GCNotifyTrailReceiptTemplateID=$GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID" "HoldPassTimeout=$HOLD_PASS_TIMEOUT" "JWTSecret=$JWT_SECRET" "LowCapacityThreshold=$LOW_CAPACITY_THRESHOLD" "ModerateCapacityThreshold=$MODERATE_CAPACITY_THRESHOLD" "S3BucketData=$S3_BUCKET_DATA" "SSOIssuerUrl=$SSO_ISSUER_URL" "SSOJWKSUri=$SSO_JWKS_URI" "WebHookURL=$WEBHOOK_URL"
+
+      - shell: bash
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: |
+          curl -X POST -H 'Content-Type: application/json' $WEBHOOK_URL --data '{"text":" DUP API - Deploy Test Complete"}'
