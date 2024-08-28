@@ -15,7 +15,6 @@ Globals:
         AWSREGION: !Ref AWSDefaultRegion
         DYNAMODB_ENDPOINT_URL: "https://dynamodb.ca-central-1.amazonaws.com"
 
-
 Parameters:
   Algorithm:
     Type: String
@@ -1490,10 +1489,10 @@ Resources:
   ############ 
   # S3 Bucket
   ############
-  ParksAssetsS3BucketSAM:
-    Type: 'AWS::S3::Bucket'
-    Properties:
-      BucketName: !Ref S3BucketData
+  # ParksAssetsS3BucketSAM:
+  #   Type: 'AWS::S3::Bucket'
+  #   Properties:
+  #     BucketName: !Ref S3BucketData
 
   #############
   # SQS Queues
