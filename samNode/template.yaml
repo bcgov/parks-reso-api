@@ -15,6 +15,7 @@ Globals:
         AWSREGION: !Ref AWSDefaultRegion
         DYNAMODB_ENDPOINT_URL: "https://dynamodb.ca-central-1.amazonaws.com"
 
+
 Parameters:
   Algorithm:
     Type: String
@@ -123,7 +124,7 @@ Parameters:
     Default: 'http://localhost:4300/dayuse'
   S3BucketData:
     Type: String
-    Default: 'parks-dup-assets-tools'
+    Default: 'parks-dup-assets-tools-SAM'
   SSOIssuerUrl:
     Type: String
     Default: 'https://dev.loginproxy.gov.bc.ca/auth/realms/bcparks-service-transformation'
@@ -1489,7 +1490,7 @@ Resources:
   ############ 
   # S3 Bucket
   ############
-  ParksArAssetsS3Bucket:
+  ParksAssetsS3BucketSAM:
     Type: 'AWS::S3::Bucket'
     Properties:
       BucketName: !Ref S3BucketData
