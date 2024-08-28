@@ -14,7 +14,7 @@ Globals:
         IS_OFFLINE: false
         AWSREGION: !Ref AWSDefaultRegion
         DYNAMODB_ENDPOINT_URL: "https://dynamodb.ca-central-1.amazonaws.com"
-#http://172.17.0.2:8000 for local 
+
 
 Parameters:
   Algorithm:
