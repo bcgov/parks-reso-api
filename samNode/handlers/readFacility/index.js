@@ -90,7 +90,7 @@ exports.handler = async (event, context) => {
             facility.currentTime = currentTime;
         });
         return sendResponse(200, facilityData, context);
-    } else {
+      } else {
         logger.info('Invalid Request');
         return sendResponse(400, { msg: 'Invalid Request' }, context);
       }
