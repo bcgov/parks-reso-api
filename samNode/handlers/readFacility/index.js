@@ -49,7 +49,12 @@ exports.handler = async (event, context) => {
         queryObj = visibleFilter(queryObj, permissionObject.isAuthenticated);
         const facilityData = await runQuery(queryObj);
         logger.info('Returning results', facilityData.length);
+        const currentTime = new Date().toISOString();
+        facilityData.forEach(facility => {
+          facility.currentTime = currentTime;
+        });
         return sendResponse(200, facilityData, context);
+
       } else {
         logger.info('Invalid Request');
         return sendResponse(400, { msg: 'Invalid Request' }, context);
@@ -80,8 +85,12 @@ exports.handler = async (event, context) => {
         queryObj = visibleFilter(queryObj, permissionObject.isAuthenticated);
         const facilityData = await runQuery(queryObj);
         logger.info('Returning results', facilityData.length);
+        const currentTime = new Date().toISOString();
+        facilityData.forEach(facility => {
+            facility.currentTime = currentTime;
+        });
         return sendResponse(200, facilityData, context);
-      } else {
+    } else {
         logger.info('Invalid Request');
         return sendResponse(400, { msg: 'Invalid Request' }, context);
       }
