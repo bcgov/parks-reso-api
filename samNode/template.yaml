@@ -145,6 +145,12 @@ Parameters:
   WebHookURL:
     Type: String
     Default: 'default'
+  SQSExpiryQueueURL:
+    Type: String
+    Default: ''
+  GCNotifyQueue:
+    Type: String
+    Default: ''
   
 Resources:
   #########
@@ -1267,6 +1273,8 @@ Resources:
       Runtime: nodejs20.x
       Environment:
         Variables:
+          SQS_EXPIRY_QUEUE_URL: !Ref SQSExpiryQueueURL
+          GC_NOTIFY_QUEUE: !Ref GCNotifyQueue
           ALGORITHM: !Ref Algorithm
           GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID: !Ref GCNotifyParkingReceiptTemplateID
           GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID: !Ref GCNotifyTrailReceiptTemplateID
