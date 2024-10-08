@@ -13,7 +13,7 @@ Globals:
         SSO_JWKSURI: !Ref SSOJWKSUri
         IS_OFFLINE: false
         AWSREGION: !Ref AWSDefaultRegion
-        DYNAMODB_ENDPOINT_URL: "http://172.17.0.2:8000"
+        DYNAMODB_ENDPOINT_URL: "https://dynamodb.ca-central-1.amazonaws.com"
 
 Parameters:
   Algorithm:
@@ -123,7 +123,7 @@ Parameters:
     Default: 'http://localhost:4300/dayuse'
   S3BucketData:
     Type: String
-    Default: 'parks-dup-assets-tools'
+    Default: 'parks-dup-assets-tools-SAM'
   SSOIssuerUrl:
     Type: String
     Default: 'https://dev.loginproxy.gov.bc.ca/auth/realms/bcparks-service-transformation'
@@ -145,6 +145,12 @@ Parameters:
   WebHookURL:
     Type: String
     Default: 'default'
+  SQSExpiryQueueURL:
+    Type: String
+    Default: ''
+  GCNotifyQueue:
+    Type: String
+    Default: ''
   
 Resources:
   #########
@@ -1267,6 +1273,8 @@ Resources:
       Runtime: nodejs20.x
       Environment:
         Variables:
+          SQS_EXPIRY_QUEUE_URL: !Ref SQSExpiryQueueURL
+          GC_NOTIFY_QUEUE: !Ref GCNotifyQueue
           ALGORITHM: !Ref Algorithm
           GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID: !Ref GCNotifyParkingReceiptTemplateID
           GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID: !Ref GCNotifyTrailReceiptTemplateID
@@ -1489,10 +1497,10 @@ Resources:
   ############ 
   # S3 Bucket
   ############
-  ParksArAssetsS3Bucket:
-    Type: 'AWS::S3::Bucket'
-    Properties:
-      BucketName: !Ref S3BucketData
+  # ParksAssetsS3BucketSAM:
+  #   Type: 'AWS::S3::Bucket'
+  #   Properties:
+  #     BucketName: !Ref S3BucketData
 
   #############
   # SQS Queues
