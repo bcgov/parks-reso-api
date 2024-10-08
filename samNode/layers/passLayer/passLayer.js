@@ -15,8 +15,8 @@ const { DateTime } = require('luxon');
 const { info } = require('winston');
 
 //TODO PUT THIS IN AWS
-const sqsExpiryQueueURL = "https://sqs.ca-central-1.amazonaws.com/039380614566/expiry-queue-sam"
-const gcNotifyQueue = 'https://sqs.ca-central-1.amazonaws.com/039380614566/gcn-email-queue-sam'
+const sqsExpiryQueueURL = process.env.SQS_EXPIRY_QUEUE_URL;
+const gcNotifyQueue = process.env.GC_NOTIFY_QUEUE;
 
 // default opening closing hours in 24h time
 
