@@ -145,7 +145,7 @@ Parameters:
   WebHookURL:
     Type: String
     Default: 'default'
-  SQSExpiryQueueURL:
+  SQSExpiryQueue:
     Type: String
     Default: ''
   GCNotifyQueue:
