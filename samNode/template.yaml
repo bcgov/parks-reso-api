@@ -69,10 +69,10 @@ Parameters:
     Default: 'String'
   GCNotifyIsSendingReminders:
     Type: String
-    Default: 'true'
+    Default: 'True'
   GCNotifyIsSendingSurveys:
     Type: String
-    Default: 'true'
+    Default: 'True'
   GCNotifyParkingReceiptTemplateID:
     Type: String
     Default: 'String'
