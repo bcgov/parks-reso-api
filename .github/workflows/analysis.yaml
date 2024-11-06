@@ -33,8 +33,6 @@ jobs:
           scan-type: "fs"
           scanners: "vuln,secret,config"
           severity: "CRITICAL,HIGH"
-          retry-count: 3
-          retry-interval: 30s
 
       - name: Print SARIF file
         run: cat trivy-results.sarif
