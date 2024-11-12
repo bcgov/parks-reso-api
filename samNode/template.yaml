@@ -339,7 +339,7 @@ Resources:
         ScheduleEvent:
           Type: Schedule
           Properties:
-            Schedule: "cron(0 0 * * ? *)" #  Every night at midnight
+            Schedule: "cron(0 * * * ? *)" #  Every hour
 
   CheckExpiryFunction:
     Type: AWS::Serverless::Function
@@ -366,7 +366,7 @@ Resources:
         ScheduleEvent:
           Type: Schedule
           Properties:
-            Schedule: "cron(0 0 * * ? *)" #  Every night at midnight       
+            Schedule: "cron(0 * * * ? *)" #  Every hour       
 
   CloudWatchFunction:
     Type: AWS::Serverless::Function
@@ -942,7 +942,7 @@ Resources:
         ScheduleEvent:
           Type: Schedule
           Properties:
-            Schedule: "cron(0 0 * * ? *)" #  Every night at midnight
+            Schedule: "cron(0 0 * * ? *)" #  Every day at 4pm PST
 
   SendSurveyFunction:
     Type: AWS::Serverless::Function
@@ -1053,6 +1053,11 @@ Resources:
               TableName: !Ref MetaTableName
           - DynamoDBCrudPolicy:
               TableName: !Ref MetricsTableName
+      Events:
+          ScheduleEvent:
+            Type: Schedule
+            Properties:
+              Schedule: "cron(57,58,59 12 ? * * *)" # Fires at 5:57, 5:58, 5:59 in the morning PST
 
   WriteConfigFunction:
     Type: AWS::Serverless::Function
@@ -1109,10 +1114,10 @@ Resources:
           - DynamoDBCrudPolicy:
               TableName: !Ref MetricsTableName
       Events:
-          writeMetrics:
+          ScheduleEvent:
             Type: Schedule
             Properties:
-              Schedule: "cron(0 0 * * ? *)" # Every night at midnight
+              Schedule: "cron(0 8 * * ? *)" # Every night at midnight PST
 
   WriteModifierFunction:
     Type: AWS::Serverless::Function

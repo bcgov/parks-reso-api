@@ -19,7 +19,7 @@ jobs:
     name: Trivy Security Scan
     if: ${{ ! github.event.pull_request.draft }}
     runs-on: ubuntu-22.04
-    timeout-minutes: 1
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
