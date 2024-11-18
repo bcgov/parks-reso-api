@@ -328,6 +328,8 @@ Resources:
           META_TABLE_NAME: !Ref MetaTableName
           METRICS_TABLE_NAME: !Ref MetricsTableName
           LOG_LEVEL: !Ref LogLevel
+      Layers:
+          - !Ref BaseLayer
       Policies:
           - DynamoDBCrudPolicy:
               TableName: !Ref TableNameParks
