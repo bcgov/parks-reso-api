@@ -1302,6 +1302,7 @@ Resources:
           META_TABLE_NAME: !Ref MetaTableName
           METRICS_TABLE_NAME: !Ref MetricsTableName
           LOG_LEVEL: !Ref LogLevel
+          PUBLIC_FRONTEND: !REF PublicFrontend
       Layers:
         - !Ref BaseLayer
         - !Ref PermissionLayer
