@@ -36,7 +36,7 @@ async function run() {
     await restoreData(data);
     const res = await sourceDynamoDB.scan({ ...params, ExclusiveStartKey: key }).promise();
     console.log("data.Items.length:", res.Items.length);
-    data.Items = data.Items.concat(res.Items);
+    data.Items = res.Items;
     key = res.LastEvaluatedKey;
   }
 
