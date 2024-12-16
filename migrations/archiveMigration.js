@@ -7,7 +7,7 @@ const {
 } = require('@aws-sdk/client-dynamodb');
 const TABLE_NAME = process.env.TABLE_NAME || 'ParksDUP';
 const ARCHIVE_TABLE_NAME = process.env.ARCHIVE_TABLE_NAME || 'archivedPasses';
-const REGION = 'ca-central-1'; //use for testing
+const REGION = 'ca-central-1'; 
 const DYNAMODB_ENDPOINT_URL = process.env.DYNAMODB_ENDPOINT_URL || 'http://172.17.0.2:8000';
 
 const options = {
