@@ -41,7 +41,7 @@ const scanObj = {
       S: 'pass::'
     },
     ':maxDate': {
-      S: '2023-01-01T00:00:00.000Z' //change year? maybe get current time and take year for this?
+      S: '2023-01-01T00:00:00.000Z'
     }
   },
   FilterExpression: 'begins_with(#pk, :beginsWith) AND #date < :maxDate'
