@@ -172,10 +172,7 @@ async function createTable(NEW_TABLE) {
       { AttributeName: 'pk', AttributeType: 'S' },
       { AttributeName: 'sk', AttributeType: 'S' }
     ],
-    ProvisionedThroughput: {
-      ReadCapacityUnits: 10000,
-      WriteCapacityUnits: 10000
-    }
+    BillingMode: "PAY_PER_REQUEST"
   };
   let command = new CreateTableCommand(createTableParams);
   const data = await dynamoClient.send(command);
