@@ -152,6 +152,9 @@ Parameters:
   GCNotifyQueue:
     Type: String
     Default: ''
+  ArchiveTableName:
+    Type: String
+    Default: "archivedPasses"
   
 Resources:
   #########
@@ -316,6 +319,31 @@ Resources:
   ############
   # Functions
   ############
+
+  ArchivePasses:
+    Type: AWS::Serverless::Function
+    Properties:
+      Timeout: 600
+      CodeUri: handlers/archivePasses/
+      Handler: index.handler
+      Runtime: nodejs20.x
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableNameParks
+          ARCHIVE_TABLE_NAME: !Ref ArchiveTableName
+          LOG_LEVEL: !Ref LogLevel
+      Policies:
+          - DynamoDBCrudPolicy:
+              TableName: !Ref TableNameParks
+          - DynamoDBCrudPolicy:
+              TableName: !Ref ArchiveTableName
+      Events:
+        ScheduleEvent:
+          Type: Schedule
+          Properties:
+            Schedule: "cron(0 8 1 4,11 ? *)" # April 1st and November 1st at 00:00 PST
+
+
   CheckActivationFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -1445,6 +1473,28 @@ Resources:
     UpdateReplacePolicy: Retain
     Properties:
       TableName: !Ref MetricsTableName
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  ArchivedPasses:
+    Type: "AWS::DynamoDB::Table"
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Ref ArchiveTableName
       AttributeDefinitions:
         - AttributeName: pk
           AttributeType: S
