@@ -1,9 +1,0 @@
-{
-	"name": "archivePassesFunction",
-	"version": "0.0.1",
-	"author": "Team Osprey",
-	"license": "MIT",
-		"dependencies": {
-			"luxon": "3.4.4"
-		}
-}
