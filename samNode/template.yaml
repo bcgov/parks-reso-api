@@ -940,6 +940,7 @@ Resources:
       CodeUri: handlers/sendReminder/
       Handler: index.handler
       Runtime: nodejs20.x
+      Timeout: 300
       Environment:
         Variables:
           GC_NOTIFY_IS_SENDING_REMINDERS: !Ref GCNotifyIsSendingReminders
