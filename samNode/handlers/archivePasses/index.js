@@ -49,23 +49,23 @@ const {
     FilterExpression: 'begins_with(#pk, :beginsWith) AND #date < :maxDate'
   };
 
-exports.handler = async (event, context) => {
-
+  exports.handler = async (event, context) => {
     await tableExists();
-    let scanCommand = new ScanCommand(scanObj);
-    let scanData = await dynamoClient.send(scanCommand);
-    let key = scanData.LastEvaluatedKey;
     let index = 0;
-  
-    while (typeof key !== 'undefined') {
-      await restoreData(scanData);
-      scanData = await dynamoClient.send(new ScanCommand({ ...scanObj, ExclusiveStartKey: key }));
-      key = scanData.LastEvaluatedKey;
-      index += scanData.Items.length;
-    }
-    process.stdout.write(`${index.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Records Processed\r\n`);
-}
+    let scanData;
 
+    do {
+        scanData = await dynamoClient.send(new ScanCommand({ ...scanObj, ExclusiveStartKey: scanData?.LastEvaluatedKey }));
+
+        if (scanData.Items.length > 0) {
+            await restoreData(scanData);
+            index += scanData.Items.length;
+        }
+
+    } while (scanData.LastEvaluatedKey);
+
+    process.stdout.write(`${index.toLocaleString()} Records Processed\r\n`);
+};
 async function restoreData(data) {
     console.log('Processing data:', data.Items.length);
 
