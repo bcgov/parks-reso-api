@@ -343,6 +343,30 @@ Resources:
           Properties:
             Schedule: "cron(0 8 1 4,11 ? *)" # April 1st and November 1st at 00:00 PST
 
+  BackfillMetricsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: handlers/tools/backfillMetrics
+      Handler: index.handler
+      Runtime: nodejs20.x
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableNameParks
+          META_TABLE_NAME: !Ref MetaTableName
+          METRICS_TABLE_NAME: !Ref MetricsTableName
+          LOG_LEVEL: !Ref LogLevel
+      Layers:
+          - !Ref BaseLayer
+          - !Ref MetricsLayer
+          - !Ref ReservationLayer
+      Policies:
+          - DynamoDBCrudPolicy:
+              TableName: !Ref TableNameParks
+          - DynamoDBCrudPolicy:
+              TableName: !Ref MetaTableName
+          - DynamoDBCrudPolicy:
+              TableName: !Ref MetricsTableName
+
 
   CheckActivationFunction:
     Type: AWS::Serverless::Function
