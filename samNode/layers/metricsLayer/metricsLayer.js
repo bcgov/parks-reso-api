@@ -18,19 +18,19 @@ async function createMetric(park, facility, date) {
   const today = DateTime.now().setZone(TIMEZONE);
   const currentDate = today.toISODate();
   let capacities = {};
-  
+
   // Get passes for park/facility/date DB:
   let hourlyData = [];
   const [passes, resObj] = await Promise.all([getPassesForDate(facility, date), getReservationObjectForDate(park.sk, facility.sk, date)]);
 
   for (const time in facility.bookingTimes) {
     capacities[time] = {
-      baseCapacity: resObj?.capacities?.[time].baseCapacity ??
+      baseCapacity: resObj?.capacities?.[time]?.baseCapacity ??
         (facility.bookingTimes[time].max || 0),
-      capacityModifier: resObj?.capacities?.[time].capacityModifier || 0,
-      availablePasses: resObj?.capacities?.[time].availablePasses ??
+      capacityModifier: resObj?.capacities?.[time]?.capacityModifier || 0,
+      availablePasses: resObj?.capacities?.[time]?.availablePasses ??
         (facility?.bookingTimes?.[time]?.max || 0),
-      overbooked: resObj?.capacities?.[time].overbooked || 0,
+      overbooked: resObj?.capacities?.[time]?.overbooked || 0,
       checkedIn: 0,
       passStatuses: {}
     }
@@ -56,6 +56,7 @@ async function createMetric(park, facility, date) {
           capacityModifier: 0,
           availablePasses: 0,
           overbooked: 0,
+          checkedIn: 0,
           passStatuses: {}
         }
       }
@@ -63,7 +64,7 @@ async function createMetric(park, facility, date) {
         // If timeslot doesn't exist, count pass as overbooked
         capacities[pass.type].overbooked += pass.numberOfGuests;
       }
-      if (pass.checkedIn) {
+      if (pass?.checkedIn) {
         // Increase total checked in counter
         capacities[pass.type].checkedIn += pass.numberOfGuests;
       }
@@ -73,9 +74,9 @@ async function createMetric(park, facility, date) {
         }
         capacities[pass.type].passStatuses[pass.passStatus] += pass.numberOfGuests
       }
-      // collect hourly data 
+      // collect hourly data
       if (pass.checkedInTime && hourlyData.length) {
-        const checkInHour = DateTime.fromISO(pass.checkedInTime).get('hour');
+        const checkInHour = DateTime.fromISO(pass.checkedInTime).setZone(TIMEZONE).get('hour')
         // hourlyData index === 0-23 hour
         hourlyData[checkInHour]['checkedIn'] += pass.numberOfGuests;
       }
@@ -88,8 +89,8 @@ async function createMetric(park, facility, date) {
   let totalCapacity = 0;
 
   for (const time in capacities) {
-    totalCapacity += capacities[time].baseCapacity;
-    totalCapacity += capacities[time].capacityModifier;
+    totalCapacity += capacities[time]?.baseCapacity;
+    totalCapacity += capacities[time]?.capacityModifier;
     totalUsedPasses += capacities[time].passStatuses['active'] || 0;
     totalUsedPasses += capacities[time].passStatuses['reserved'] || 0;
     totalUsedPasses += capacities[time].passStatuses['expired'] || 0;
