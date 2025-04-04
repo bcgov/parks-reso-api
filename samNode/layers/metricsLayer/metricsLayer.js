@@ -97,6 +97,12 @@ async function createMetric(park, facility, date) {
     totalCancelledPasses += capacities[time].passStatuses['cancelled'] || 0;
   }
 
+  let passesRequired = checkPassesRequired(facility, date)
+
+  if (park?.status == 'closed') {
+    passesRequired = false;
+  }
+
   let metricsObj = {
     pk: `metrics::${park.sk}::${facility.sk}`,
     sk: date,
@@ -106,7 +112,7 @@ async function createMetric(park, facility, date) {
     fullyBooked: totalUsedPasses >= totalCapacity ? true : false,
     capacities: capacities,
     status: resObj?.status || facility.status.state || null,
-    passesRequired: resObj?.passesRequired || checkPassesRequired(facility, date) || null,
+    passesRequired: resObj?.passesRequired || passesRequired,
     specialClosure: !!park.specialClosure
   }
 

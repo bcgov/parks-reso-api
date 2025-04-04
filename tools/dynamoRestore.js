@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const { de } = require('date-fns/locale');
 const readline = require('readline');
-const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
+const TABLE_NAME = process.env.TABLE_NAME || 'ParksDUP';
 const sourceRegion = 'ca-central-1';
 const destRegion = 'local-env';
 
@@ -25,25 +25,31 @@ const params = {
 };
 
 async function run() {
-  
   await tableExists();
 
   let data = await sourceDynamoDB.scan(params).promise();
-  console.log("data.Items.length:", data.Items.length); 
   console.log("LastEvaluatedKey:", data.LastEvaluatedKey);
+  console.log("data.Items.length:", data.Items.length);
   let key = data.LastEvaluatedKey;
-  let index = 0;
+  let index = data.Items.length;
   while (typeof key !== "undefined") {
     await restoreData(data);
-    const res = await sourceDynamoDB.scan({ ...params, ExclusiveStartKey: key }).promise();
-    console.log("data.Items.length:", res.Items.length);
-    key = res.LastEvaluatedKey;
+    let data = await sourceDynamoDB.scan({ ...params, ExclusiveStartKey: key }).promise();
+    console.log("LastEvaluatedKey:", data.LastEvaluatedKey);
+    console.log("data.Items.length:", data.Items.length);
+    key = data.LastEvaluatedKey;
     index += data.Items.length;
-    key = res.LastEvaluatedKey;
+  }
+
+   // Ensure the final batch is processed
+   if (data.Items.length > 0) {
+    console.log("Processing final batch...");
+    await restoreData(data);
   }
 
   process.stdout.write(`${index.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Records Processed\r\n`);
 }
+
 
 async function tableExists() {
   try {
