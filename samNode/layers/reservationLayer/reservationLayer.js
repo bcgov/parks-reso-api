@@ -1,4 +1,4 @@
-const { TABLE_NAME, TIMEZONE, runQuery, logger, marshall, dynamoClient, PutItemCommand, UpdateItemCommand } = require('/opt/baseLayer'); 
+const { TABLE_NAME, TIMEZONE, runQuery, getOne, logger, marshall, dynamoClient, PutItemCommand, unmarshall, UpdateItemCommand } = require('/opt/baseLayer'); 
 const { DateTime } = require('luxon');
 // TODO: provide these as vars in Parameter Store
 const LOW_CAPACITY_THRESHOLD = process.env.LOW_CAPACITY_THRESHOLD || 0.25;
@@ -80,21 +80,28 @@ async function createNewReservationsObj(
 
   const bookingTimeTypes = Object.keys(facility.bookingTimes);
 
+  let passesRequired = checkPassesRequired(facility, bookingPSTShortDate)
+  const park = unmarshall(await getOne('park', facility.parkOrcs))
+
+  if (park?.status == 'closed') {
+    passesRequired = false;
+  }
+
   let rawReservationsObject = {
     pk: reservationsObjectPK,
     sk: bookingPSTShortDate,
     capacities: {},
     status: facility.status.state,
-    passesRequired: checkPassesRequired(facility, bookingPSTShortDate)
+    passesRequired: passesRequired
   };
 
   // We are initing capacities
   for (let i = 0; i < bookingTimeTypes.length; i++) {
     const property = bookingTimeTypes[i];
     rawReservationsObject.capacities[property] = {
-      baseCapacity: facility.bookingTimes[property].max,
+      baseCapacity: passesRequired ? facility.bookingTimes[property].max : 0,
       capacityModifier: 0,
-      availablePasses: facility.bookingTimes[property].max
+      availablePasses: passesRequired ? facility.bookingTimes[property].max : 0
     };
   }
 
@@ -121,25 +128,25 @@ async function createNewReservationsObj(
 
 // check if passes are required on the date
 function checkPassesRequired(facility, shortDate) {
-  if (Object.keys(facility?.bookingDays).find((e) => facility.bookingDays.e === false)) {
-    // there is at least 1 day of the week where passes are not required.
-    const date = DateTime.fromFormat(shortDate, 'yyyy-LL-dd').setZone(TIMEZONE);
-    const day = date.toFormat('c');
-    // luxon days of the week are 1-indexed starting on Monday
-    if (facility?.bookingDays[day]) {
-      // passes are required
-      return true;
-    }
-    // if here, passes are not required. Check if bookableHolidays override the day
-    if (facility?.bookableHolidays.find((e) => e === shortDate)) {
-      // passes are required
-      return true;
-    }
-    // passes are not required.
+  const date = DateTime.fromFormat(shortDate, "yyyy-LL-dd", { zone: TIMEZONE });
+  const day = date.toFormat("c").toString();
+
+  // Ensure bookableHolidays is an array; if not, default to an empty array
+  const bookableHolidays = Array.isArray(facility?.bookableHolidays) ? facility.bookableHolidays : []
+
+  // Holidays always require passes, check if today's date is in the array (override)
+  if (bookableHolidays.some((e) => e === shortDate)) {
+    return true;
+  }
+
+  // Check if the facility's bookingDays day of the week requires passes
+  if (facility?.bookingDays[day]) {
+    return true;
+  } else {
     return false;
   }
-  return true;
 }
+
 
 async function getFutureReservationObjects(parkSk, facilityName) {
   let futureResObjects = [];
