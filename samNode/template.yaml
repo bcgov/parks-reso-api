@@ -157,7 +157,7 @@ Parameters:
     Default: "archivedPasses"
   WriteMetricsCron:
     Type: String
-    Default: "cron(0 8,16,24 * * ? *)" 
+    Default: "cron(0 1,8,17 * * ? *)"
   
 Resources:
   #########
