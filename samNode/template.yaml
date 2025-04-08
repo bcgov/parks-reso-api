@@ -155,6 +155,9 @@ Parameters:
   ArchiveTableName:
     Type: String
     Default: "archivedPasses"
+  WriteMetricsCron:
+    Type: String
+    Default: "0 8,16,24 * * ? *" 
   
 Resources:
   #########
@@ -1172,7 +1175,7 @@ Resources:
           ScheduleEvent:
             Type: Schedule
             Properties:
-              Schedule: "cron(0 8 * * ? *)" # Every night at midnight PST
+              Schedule: !Ref WriteMetricsCron
 
   WriteModifierFunction:
     Type: AWS::Serverless::Function
