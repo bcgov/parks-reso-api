@@ -23,13 +23,19 @@ async function createMetric(park, facility, date) {
   let hourlyData = [];
   const [passes, resObj] = await Promise.all([getPassesForDate(facility, date), getReservationObjectForDate(park.sk, facility.sk, date)]);
 
+  let passesRequired = checkPassesRequired(facility, date)
+
+  if (park?.status == 'closed') {
+    passesRequired = false;
+  }
+
   for (const time in facility.bookingTimes) {
     capacities[time] = {
       baseCapacity: resObj?.capacities?.[time]?.baseCapacity ??
-        (facility.bookingTimes[time].max || 0),
+        (passesRequired ? facility?.bookingTimes[time].max : 0),
       capacityModifier: resObj?.capacities?.[time]?.capacityModifier || 0,
       availablePasses: resObj?.capacities?.[time]?.availablePasses ??
-        (facility?.bookingTimes?.[time]?.max || 0),
+        (passesRequired ? facility?.bookingTimes[time].max : 0),
       overbooked: resObj?.capacities?.[time]?.overbooked || 0,
       checkedIn: 0,
       passStatuses: {}
@@ -95,12 +101,6 @@ async function createMetric(park, facility, date) {
     totalUsedPasses += capacities[time].passStatuses['reserved'] || 0;
     totalUsedPasses += capacities[time].passStatuses['expired'] || 0;
     totalCancelledPasses += capacities[time].passStatuses['cancelled'] || 0;
-  }
-
-  let passesRequired = checkPassesRequired(facility, date)
-
-  if (park?.status == 'closed') {
-    passesRequired = false;
   }
 
   let metricsObj = {
