@@ -1,7 +1,7 @@
 const { TABLE_NAME, TIMEZONE, runQuery, getOne, logger, marshall, dynamoClient, PutItemCommand, unmarshall, UpdateItemCommand } = require('/opt/baseLayer'); 
 const { DateTime } = require('luxon');
 // TODO: provide these as vars in Parameter Store
-const LOW_CAPACITY_THRESHOLD = process.env.LOW_CAPACITY_THRESHOLD || 0.25;
+const LOW_CAPACITY_THRESHOLD = process.env.LOW_CAPACITY_THRESHOLD || 0.25; 
 const MODERATE_CAPACITY_THRESHOLD = process.env.MODERATE_CAPACITY_THRESHOLD || 0.75;
 const PARKING_MAX_PER_PASS = 1;
 const TRAIL_MAX_PER_PASS = 4;
@@ -81,7 +81,8 @@ async function createNewReservationsObj(
   const bookingTimeTypes = Object.keys(facility.bookingTimes);
 
   let passesRequired = checkPassesRequired(facility, bookingPSTShortDate)
-  const park = unmarshall(await getOne('park', facility.parkOrcs))
+  let parkOrcs = facility.pk.replace('/\D/g','');
+  const park = unmarshall(await getOne('park', parkOrcs));
 
   if (park?.status == 'closed') {
     passesRequired = false;
