@@ -81,7 +81,8 @@ async function createNewReservationsObj(
   const bookingTimeTypes = Object.keys(facility.bookingTimes);
 
   let passesRequired = checkPassesRequired(facility, bookingPSTShortDate)
-  const park = unmarshall(await getOne('park', facility.parkOrcs))
+  const parkOrcs = facility.pk.replace('/\D/g','');
+  const park = unmarshall(await getOne('park', parkOrcs));
 
   if (park?.status == 'closed') {
     passesRequired = false;
