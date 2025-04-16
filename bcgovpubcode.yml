@@ -1,6 +1,6 @@
 ---
 data_management_roles:
-  data_custodian: Lindsay Macfarlane
+  data_custodian: Rumon Carter
   product_owner: Lindsay Macfarlane
 product_external_dependencies:
   identity_authorization:
