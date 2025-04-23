@@ -50,13 +50,13 @@ exports.handler = async (event, context) => {
   // date must be a valid shortDate:
   try {
     checkDate = DateTime.fromFormat(date, 'yyyy-mm-dd');
-    if (checkDate.invalid){
+    if (checkDate.invalid) {
       logger.info('Provided date must be valid shortDate');
       throw 'Provided date must be valid shortDate';
     }
   } catch (error) {
     logger.error('ERR:', error);
-    return sendResponse(400, {msg: error});
+    return sendResponse(400, { msg: error });
   }
 
   try {
@@ -89,6 +89,20 @@ exports.handler = async (event, context) => {
   }
 };
 
+/**
+ * Updates the capacity modifier for a facility's reservation object on a specific date.
+ *
+ * @async
+ * @function updateModifier
+ * @param {string} date - The date for which the reservation object is being updated (in YYYY-MM-DD format).
+ * @param {Object} modTimes - An object containing time slots (e.g., "AM", "PM") as keys and their respective capacity modifiers as values.
+ * @param {string} parkOrcs - The unique identifier for the park.
+ * @param {Object} currentFacility - The facility object containing details about the facility.
+ * @param {string} currentFacility.name - The name of the facility.
+ * @param {Object} currentFacility.bookingTimes - An object representing the active booking times for the facility.
+ * @throws Will throw an error if the current facility is invalid, if a new total capacity is negative, or if any other error occurs during processing.
+ * @returns {Promise<Object|undefined>} A promise that resolves to the result of the reservation object update, or undefined if no updates were made.
+ */
 async function updateModifier(date, modTimes, parkOrcs, currentFacility) {
   try {
     if (!currentFacility || !currentFacility.name || !currentFacility.bookingTimes) {
@@ -96,28 +110,40 @@ async function updateModifier(date, modTimes, parkOrcs, currentFacility) {
     }
 
     const reservationsObjectPK = `reservations::${parkOrcs}::${currentFacility.name}`;
-    
-    // Apply modifier - ReservationObjLayer will handle available pass logic.
-    //// Ensure the res obj exists
+    // Create a new reservation object if it doesn't exist for the given date
     await createNewReservationsObj(currentFacility, reservationsObjectPK, date);
-    //// Get modifier via date
-    const reservationObj = await getReservationObject(parkOrcs, currentFacility.name, date);
-    // Make sure all modifiers are actually booking types we have active in the facility
-    //// Build timesToUpdate
+
+    // This is safe because we are only getting one reservation object per date.
+    const reservationObj = (await getReservationObject(parkOrcs, currentFacility.name, date))[0];
+
+    // Make sure all modifiers are actually booking types we have active in the facility and check that
+    // the new total capacity is not negative.
     let timesToUpdate = [];
     for (const time in modTimes) {
       // If no time slot exists, we skip
       if (time in currentFacility.bookingTimes) {
+        const currentCapacity = Number(reservationObj.capacities[time].baseCapacity) + Number(reservationObj.capacities[time].capacityModifier);
+        const newTotalCapacity = currentCapacity + Number(modTimes[time]);
+
+        logger.debug("Time AM/PM:", time); // AM / PM
+        logger.debug("Current Capacity:", currentCapacity);
+        logger.debug("Modifier:", Number(modTimes[time]));
+        logger.debug("New Total Capacity:", newTotalCapacity);
+
+        if (newTotalCapacity < 0) {
+          throw `New total capacity for ${time} is negative`;
+        }
+
         timesToUpdate.push({
           time: time,
           modifierToSet: Number(modTimes[time])
         });
       }
     }
-    //// Update res objects
     let res;
     if (timesToUpdate.length > 0) {
-      res = await processReservationObjects(reservationObj, timesToUpdate, []);
+      // We only have one reservation object, so we pass in an array with one object.
+      res = await processReservationObjects([reservationObj], timesToUpdate, []);
     }
     return res;
 
@@ -125,5 +151,4 @@ async function updateModifier(date, modTimes, parkOrcs, currentFacility) {
     logger.error("Error updating modifier");
     throw error;
   }
-    
 }
