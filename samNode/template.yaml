@@ -7,13 +7,14 @@ Description: >
 Globals:
   Function:
     Timeout: 30
+    MemorySize: 768
     Environment:
       Variables:
         SSO_ISSUER: !Ref SSOIssuerUrl
         SSO_JWKSURI: !Ref SSOJWKSUri
         IS_OFFLINE: false
         AWSREGION: !Ref AWSDefaultRegion
-        DYNAMODB_ENDPOINT_URL: "http://172.17.0.2:8000"
+        DYNAMODB_ENDPOINT_URL: "https://dynamodb.ca-central-1.amazonaws.com"
 
 Parameters:
   Algorithm:
@@ -69,10 +70,10 @@ Parameters:
     Default: 'String'
   GCNotifyIsSendingReminders:
     Type: String
-    Default: 'true'
+    Default: 'True'
   GCNotifyIsSendingSurveys:
     Type: String
-    Default: 'true'
+    Default: 'True'
   GCNotifyParkingReceiptTemplateID:
     Type: String
     Default: 'String'
@@ -123,7 +124,7 @@ Parameters:
     Default: 'http://localhost:4300/dayuse'
   S3BucketData:
     Type: String
-    Default: 'parks-dup-assets-tools'
+    Default: 'parks-dup-assets-tools-SAM'
   SSOIssuerUrl:
     Type: String
     Default: 'https://dev.loginproxy.gov.bc.ca/auth/realms/bcparks-service-transformation'
@@ -145,6 +146,18 @@ Parameters:
   WebHookURL:
     Type: String
     Default: 'default'
+  SQSExpiryQueueURL:
+    Type: String
+    Default: ''
+  GCNotifyQueue:
+    Type: String
+    Default: ''
+  ArchiveTableName:
+    Type: String
+    Default: "archivedPasses"
+  WriteMetricsCron:
+    Type: String
+    Default: "cron(0 1,8,17 * * ? *)"
   
 Resources:
   #########
@@ -309,6 +322,55 @@ Resources:
   ############
   # Functions
   ############
+
+  ArchivePasses:
+    Type: AWS::Serverless::Function
+    Properties:
+      Timeout: 600
+      CodeUri: handlers/archivePasses/
+      Handler: index.handler
+      Runtime: nodejs20.x
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableNameParks
+          ARCHIVE_TABLE_NAME: !Ref ArchiveTableName
+          LOG_LEVEL: !Ref LogLevel
+      Policies:
+          - DynamoDBCrudPolicy:
+              TableName: !Ref TableNameParks
+          - DynamoDBCrudPolicy:
+              TableName: !Ref ArchiveTableName
+      Events:
+        ScheduleEvent:
+          Type: Schedule
+          Properties:
+            Schedule: "cron(0 8 1 4,11 ? *)" # April 1st and November 1st at 00:00 PST
+
+  BackfillMetricsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: handlers/tools/backfillMetrics
+      Handler: index.handler
+      Runtime: nodejs20.x
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableNameParks
+          META_TABLE_NAME: !Ref MetaTableName
+          METRICS_TABLE_NAME: !Ref MetricsTableName
+          LOG_LEVEL: !Ref LogLevel
+      Layers:
+          - !Ref BaseLayer
+          - !Ref MetricsLayer
+          - !Ref ReservationLayer
+      Policies:
+          - DynamoDBCrudPolicy:
+              TableName: !Ref TableNameParks
+          - DynamoDBCrudPolicy:
+              TableName: !Ref MetaTableName
+          - DynamoDBCrudPolicy:
+              TableName: !Ref MetricsTableName
+
+
   CheckActivationFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -321,6 +383,8 @@ Resources:
           META_TABLE_NAME: !Ref MetaTableName
           METRICS_TABLE_NAME: !Ref MetricsTableName
           LOG_LEVEL: !Ref LogLevel
+      Layers:
+          - !Ref BaseLayer
       Policies:
           - DynamoDBCrudPolicy:
               TableName: !Ref TableNameParks
@@ -332,7 +396,7 @@ Resources:
         ScheduleEvent:
           Type: Schedule
           Properties:
-            Schedule: "cron(0 0 * * ? *)" #  Every night at midnight
+            Schedule: "cron(0 * * * ? *)" #  Every hour
 
   CheckExpiryFunction:
     Type: AWS::Serverless::Function
@@ -359,7 +423,7 @@ Resources:
         ScheduleEvent:
           Type: Schedule
           Properties:
-            Schedule: "cron(0 0 * * ? *)" #  Every night at midnight       
+            Schedule: "cron(0 * * * ? *)" #  Every hour       
 
   CloudWatchFunction:
     Type: AWS::Serverless::Function
@@ -903,6 +967,7 @@ Resources:
       CodeUri: handlers/sendReminder/
       Handler: index.handler
       Runtime: nodejs20.x
+      Timeout: 300
       Environment:
         Variables:
           GC_NOTIFY_IS_SENDING_REMINDERS: !Ref GCNotifyIsSendingReminders
@@ -935,7 +1000,7 @@ Resources:
         ScheduleEvent:
           Type: Schedule
           Properties:
-            Schedule: "cron(0 0 * * ? *)" #  Every night at midnight
+            Schedule: "cron(0 23 * * ? *)" #  Every day at 4pm PDT
 
   SendSurveyFunction:
     Type: AWS::Serverless::Function
@@ -1046,6 +1111,11 @@ Resources:
               TableName: !Ref MetaTableName
           - DynamoDBCrudPolicy:
               TableName: !Ref MetricsTableName
+      Events:
+          ScheduleEvent:
+            Type: Schedule
+            Properties:
+              Schedule: "cron(57,58,59 12 ? * * *)" # Fires at 5:57, 5:58, 5:59 in the morning PDT
 
   WriteConfigFunction:
     Type: AWS::Serverless::Function
@@ -1102,10 +1172,10 @@ Resources:
           - DynamoDBCrudPolicy:
               TableName: !Ref MetricsTableName
       Events:
-          writeMetrics:
+          ScheduleEvent:
             Type: Schedule
             Properties:
-              Schedule: "cron(0 0 * * ? *)" # Every night at midnight
+              Schedule: !Ref WriteMetricsCron
 
   WriteModifierFunction:
     Type: AWS::Serverless::Function
@@ -1267,6 +1337,8 @@ Resources:
       Runtime: nodejs20.x
       Environment:
         Variables:
+          SQS_EXPIRY_QUEUE_URL: !Ref SQSExpiryQueueURL
+          GC_NOTIFY_QUEUE: !Ref GCNotifyQueue
           ALGORITHM: !Ref Algorithm
           GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID: !Ref GCNotifyParkingReceiptTemplateID
           GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID: !Ref GCNotifyTrailReceiptTemplateID
@@ -1286,6 +1358,7 @@ Resources:
           META_TABLE_NAME: !Ref MetaTableName
           METRICS_TABLE_NAME: !Ref MetricsTableName
           LOG_LEVEL: !Ref LogLevel
+          PUBLIC_FRONTEND: !Ref PublicFrontend
       Layers:
         - !Ref BaseLayer
         - !Ref PermissionLayer
@@ -1444,6 +1517,28 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
 
+  ArchivedPasses:
+    Type: "AWS::DynamoDB::Table"
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Ref ArchiveTableName
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
   #############
   # Authorizer
   #############
@@ -1489,10 +1584,10 @@ Resources:
   ############ 
   # S3 Bucket
   ############
-  ParksArAssetsS3Bucket:
-    Type: 'AWS::S3::Bucket'
-    Properties:
-      BucketName: !Ref S3BucketData
+  # ParksAssetsS3BucketSAM:
+  #   Type: 'AWS::S3::Bucket'
+  #   Properties:
+  #     BucketName: !Ref S3BucketData
 
   #############
   # SQS Queues

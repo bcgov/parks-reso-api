@@ -481,6 +481,13 @@ describe('Pass Successes', () => {
         })
       };
     });
+    jest.mock('/opt/reservationLayer', () => {
+      return {
+        createNewReservationsObj: jest.fn(() => {
+          // Do nothing, don't throw
+        }),
+      };
+    });
     const writePassHandler = require('../index');
     process.env.ADMIN_FRONTEND = 'http://localhost:4300';
     process.env.PASS_MANAGEMENT_ROUTE = '/pass-management';

@@ -1,4 +1,4 @@
-# Parks Reservation - API
+# Day Use Pass - API
 ![Lifecycle:Maturing](https://img.shields.io/badge/Lifecycle-Maturing-007EC6) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=bcgov_parks-reso-api&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=bcgov_parks-reso-api)
 
 # Introduction

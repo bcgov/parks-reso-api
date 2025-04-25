@@ -1,6 +1,6 @@
 {
 	"scripts": {
-		"start": "sam local start-api --env-vars vars.json --debug",
+		"start": "sam local start-api --env-vars vars.json --warm-containers LAZY",
 		"start-full": "npm run build && npm run start",
 		"build": "sam build",
 		"test": "export AWS_REGION=local-env &&  npm run build && jest --coverage"
