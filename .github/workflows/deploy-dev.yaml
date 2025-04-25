@@ -76,9 +76,13 @@ jobs:
           SSO_ISSUER_URL: ${{ vars.SSO_ISSUER_URL }}
           SSO_JWKS_URI: ${{ vars.SSO_JWKS_URI }}
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
- 
+          SQS_EXPIRY_QUEUE_URL: ${{vars.SQS_EXPIRY_QUEUE_URL}}
+          GC_NOTIFY_QUEUE: ${{vars.GC_NOTIFY_QUEUE}}
+          GC_NOTIFY_IS_SENDING_REMINDERS: ${{vars.GC_NOTIFY_IS_SENDING_REMINDERS}}
+          ARCHIVE_TABLE_NAME: ${{vars.ARCHIVE_TABLE_NAME}}
+          
         run: |
-          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides "AdminFrontEnd=$ADMIN_FRONTEND" "AWSAccountList=$AWS_ACCOUNT_LIST" "CFSecretKey=$CF_SECRET_KEY" "DataRegisterApiKey=$DATA_REGISTER_API_KEY" "FeedbackSurveyUrl=$FEEDBACK_SURVEY_URL" "GCNotifyApiKey=$GC_NOTIFY_API_KEY" "GCNotifyCancelTemplateID=$GC_NOTIFY_CANCEL_TEMPLATE_ID" "GCNotifyParkingReceiptTemplateID=$GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID" "PublicFrontend=$PUBLIC_FRONTEND" "GCNotifyReminderTemplateID=$GC_NOTIFY_REMINDER_TEMPLATE_ID" "GCNotifySMSTemplateID=$GC_NOTIFY_SMS_TEMPLATE_ID" "GCNotifySurveyTemplateID=$GC_NOTIFY_SURVEY_TEMPLATE_ID" "GCNotifyTrailReceiptTemplateID=$GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID" "HoldPassTimeout=$HOLD_PASS_TIMEOUT" "JWTSecret=$JWT_SECRET" "LowCapacityThreshold=$LOW_CAPACITY_THRESHOLD" "ModerateCapacityThreshold=$MODERATE_CAPACITY_THRESHOLD" "S3BucketData=$S3_BUCKET_DATA" "SSOIssuerUrl=$SSO_ISSUER_URL" "SSOJWKSUri=$SSO_JWKS_URI" "WebHookURL=$WEBHOOK_URL"
+          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides "AdminFrontEnd=$ADMIN_FRONTEND" "AWSAccountList=$AWS_ACCOUNT_LIST" "CFSecretKey=$CF_SECRET_KEY" "DataRegisterApiKey=$DATA_REGISTER_API_KEY" "FeedbackSurveyUrl=$FEEDBACK_SURVEY_URL" "GCNotifyApiKey=$GC_NOTIFY_API_KEY" "GCNotifyCancelTemplateID=$GC_NOTIFY_CANCEL_TEMPLATE_ID" "GCNotifyParkingReceiptTemplateID=$GC_NOTIFY_PARKING_RECEIPT_TEMPLATE_ID" "PublicFrontend=$PUBLIC_FRONTEND" "GCNotifyReminderTemplateID=$GC_NOTIFY_REMINDER_TEMPLATE_ID" "GCNotifySMSTemplateID=$GC_NOTIFY_SMS_TEMPLATE_ID" "GCNotifySurveyTemplateID=$GC_NOTIFY_SURVEY_TEMPLATE_ID" "GCNotifyTrailReceiptTemplateID=$GC_NOTIFY_TRAIL_RECEIPT_TEMPLATE_ID" "HoldPassTimeout=$HOLD_PASS_TIMEOUT" "JWTSecret=$JWT_SECRET" "LowCapacityThreshold=$LOW_CAPACITY_THRESHOLD" "ModerateCapacityThreshold=$MODERATE_CAPACITY_THRESHOLD" "S3BucketData=$S3_BUCKET_DATA" "SSOIssuerUrl=$SSO_ISSUER_URL" "SSOJWKSUri=$SSO_JWKS_URI" "WebHookURL=$WEBHOOK_URL" "GCNotifyQueue=$GC_NOTIFY_QUEUE" "SQSExpiryQueueURL=$SQS_EXPIRY_QUEUE_URL" "GCNotifyIsSendingReminders=$GC_NOTIFY_IS_SENDING_REMINDERS" "ArchiveTableName=$ARCHIVE_TABLE_NAME"
 
       - shell: bash
         env:

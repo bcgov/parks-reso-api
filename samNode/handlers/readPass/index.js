@@ -31,7 +31,6 @@ exports.handler = async (event, context) => {
     const permissionObject = resolvePermissions(token);
 
     if (!event.queryStringParameters.manualLookup && event.queryStringParameters.facilityName && event.queryStringParameters.park) {
-      
       if (permissionObject.isAuthenticated !== true) {
         logger.info('Unauthorized');
         return sendResponse(403, { msg: 'Unauthorized' });
@@ -53,23 +52,24 @@ exports.handler = async (event, context) => {
         queryObj.IndexName = 'manualLookup-index';
         queryObj.ExpressionAttributeValues[':shortPassDate'] = { S: shortDate };
         queryObj.ExpressionAttributeValues[':facilityName'] = { S: event.queryStringParameters.facilityName };
-        queryObj.ExpressionAttributeValues[':passStatus'] = {S: 'hold'};
         queryObj.KeyConditionExpression = 'shortPassDate =:shortPassDate AND facilityName =:facilityName';
-        queryObj.FilterExpression = 'passStatus <> :passStatus';
       } else {
         queryObj.ExpressionAttributeValues = {};
         queryObj.ExpressionAttributeValues[':pk'] = { S: 'pass::' + event.queryStringParameters.park };
         queryObj.ExpressionAttributeValues[':facilityName'] = { S: event.queryStringParameters.facilityName };
-        queryObj.ExpressionAttributeValues[':passStatus'] = {S: 'hold'};
         queryObj.KeyConditionExpression = 'pk =:pk';
-        queryObj.FilterExpression = 'facilityName =:facilityName and passStatus <> :passStatus';
+        queryObj['FilterExpression'] = 'facilityName =:facilityName';
       }
 
       if (event.queryStringParameters.passType) {
         queryObj.ExpressionAttributeValues[':passType'] = {S: event.queryStringParameters.passType.toString() };
         queryObj = checkAddExpressionAttributeNames(queryObj);
         queryObj.ExpressionAttributeNames['#theType'] = 'type';
-        queryObj.FilterExpression += expressionBuilder('AND', queryObj.FilterExpression, '#theType =:passType');
+        if (queryObj.FilterExpression) {
+          queryObj.FilterExpression += expressionBuilder('AND', queryObj.FilterExpression, '#theType =:passType');
+        } else {
+          queryObj['FilterExpression'] = '#theType =:passType';
+        }
       }
 
       // Filter Multiple Statuses
@@ -83,45 +83,66 @@ exports.handler = async (event, context) => {
         queryObj = checkAddExpressionAttributeNames(queryObj);
         queryObj.ExpressionAttributeNames['#theStatus'] = 'passStatus';
         Object.assign(queryObj.ExpressionAttributeValues, statusObj);
-        queryObj.FilterExpression += expressionBuilder(
-          'AND',
-          queryObj.FilterExpression,
-          '#theStatus IN (' + Object.keys(statusObj).toString() + ')'
-        );
+
+        if (queryObj.FilterExpression) {
+          queryObj.FilterExpression += expressionBuilder(
+            'AND',
+            queryObj.FilterExpression,
+            '#theStatus IN (' + Object.keys(statusObj).toString() + ')'
+          );
+        } else {
+          queryObj.FilterExpression = '#theStatus IN (' + Object.keys(statusObj).toString() + ')';
+        }
       }
       // Filter reservation number
       if (event.queryStringParameters.reservationNumber) {
         queryObj.ExpressionAttributeValues[':registrationNumber'] = {S: event.queryStringParameters.reservationNumber.toString() };
-        queryObj.FilterExpression += expressionBuilder(
-          'AND',
-          queryObj.FilterExpression,
-          'registrationNumber =:registrationNumber'
-        );
+        if (queryObj.FilterExpression) {
+          queryObj.FilterExpression += expressionBuilder(
+            'AND',
+            queryObj.FilterExpression,
+            'registrationNumber =:registrationNumber'
+          );
+        } else {
+          queryObj.FilterExpression = 'registrationNumber =:registrationNumber';
+        }
       }
       // Filter first/last
       if (event.queryStringParameters.firstName) {
         queryObj = checkAddExpressionAttributeNames(queryObj);
         queryObj.ExpressionAttributeValues[':searchFirstName'] = {S: event.queryStringParameters.firstName.toLowerCase() }; 
-        queryObj.FilterExpression += expressionBuilder(
-          'AND',
-          queryObj.FilterExpression,
-          'searchFirstName =:searchFirstName'
-        );
+        if (queryObj.FilterExpression) {
+          queryObj.FilterExpression += expressionBuilder(
+            'AND',
+            queryObj.FilterExpression,
+            'searchFirstName =:searchFirstName'
+          );
+        } else {
+          queryObj.FilterExpression = 'searchFirstName =:searchFirstName';
+        }
       }
       if (event.queryStringParameters.lastName) {
         queryObj = checkAddExpressionAttributeNames(queryObj);
         queryObj.ExpressionAttributeValues[':searchLastName'] = {S: event.queryStringParameters.lastName.toLowerCase() };
-        queryObj.FilterExpression += expressionBuilder(
-          'AND',
-          queryObj.FilterExpression,
-          'searchLastName =:searchLastName'
-        );
+        if (queryObj.FilterExpression) {
+          queryObj.FilterExpression += expressionBuilder(
+            'AND',
+            queryObj.FilterExpression,
+            'searchLastName =:searchLastName'
+          );
+        } else {
+          queryObj.FilterExpression = 'searchLastName =:searchLastName';
+        }
       }
       // Filter email
       if (event.queryStringParameters.email) {
         queryObj = checkAddExpressionAttributeNames(queryObj);
         queryObj.ExpressionAttributeValues[':email'] = {S: event.queryStringParameters.email };
-        queryObj.FilterExpression += expressionBuilder('AND', queryObj.FilterExpression, 'email =:email');
+        if (queryObj.FilterExpression) {
+          queryObj.FilterExpression += expressionBuilder('AND', queryObj.FilterExpression, 'email =:email');
+        } else {
+          queryObj.FilterExpression = 'email =:email';
+        }
       }
       // Filter overbooked status
       queryObj = checkOverbooked(event.queryStringParameters.overbooked, queryObj);

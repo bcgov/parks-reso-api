@@ -20,7 +20,7 @@ exports.handler = async (event, context) => {
                                             token.parkOrcs,
                                             token.shortPassDate,
                                             token.facilityName,
-                                            token.numberOfGuests,
+                                            token.numberOfGuests.toString(),
                                             token.type,
                                             token.pk,
                                             token.sk);
