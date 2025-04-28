@@ -1328,9 +1328,9 @@
     "@babel/helper-plugin-utils" "^7.25.7"
 
 "@babel/runtime@^7.21.0", "@babel/runtime@^7.23.8", "@babel/runtime@^7.24.5":
-  version "7.25.7"
-  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.25.7.tgz#7ffb53c37a8f247c8c4d335e89cdf16a2e0d0fb6"
-  integrity sha512-FjoyLe754PMiYsFaN5C94ttGiOmBNYTf6pLr4xXHAT5uctHb092PBszndLDR5XA/jghQvn4n7JMHl7dmTgbm9w==
+  version "7.27.0"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.27.0.tgz#fbee7cf97c709518ecc1f590984481d5460d4762"
+  integrity sha512-VtPOkrdPHZsKc/clNqyi9WUA8TINkZ4cGk63UUE3u4pmB2k+ZMQRDuIOagv8UVd6j7k0T3+RRIb7beKTebNbcw==
   dependencies:
     regenerator-runtime "^0.14.0"
 
@@ -3808,11 +3808,6 @@ crypto-js@^4.2.0:
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.2.0.tgz#4d931639ecdfd12ff80e8186dba6af2c2e856631"
   integrity sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==
-
-csv-parse@^5.6.0:
-  version "5.6.0"
-  resolved "https://registry.yarnpkg.com/csv-parse/-/csv-parse-5.6.0.tgz#219beace2a3e9f28929999d2aa417d3fb3071c7f"
-  integrity sha512-l3nz3euub2QMg5ouu5U09Ew9Wf6/wQ8I++ch1loQ0ljmzhmfZYrH9fflS22i/PQEvsPvxCwxgz5q7UB8K1JO4Q==
 
 csvjson@^5.1.0:
   version "5.1.0"
