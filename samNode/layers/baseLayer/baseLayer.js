@@ -40,7 +40,7 @@ const PASS_TYPE_AM = 'AM';
 const PASS_TYPE_PM = 'PM';
 const PASS_TYPE_DAY = 'DAY';
 const TIMEZONE = 'America/Vancouver';
-const DEFAULT_PM_OPENING_HOUR = 12;
+const DEFAULT_PM_OPENING_HOUR = 13;
 const PASS_TYPE_EXPIRY_HOURS = {
   AM: 12,
   PM: 0,
