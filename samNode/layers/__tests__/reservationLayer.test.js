@@ -1,4 +1,4 @@
-const { checkPassesRequired } = require('../ReservationLayer/reservationLayer');
+const { checkPassesRequired } = require('../reservationLayer/reservationLayer');
 
 const mockFacility = {
   pk: 'facility::Test Park',
