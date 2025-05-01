@@ -196,7 +196,7 @@ describe('Facility Access', () => {
     jest.mock('/opt/permissionLayer', () => {
       return mockedSysadmin;
     });
-    jest.mock('/opt/baseLayer)', () => {
+    jest.mock('/opt/baseLayer', () => {
       return {
         ...jest.requireActual('../../../layers/baseLayer/baseLayer.js'),
         getOne: jest.fn(() =>
@@ -272,7 +272,7 @@ describe('Facility Access', () => {
     jest.mock('/opt/permissionLayer', () => {
       return mockedSysadmin;
     });
-    jest.mock('/opt/baseLayer)', () => {
+    jest.mock('/opt/baseLayer', () => {
       return {
         ...jest.requireActual('../../../layers/baseLayer/baseLayer.js'),
         getOne: jest.fn(() =>
