@@ -82,7 +82,7 @@ describe('createNewReservationsObj', () => {
     baseLayerMockConfig.parkState = 'open';
     baseLayerMockConfig.marshallCaptureRef = capture;
 
-    const { createNewReservationsObj } = require('../ReservationLayer/reservationLayer');
+    const { createNewReservationsObj } = require('../reservationLayer/reservationLayer');
     await createNewReservationsObj(mockFacility, 'reservations::1234::Test Lake', '2025-04-27'); // Passes not required this day
 
     expect(capture.obj.passesRequired).toBe(false);
@@ -96,7 +96,7 @@ describe('createNewReservationsObj', () => {
     baseLayerMockConfig.parkState = 'open';
     baseLayerMockConfig.marshallCaptureRef = capture;
 
-    const { createNewReservationsObj } = require('../ReservationLayer/reservationLayer');
+    const { createNewReservationsObj } = require('../reservationLayer/reservationLayer');
     await createNewReservationsObj(mockFacility, 'reservations::1234::Test Lake', '2025-04-29'); // Passes required this day
     expect(capture.obj.passesRequired).toBe(true);
     expect(capture.obj.capacities.AM.baseCapacity).toBe('100');
@@ -109,7 +109,7 @@ describe('createNewReservationsObj', () => {
     baseLayerMockConfig.parkState = 'closed'; // Park's status state is 'closed'
     baseLayerMockConfig.marshallCaptureRef = capture;
     
-    const { createNewReservationsObj } = require('../ReservationLayer/reservationLayer');
+    const { createNewReservationsObj } = require('../reservationLayer/reservationLayer');
     await createNewReservationsObj(mockFacility, 'reservations::1234::Test Lake', '2025-04-29'); // Passes required this day
     expect(capture.obj.passesRequired).toBe(false);
     expect(capture.obj.capacities.AM.baseCapacity).toBe(0);
