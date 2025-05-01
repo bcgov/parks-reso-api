@@ -80,11 +80,15 @@ async function createNewReservationsObj(
 
   const bookingTimeTypes = Object.keys(facility.bookingTimes);
 
+  let facilityStatus = facility.status.state;
   let passesRequired = checkPassesRequired(facility, bookingPSTShortDate)
-  const parkOrcs = facility.pk.replace('/\D/g','');
+  const parkOrcs = facility.pk.replace(/\D/g, '');
   const park = unmarshall(await getOne('park', parkOrcs));
 
-  if (park?.status == 'closed') {
+  // If the park is closed, we need to ensure the facility's status is closed
+  // and that passes are deemed "not required".
+  if (park?.status.state == 'closed') {
+    facilityStatus = 'closed';
     passesRequired = false;
   }
 
@@ -92,7 +96,7 @@ async function createNewReservationsObj(
     pk: reservationsObjectPK,
     sk: bookingPSTShortDate,
     capacities: {},
-    status: facility.status.state,
+    status: facilityStatus,
     passesRequired: passesRequired
   };
 
