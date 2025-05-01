@@ -1,5 +1,5 @@
 
-const { dynamoClient, UpdateItemCommand, TABLE_NAME, logger, unmarshall } = require('/opt/baseLayer');
+const { dynamoClient, UpdateItemCommand, TABLE_NAME, logger, unmarshall, sendResponse } = require('/opt/baseLayer');
 
 async function setFacilityLock(pk, sk) {
   const facilityLockObject = {

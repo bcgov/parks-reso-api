@@ -196,6 +196,20 @@ describe('Facility Access', () => {
     jest.mock('/opt/permissionLayer', () => {
       return mockedSysadmin;
     });
+    jest.mock('/opt/baseLayer)', () => {
+      return {
+        ...jest.requireActual('../../../layers/baseLayer/baseLayer.js'),
+        getOne: jest.fn(() =>
+          Promise.resolve({
+            status: {
+              state: 'open',
+              stateReason: ''
+            }
+          })
+        ),
+        unmarshall: jest.fn(obj => obj)
+      }
+    });
 
     const dynamoClient = new DynamoDBClient({
       region: REGION,
@@ -257,6 +271,20 @@ describe('Facility Access', () => {
   test('QR Codes enabled on update', async () => {
     jest.mock('/opt/permissionLayer', () => {
       return mockedSysadmin;
+    });
+    jest.mock('/opt/baseLayer)', () => {
+      return {
+        ...jest.requireActual('../../../layers/baseLayer/baseLayer.js'),
+        getOne: jest.fn(() =>
+          Promise.resolve({
+            status: {
+              state: 'open',
+              stateReason: ''
+            }
+          })
+        ),
+        unmarshall: jest.fn(obj => obj)
+      }
     });
 
     const dynamoClient = new DynamoDBClient({
