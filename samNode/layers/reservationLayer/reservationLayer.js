@@ -136,6 +136,10 @@ function checkPassesRequired(facility, shortDate) {
   const date = DateTime.fromFormat(shortDate, "yyyy-LL-dd", { zone: TIMEZONE });
   const day = date.toFormat("c").toString();
 
+  if (facility.status.state == 'closed') {
+    return false
+  }
+
   // Ensure bookableHolidays is an array; if not, default to an empty array
   const bookableHolidays = Array.isArray(facility?.bookableHolidays) ? facility.bookableHolidays : []
 
