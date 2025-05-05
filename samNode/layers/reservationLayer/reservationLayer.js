@@ -87,7 +87,7 @@ async function createNewReservationsObj(
 
   // If the park is closed, we need to ensure the facility's status is closed
   // and that passes are deemed "not required".
-  if (park?.status.state == 'closed') {
+  if (park?.status == 'closed') {
     facilityStatus = 'closed';
     passesRequired = false;
   }

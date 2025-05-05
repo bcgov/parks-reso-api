@@ -1,77 +1,46 @@
-const { checkPassesRequired } = require('../reservationLayer/reservationLayer');
+const { checkPassesRequired, createNewReservationsObj } = require('../reservationLayer/reservationLayer');
 
-const mockFacilityOpen = {
-  pk: 'facility::Test Park',
-  sk: 'Test Facility',
-  name: 'Test Facility',
-  description: 'A Parking Lot!',
-  isUpdating: false,
-  type: 'Parking',
-  bookingTimes: {
-    AM: { max: '100' },
-    PM: { max: '200' },
-    DAY: { max: '300' }
-  },
-  bookingDays: {
-    1: true,
-    2: true, // Tuesday e.g. 2025-04-29
-    3: true,
-    4: true,
-    5: true,
-    6: true,
-    7: false // Sunday e.g. 2025-04-27, 2025-04-20 (Easter)
-  },
-  bookingDaysRichText: '',
-  bookableHolidays: ['2025-04-20'],
-  status: { stateReason: '', state: 'open' },
-  qrcode: true,
-  visible: true
-};
-
-const mockFacilityClosed = {
-  pk: 'facility::Test Park',
-  sk: 'Test Facility',
-  name: 'Test Facility',
-  description: 'A Parking Lot!',
-  isUpdating: false,
-  type: 'Parking',
-  bookingTimes: {
-    AM: { max: '100' },
-    PM: { max: '200' },
-    DAY: { max: '300' }
-  },
-  bookingDays: {
-    1: true,
-    2: true, // Tuesday e.g. 2025-04-29
-    3: true,
-    4: true,
-    5: true,
-    6: true,
-    7: false // Sunday e.g. 2025-04-27, 2025-04-20 (Easter)
-  },
-  bookingDaysRichText: '',
-  bookableHolidays: ['2025-04-20'],
-  status: { stateReason: 'Bears in the area!', state: 'closed' },
-  qrcode: true,
-  visible: true
-};
+function mockFacility(paramState, paramBookingDays, paramBookableHolidays = []) {
+  return {
+    pk: 'facility::Test Park',
+    sk: 'Test Facility',
+    name: 'Test Facility',
+    description: 'A Parking Lot!',
+    isUpdating: false,
+    type: 'Parking',
+    bookingTimes: {
+      AM: { max: '100' },
+      PM: { max: '100' },
+      DAY: { max: '100' }
+    },
+    bookingDays: paramBookingDays,
+    bookingDaysRichText: '',
+    bookableHolidays: paramBookableHolidays,
+    status: { stateReason: '', state: paramState },
+    qrcode: true,
+    visible: true
+  };
+}
 
 describe('checkPassesRequired', () => {
-  let passesRequired = checkPassesRequired(mockFacilityOpen, '2025-04-29');
-  test('should return true when a facility requires passes', () => {
-    expect(passesRequired).toBeTruthy();
+  const bookingDays = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: false };
+  const bookableHolidays = ['2025-04-20'];
+  const facility = mockFacility('open', bookingDays, bookableHolidays);
+
+  test('should return true when a facility requires passes (normal weekday)', () => {
+    expect(checkPassesRequired(facility, '2025-04-29')).toBeTruthy(); // Tuesday
   });
 
-  let passesNotRequired = checkPassesRequired(mockFacilityOpen, '2025-04-27');
-  test("should return false when a facility doesn't require passes", () => {
-    expect(passesNotRequired).toBeFalsy();
+  test("should return false when passes aren't required (Sunday)", () => {
+    expect(checkPassesRequired(facility, '2025-04-27')).toBeFalsy(); // Sunday
   });
 
-  let bookableHoliday = checkPassesRequired(mockFacilityOpen, '2025-04-20');
-  test('should return true when a facility requires passes on a holiday', () => {
-    expect(bookableHoliday).toBeTruthy();
+  test('should return true on a bookable holiday (even if not in bookingDays)', () => {
+    expect(checkPassesRequired(facility, '2025-04-20')).toBeTruthy(); // Easter Sunday
   });
 });
+
+// --- Base Layer Mocks ---
 
 let baseLayerMockConfig = {
   parkState: 'open',
@@ -81,10 +50,7 @@ let baseLayerMockConfig = {
 jest.mock('/opt/baseLayer', () => ({
   getOne: jest.fn(() =>
     Promise.resolve({
-      status: {
-        state: baseLayerMockConfig.parkState,
-        stateReason: ''
-      }
+      status: baseLayerMockConfig.parkState
     })
   ),
   PutItemCommand: jest.fn(obj => obj),
@@ -104,58 +70,118 @@ jest.mock('/opt/baseLayer', () => ({
   }
 }));
 
+// --- Helper for createNewReservationsObj test ---
+
+async function runCreateTest({
+  parkState,
+  facilityState,
+  bookingDays,
+  date,
+  expectedPassesRequired,
+  expectedCapacities
+}) {
+  const capture = {};
+  baseLayerMockConfig.parkState = parkState;
+  baseLayerMockConfig.marshallCaptureRef = capture;
+  const facility = mockFacility(facilityState, bookingDays);
+  await createNewReservationsObj(facility, 'reservations::1234::Test Lake', date);
+
+  expect(capture.obj.passesRequired).toBe(expectedPassesRequired);
+  expect(capture.obj.capacities.AM.baseCapacity).toBe(expectedCapacities);
+  expect(capture.obj.capacities.PM.baseCapacity).toBe(expectedCapacities);
+  expect(capture.obj.capacities.DAY.baseCapacity).toBe(expectedCapacities);
+}
+
 describe('createNewReservationsObj', () => {
-  test("should show that passes are NOT required and capacities are 0 because the park is open and facility's booking day is set to false", async () => {
-    const capture = {};
-    baseLayerMockConfig.parkState = 'open';
-    baseLayerMockConfig.marshallCaptureRef = capture;
+  const allDays = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true };
+  const noDays = { 1: false, 2: false, 3: false, 4: false, 5: false, 6: false, 7: false };
+  const testDate = '2025-04-27'; // A Sunday, or the 7th day in the objects
 
-    const { createNewReservationsObj } = require('../reservationLayer/reservationLayer');
-    await createNewReservationsObj(mockFacilityOpen, 'reservations::1234::Test Lake', '2025-04-27'); // Passes not required this day
-
-    expect(capture.obj.passesRequired).toBe(false);
-    expect(capture.obj.capacities.AM.baseCapacity).toBe(0);
-    expect(capture.obj.capacities.PM.baseCapacity).toBe(0);
-    expect(capture.obj.capacities.DAY.baseCapacity).toBe(0);
+  test('Park open, facility open, passes required', async () => {
+    await runCreateTest({
+      parkState: 'open',
+      facilityState: 'open',
+      bookingDays: allDays,
+      date: testDate,
+      expectedPassesRequired: true,
+      expectedCapacities: '100'
+    });
   });
 
-  test("should show that passes are required and capacities are normal because the park is open and facility's booking day is set to true", async () => {
-    const capture = {};
-    baseLayerMockConfig.parkState = 'open';
-    baseLayerMockConfig.marshallCaptureRef = capture;
-
-    const { createNewReservationsObj } = require('../reservationLayer/reservationLayer');
-    await createNewReservationsObj(mockFacilityOpen, 'reservations::1234::Test Lake', '2025-04-29'); // Passes required this day
-    expect(capture.obj.passesRequired).toBe(true);
-    expect(capture.obj.capacities.AM.baseCapacity).toBe('100');
-    expect(capture.obj.capacities.PM.baseCapacity).toBe('200');
-    expect(capture.obj.capacities.DAY.baseCapacity).toBe('300');
+  test('Park open, facility open, passes NOT required', async () => {
+    await runCreateTest({
+      parkState: 'open',
+      facilityState: 'open',
+      bookingDays: noDays,
+      date: testDate,
+      expectedPassesRequired: false,
+      expectedCapacities: 0
+    });
   });
 
-  test("should show that passes are NOT required and capacities are 0 because the FACILITY is CLOSED, regardless of facility's pass status", async () => {
-    const capture = {};
-    baseLayerMockConfig.parkState = 'open';
-    baseLayerMockConfig.marshallCaptureRef = capture;
-    
-    const { createNewReservationsObj } = require('../reservationLayer/reservationLayer');
-    await createNewReservationsObj(mockFacilityClosed, 'reservations::1234::Test Lake', '2025-04-29'); // Passes required this day
-    expect(capture.obj.passesRequired).toBe(false);
-    expect(capture.obj.capacities.AM.baseCapacity).toBe(0);
-    expect(capture.obj.capacities.PM.baseCapacity).toBe(0);
-    expect(capture.obj.capacities.DAY.baseCapacity).toBe(0);
-  });
-  
-  test("should show that passes are NOT required and capacities are 0 because the PARK is CLOSED, regardless of facility's pass status", async () => {
-    const capture = {};
-    baseLayerMockConfig.parkState = 'closed'; // Park's status state is 'closed'
-    baseLayerMockConfig.marshallCaptureRef = capture;
-    
-    const { createNewReservationsObj } = require('../reservationLayer/reservationLayer');
-    await createNewReservationsObj(mockFacilityOpen, 'reservations::1234::Test Lake', '2025-04-29'); // Passes required this day
-    expect(capture.obj.passesRequired).toBe(false);
-    expect(capture.obj.capacities.AM.baseCapacity).toBe(0);
-    expect(capture.obj.capacities.PM.baseCapacity).toBe(0);
-    expect(capture.obj.capacities.DAY.baseCapacity).toBe(0);
+  test('Park open, facility closed, passes required', async () => {
+    await runCreateTest({
+      parkState: 'open',
+      facilityState: 'closed',
+      bookingDays: allDays,
+      date: testDate,
+      expectedPassesRequired: false,
+      expectedCapacities: 0
+    });
   });
 
+  test('Park open, facility closed, passes NOT required', async () => {
+    await runCreateTest({
+      parkState: 'open',
+      facilityState: 'closed',
+      bookingDays: noDays,
+      date: testDate,
+      expectedPassesRequired: false,
+      expectedCapacities: 0
+    });
+  });
+
+  test('Park closed, facility open, passes required', async () => {
+    await runCreateTest({
+      parkState: 'closed',
+      facilityState: 'open',
+      bookingDays: allDays,
+      date: testDate,
+      expectedPassesRequired: false,
+      expectedCapacities: 0
+    });
+  });
+
+  test('Park closed, facility open, passes NOT required', async () => {
+    await runCreateTest({
+      parkState: 'closed',
+      facilityState: 'open',
+      bookingDays: noDays,
+      date: testDate,
+      expectedPassesRequired: false,
+      expectedCapacities: 0
+    });
+  });
+
+  test('Park closed, facility closed, passes required', async () => {
+    await runCreateTest({
+      parkState: 'closed',
+      facilityState: 'closed',
+      bookingDays: allDays,
+      date: testDate,
+      expectedPassesRequired: false,
+      expectedCapacities: 0
+    });
+  });
+
+  test('Park closed, facility closed, passes NOT required', async () => {
+    await runCreateTest({
+      parkState: 'closed',
+      facilityState: 'closed',
+      bookingDays: noDays,
+      date: testDate,
+      expectedPassesRequired: false,
+      expectedCapacities: 0
+    });
+  });
 });
