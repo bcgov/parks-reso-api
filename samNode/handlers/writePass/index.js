@@ -526,6 +526,7 @@ async function transactWriteWithRetries(transactionObj, maxRetries = 3) {
       }
     } while (retryCount < maxRetries);
   }catch(error){
+    logger.error('Error in transactWriteWithRetries:', error);
     throw new CustomError('Failed to write transaction after retries', 500);
   }
 };
