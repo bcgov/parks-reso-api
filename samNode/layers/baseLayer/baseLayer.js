@@ -460,6 +460,8 @@ async function convertPassToReserved(decodedToken, passStatus, firstName, lastNa
       }
     },
     UpdateExpression: 'SET passStatus = :statusValue, firstName = :firstName, lastName = :lastName, searchFirstName = :searchFirstName, searchLastName = :searchLastName, email = :email, audit = list_append(if_not_exists(audit, :empty_list), :audit_val), dateUpdated = :dateUpdated',
+    // Fail if the item does not exist in the database.
+    ConditionExpression: 'attribute_exists(pk)',
     ReturnValues: 'ALL_NEW'
   };
   if (phoneNumber) {
@@ -467,12 +469,17 @@ async function convertPassToReserved(decodedToken, passStatus, firstName, lastNa
     updateParams.UpdateExpression += ', phoneNumber = :phoneNumber';
   };
   const command = new UpdateItemCommand(updateParams);
-  const res = await dynamoClient.send(command);
-  if (Object.keys(res.Attributes).length === 0) {
-    logger.info(`Set status of ${res.Attributes?.type?.S} pass ${res.Attributes?.sk?.S} to ${passStatus}`);
-    throw new CustomError('Operation Failed', 400);
+  try {
+    const res = await dynamoClient.send(command);
+      if (Object.keys(res.Attributes).length === 0) {
+        logger.info(`Set status of ${res.Attributes?.type?.S} pass ${res.Attributes?.sk?.S} to ${passStatus}`);
+        throw new CustomError('Operation Failed', 400);
+      }
+    return unmarshall(res.Attributes);
+  } catch (error) {
+    logger.error(`Error converting pass to reserved: ${error}`);
+    throw new CustomError(`Error converting pass to reserved: ${error.message}`, 400);
   }
-  return unmarshall(res.Attributes);
 }
 
 /**
@@ -577,7 +584,11 @@ async function restoreAvailablePass(pk, sk, orcNumber, shortPassDate, facilityNa
               pk: { S: passPk },
               sk: { S: passSk }
             },
-            ConditionExpression: 'attribute_exists (pk) AND attribute_exists (sk)'
+            // Only delete the pass if it exists and is in hold
+            ConditionExpression: 'attribute_exists (pk) AND passStatus = :passStatus',
+            ExpressionAttributeValues: {
+              ':passStatus': { S: PASS_HOLD_STATUS }
+            }
           }
         }]
     };
@@ -585,6 +596,7 @@ async function restoreAvailablePass(pk, sk, orcNumber, shortPassDate, facilityNa
     res = await dynamoClient.send(command);
     logger.info(`added: ${numberOfGuests} back to ${facilityName}`);
   } catch (error) {
+    // TODO: delete the jwt item if the transaction fails due to the pass not existing (orphaned jwts are stacking up in the db)
     logger.error('Error updating available passes:', error);
     throw new CustomError('Error updating pass', error);
   }
