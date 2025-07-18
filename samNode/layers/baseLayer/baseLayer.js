@@ -576,7 +576,7 @@ async function restoreAvailablePass(pk, sk, orcNumber, shortPassDate, facilityNa
             ConditionExpression: 'attribute_exists (pk) AND attribute_exists (sk)'
           }
         },
-        ,
+        
         {
           Delete: {
             TableName: process.env.TABLE_NAME,
