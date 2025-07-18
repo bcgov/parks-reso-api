@@ -451,6 +451,12 @@ describe('Pass Successes', () => {
   });
 
   test('200 pass has been held for a Trail.', async () => {
+    const date = new Date().toISOString().split('T')[0];
+    const dynamoClient = new DynamoDBClient({
+      region: REGION,
+      endpoint: ENDPOINT
+    });
+
     jest.mock('/opt/permissionLayer', () => {
       return {
         validateToken: jest.fn(event => {
@@ -484,10 +490,35 @@ describe('Pass Successes', () => {
     jest.mock('/opt/reservationLayer', () => {
       return {
         createNewReservationsObj: jest.fn(() => {
-          // Do nothing, don't throw
+          // Do nothing, don't throw, create a mock object  below
         }),
       };
     });
+
+    // Create a mock reservation object to prevent the reservationLayer from throwing an error.
+    const resPutCommand = {
+      TableName: TABLE_NAME,
+      Item: marshall({
+        pk: 'reservations::0015::P1 and Lower P5',
+        sk: date,
+        capacities: {
+          AM: {
+            availablePasses: 10,
+            baseCapacity: 100
+          },
+          PM: {
+            availablePasses: 10,
+            baseCapacity: 100
+          },
+          DAY: {
+            availablePasses: 10,
+            baseCapacity: 100
+          }
+        }
+      })
+    };
+    await dynamoClient.send(new PutItemCommand(resPutCommand));
+
     const writePassHandler = require('../index');
     process.env.ADMIN_FRONTEND = 'http://localhost:4300';
     process.env.PASS_MANAGEMENT_ROUTE = '/pass-management';
