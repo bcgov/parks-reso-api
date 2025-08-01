@@ -1,38 +1,57 @@
-const { Console } = require('winston/lib/winston/transports');
 const { logger } = require('/opt/baseLayer');
 const axios = require('axios');
 
-exports.handler = async (event) => {
-  if (event === null || !(Symbol.iterator in Object(event.Records))) {
+exports.handler = async event => {
+  logger.debug('SQS Processor: ', event);
+  const batchItemFailures = [];
+
+  if (!event || !Array.isArray(event.Records)) {
     logger.error('Invalid event object.');
-    return {};
+    return { batchItemFailures };
   }
 
-  logger.info("SQS Processor:", event.Records?.length);
-  for(const record of event.Records) {
-    let bodyObject;
-    try {
-      bodyObject = JSON.parse(record.body);
-      if (bodyObject.service === 'GCN') {
-        await handleGCNRecord(bodyObject);
+  logger.debug(`SQS Processor: Received ${event.Records.length} records`);
+
+  await Promise.all(
+    event.Records.map(async record => {
+      try {
+        const bodyObject = JSON.parse(record.body);
+
+        if (bodyObject.service === 'GCN') {
+          await handleGCNRecord(bodyObject);
+        } else {
+          logger.debug(`Unknown service type: ${bodyObject.service}`);
+        }
+      } catch (error) {
+        logger.error('Failed to process record', {
+          messageId: record.messageId,
+          error: error?.message,
+          stack: error?.stack
+        });
+
+        // If the error is a NoRetry error, we log it but do not retry
+        if (error.name === 'NoRetry') {
+          logger.debug(`NoRetry; won't retry messageId: ${record.messageId}`);
+        } else {
+          batchItemFailures.push({ itemIdentifier: record.messageId });
+        }
       }
-    } catch (error) {
-      console.error("Error parsing JSON from record.body did not handle gcn record:", error);
-    }
-  }
-  return {};
+    })
+  );
+
+  return { batchItemFailures };
 };
 
-const handleGCNRecord = async function (record, retry = true) {
-  logger.info('Handling GCN Record');
+const handleGCNRecord = async record => {
+  logger.debug('Handling GCN Record', { template_id: record.template_id });
+
   const gcnData = {
     email_address: record.email_address,
     template_id: record.template_id,
     personalisation: record.personalisation
   };
-  
+
   try {
-    logger.info('Sending payload to GCN');
     const response = await axios({
       method: 'post',
       url: process.env.GC_NOTIFY_API_PATH,
@@ -43,23 +62,42 @@ const handleGCNRecord = async function (record, retry = true) {
       data: gcnData
     });
 
-    // If we get here, the request was successful
-    logger.info('GCNotify email sent.');
+    logger.info('GCNotify email sent.', { status: response.status });
     return response;
-
   } catch (error) {
-    // Check if it's a 503 error and we haven't retried yet
-    if (error.response?.status === 503 && retry === true) {
-      logger.info('Received 503 from GCNotify, waiting 5 seconds before retry...');
-      await new Promise(resolve => setTimeout(resolve, 5000)); 
-      
-      try {
-        return await handleGCNRecord(record, false); // Retry once
-      } catch (retryError) {
-        logger.warn('Retry failed, ignoring this record:', retryError.message);
-        return null; 
+    if (error.response) {
+      const status = error.response?.status;
+      const errorData = error.response?.data;
+
+      logger.debug('Received error from GCNotify', {
+        status,
+        data: errorData
+      });
+
+      if (status === 429 || status === 500 || status === 503) {
+        // These should be retries
+        throw error;
       }
+
+      if (status === 400 || status === 403) {
+        // These 400 errors are essentially client errors, such as invalid template ID or wonky email address.
+        // We log the error and throw a NoRetry error to avoid retrying them
+        logger.debug('Client or auth error from GCNotify', {
+          status,
+          data: JSON.stringify(errorData)
+        });
+        const noRetryError = new Error(`NoRetry: ${status}`);
+        noRetryError.name = 'NoRetry';
+        throw noRetryError;
+      }
+
+      // Unexpected status, we'll retry this
+      logger.debug('Unexpected HTTP status', { status });
+      throw error;
     }
+
+    // Network errors, we'll retry this
+    logger.debug('Transient network error calling GCNotify', { message: error.message });
     throw error;
   }
 };
