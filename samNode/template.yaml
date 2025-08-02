@@ -1064,6 +1064,8 @@ Resources:
           Type: SQS
           Properties:
             Queue: !GetAtt SqsGcnEmailQueue.Arn
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
 
   UpdateParkNameFunction:
     Type: AWS::Serverless::Function
@@ -1596,12 +1598,20 @@ Resources:
     Type: 'AWS::SQS::Queue'
     Properties:
       QueueName: !Ref SqsGCNQueueName
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt SqsGcnEmailDLQ.Arn
+        maxReceiveCount: 5
 
+  SqsGcnEmailDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${SqsGCNQueueName}-dlq"
+      
   SqsExpiryQueue:
     Type: 'AWS::SQS::Queue'
     Properties:
       QueueName: !Ref SqsExpiryQueueName
-      
+
 Outputs:
   ApiDeployment:
     Description: 'API Gateway endpoint URL for Stage for Config function'
