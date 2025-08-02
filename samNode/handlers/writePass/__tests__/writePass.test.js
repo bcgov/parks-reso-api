@@ -523,7 +523,25 @@ describe('Pass Successes', () => {
     process.env.ADMIN_FRONTEND = 'http://localhost:4300';
     process.env.PASS_MANAGEMENT_ROUTE = '/pass-management';
 
-    //THIS IS BROKEN for test ---- Missing 
+    // Create the token that was missing
+    const token = jwt.sign(
+      {
+        parkOrcs: '0015',
+        firstName: 'Jest',
+        lastName: 'User',
+        facilityName: 'P1 and Lower P5',
+        email: 'testEmail7@test.ca',
+        date: new Date().toISOString(),
+        type: 'DAY',
+        numberOfGuests: 1,
+        phoneNumber: '2505555555'
+      },
+      'defaultSecret',
+      {
+        algorithm: ALGORITHM
+      }
+    );
+
     const event = {
       headers: {
         Authorization: 'None'
@@ -537,7 +555,8 @@ describe('Pass Successes', () => {
         date: new Date().toISOString(),
         type: 'DAY',
         numberOfGuests: 1,
-        phoneNumber: '2505555555'
+        phoneNumber: '2505555555',
+        token: token // Added the missing token
       })
     };
 
