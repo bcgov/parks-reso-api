@@ -322,7 +322,7 @@ describe('Pass Fails', () => {
         lastName: '',
         facilityName: '',
         email: 'something@where.not',
-        date: new Date(),
+        date: new Date().toISOString(),
         type: 'DAY',
         numberOfGuests: 1,
         phoneNumber: '',
