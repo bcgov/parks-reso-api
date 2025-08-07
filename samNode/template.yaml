@@ -103,7 +103,7 @@ Parameters:
     Default: 'String'
   LogLevel:
     Type: String
-    Default: 'error'
+    Default: 'debug'
   LowCapacityThreshold:
     Type: String
     Default: '0.25'
