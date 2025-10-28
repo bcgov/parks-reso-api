@@ -40,9 +40,9 @@ const PASS_TYPE_AM = 'AM';
 const PASS_TYPE_PM = 'PM';
 const PASS_TYPE_DAY = 'DAY';
 const TIMEZONE = 'America/Vancouver';
-const DEFAULT_PM_OPENING_HOUR = 13;
+const DEFAULT_PM_OPENING_HOUR = 12;
 const PASS_TYPE_EXPIRY_HOURS = {
-  AM: 13,
+  AM: 12,
   PM: 0,
   DAY: 0
 };
@@ -426,6 +426,7 @@ async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
  * @throws {CustomError} - If the operation fails.
  */
 async function convertPassToReserved(decodedToken, passStatus, firstName, lastName, email, phoneNumber) {
+  console.log("THE DECODED TOKEN!!!: ", decodedToken);
   const updateParams = {
     TableName: process.env.TABLE_NAME,
     Key: {
