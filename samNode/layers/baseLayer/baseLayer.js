@@ -426,7 +426,6 @@ async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
  * @throws {CustomError} - If the operation fails.
  */
 async function convertPassToReserved(decodedToken, passStatus, firstName, lastName, email, phoneNumber) {
-  console.log("THE DECODED TOKEN!!!: ", decodedToken);
   const updateParams = {
     TableName: process.env.TABLE_NAME,
     Key: {
