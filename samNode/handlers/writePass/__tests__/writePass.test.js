@@ -451,10 +451,24 @@ describe('Pass Successes', () => {
   });
 
   test('200 pass has been held for a Trail.', async () => {
-    const date = new Date().toISOString().split('T')[0];
+    const date = DateTime.now().setZone('America/Vancouver').toISODate();
     const dynamoClient = new DynamoDBClient({
       region: REGION,
       endpoint: ENDPOINT
+    });
+
+    jest.mock('/opt/passLayer', () => {
+      return {
+        isBookingAllowed: jest.fn(() => {
+          // Do nothing, don't throw
+        }),
+        sendExpirationSQS: jest.fn(() => {
+          // Do nothing, don't throw
+        }),
+        getAdminLinkToPass: jest.fn(() => ''),
+        getPersonalizationAttachment: jest.fn(() => ({})),
+        sendTemplateSQS: jest.fn(() => {}),
+      };
     });
 
     jest.mock('/opt/permissionLayer', () => {
@@ -523,7 +537,6 @@ describe('Pass Successes', () => {
     process.env.ADMIN_FRONTEND = 'http://localhost:4300';
     process.env.PASS_MANAGEMENT_ROUTE = '/pass-management';
 
-    //THIS IS BROKEN for test ---- Missing 
     const event = {
       headers: {
         Authorization: 'None'
@@ -534,7 +547,7 @@ describe('Pass Successes', () => {
         lastName: 'User',
         facilityName: 'P1 and Lower P5',
         email: 'testEmail7@test.ca',
-        date: new Date().toISOString(),
+        date: DateTime.now().setZone('America/Vancouver').toISO(),
         type: 'DAY',
         numberOfGuests: 1,
         phoneNumber: '2505555555'
