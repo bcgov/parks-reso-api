@@ -37,7 +37,10 @@ const {
 } = require('/opt/passLayer');
 const { createNewReservationsObj } = require('/opt/reservationLayer'); 
 const { generateRegistrationNumber } = require('/opt/jwtLayer');
-const SECRET = process.env.JWT_SECRET || 'defaultSecret';
+const SECRET = process.env.JWT_SECRET;
+if (!SECRET) {
+  throw new Error('JWT_SECRET environment variable is not set. Refusing to start.');
+}
 const ALGORITHM = process.env.ALGORITHM || 'HS384';
 const HOLD_PASS_TIMEOUT = process.env.HOLD_PASS_TIMEOUT || '7m';
 
@@ -144,7 +147,7 @@ async function handleCommitPass(newObject, isAdmin) {
         // Check if the JWT is expired
         logger.info('Checking JWT expiry');
         logger.debug(JSON.stringify(decodedToken));
-        const jwtExpiry = DateTime.fromISO(jwt.expiry);
+        const jwtExpiry = DateTime.fromISO(jwt.expiration);
         if (jwtExpiry < DateTime.now().setZone(TIMEZONE)) {
           // The JWT is expired, therefore reject this request.
           logger.info('JWT is expired.');
