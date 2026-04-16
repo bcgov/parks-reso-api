@@ -65,5 +65,5 @@ jobs:
           AWS_REGION: local-env
           AWS_ACCESS_KEY_ID: notused
           AWS_SECRET_ACCESS_KEY: notused
-        run: ./node_modules/jest/bin/jest.js --coverage --runInBand
+        run: NODE_OPTIONS=--experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage --runInBand
         working-directory: ./samNode
