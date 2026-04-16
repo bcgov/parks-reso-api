@@ -4,8 +4,8 @@
   "author": "Team Osprey",
   "license": "MIT",
   "dependencies": {
+    "axios": "^1.15.0",
     "jsonwebtoken": "9.0.2",
-    "jwks-rsa": "^3.0.0",
-    "axios":"1.13.5"
+    "jwks-rsa": "^3.2.2"
   }
 }
