@@ -1,9 +1,1 @@
-{
-"name": "dup-api-response-layer",
-"version": "0.0.1",
-"author": "Team Osprey",
-"license": "MIT",
-"dependencies": {
-  "axios": "1.13.5"
-}
-}
+{"name":"dup-api-response-layer","version":"0.0.1","author":"Team Osprey","license":"MIT","dependencies":{"axios":"^1.15.0"}}
