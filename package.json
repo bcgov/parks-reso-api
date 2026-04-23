@@ -23,7 +23,7 @@
     "node-jose": "^2.2.0",
     "qrcode": "^1.5.1",
     "utf-8-validate": "^6.0.4",
-    "uuid": "^9.0.0",
+    "uuid": "^14.0.0",
     "winston": "^3.7.2"
   },
   "devDependencies": {
