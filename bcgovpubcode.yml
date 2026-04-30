@@ -23,7 +23,7 @@ product_information:
 product_technology_information:
   backend_frameworks:
     - name: Node.js
-      version: 18.x
+      version: 22.x
   backend_languages_version:
     - name: JavaScript
       version: ES6
