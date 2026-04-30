@@ -1,5 +1,5 @@
-# Use the official AWS Lambda Node.js 18 image as the base image
-FROM public.ecr.aws/lambda/nodejs:18
+# Use the official AWS Lambda Node.js 22 image as the base image
+FROM public.ecr.aws/lambda/nodejs:22
 
 # Copy the contents of your SAM app directory into the container
 COPY . ./
