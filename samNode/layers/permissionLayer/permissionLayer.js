@@ -248,7 +248,8 @@ exports.validateToken = async function (token) {
   });
 
   logger.debug(res.data);
-  if (res.status !== 200 || !res.data.success) {
+  if (res.status !== 200) {
+    console.log('res >>>', res);
     throw new CustomError('Invalid token.', 400);
   }
 };
