@@ -562,6 +562,7 @@ async function restoreAvailablePass(pk, sk, orcNumber, shortPassDate, facilityNa
           '#type': type,
           '#availablePasses': 'availablePasses'
         },
+        ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)',
         UpdateExpression: 'SET capacities.#type.#availablePasses = capacities.#type.#availablePasses + :inc',
         ReturnValuesOnConditionCheckFailure: 'ALL_OLD'
         }
@@ -596,7 +597,26 @@ async function restoreAvailablePass(pk, sk, orcNumber, shortPassDate, facilityNa
     res = await dynamoClient.send(command);
     logger.info(`added: ${numberOfGuests} back to ${facilityName}`);
   } catch (error) {
-    // TODO: delete the jwt item if the transaction fails due to the pass not existing (orphaned jwts are stacking up in the db)
+    // If the transaction failed because the pass is no longer in hold status e.g. it was committed or doesn't exist
+    // just delete the orphaned JWT without restoring available passes — the count was already handled
+    if (error.name === 'TransactionCanceledException') {
+      const reasons = error.CancellationReasons || [];
+      if (reasons[2]?.Code === 'ConditionalCheckFailed') {
+        logger.info('Pass is no longer in hold status or does not exist. Deleting orphaned JWT only.');
+        try {
+          const deleteCommand = new DeleteItemCommand({
+            TableName: process.env.TABLE_NAME,
+            Key: { pk: { S: pk }, sk: { S: sk } }
+          });
+          await dynamoClient.send(deleteCommand);
+          logger.info('Orphaned JWT deleted.');
+          return;
+        } catch (deleteError) {
+          logger.error('Error deleting orphaned JWT:', deleteError);
+          throw new CustomError('Error deleting orphaned JWT', deleteError);
+        }
+      }
+    }
     logger.error('Error updating available passes:', error);
     throw new CustomError('Error updating pass', error);
   }
