@@ -256,4 +256,31 @@ exports.validateToken = async function (token, remoteip) {
     logger.info(`Hostname mismatch: got ${res.data.hostname}, expected ${expectedHost}`);
     throw new CustomError('Invalid token.', 400);
   }
+
+  const maxAgeMs = parseInt(process.env.MAX_TOKEN_AGE_MS || '0', 10);
+  const enforceAge = (process.env.ENFORCE_TOKEN_AGE || 'false').toLowerCase() === 'true';
+  if (maxAgeMs > 0 && res.data.challenge_ts) {
+    const ageMs = Date.now() - new Date(res.data.challenge_ts).getTime();
+    if (ageMs > maxAgeMs) {
+      // Embedded metric format: emit a CloudWatch metric directly via stdout.
+      console.log(JSON.stringify({
+        _aws: {
+          Timestamp: Date.now(),
+          CloudWatchMetrics: [{
+            Namespace: 'BotHealth',
+            Dimensions: [['Enforce']],
+            Metrics: [{ Name: 'TurnstileTooOld', Unit: 'Count' }]
+          }]
+        },
+        TurnstileTooOld: 1,
+        Enforce: String(enforceAge),
+        ageMs: ageMs,
+        maxAgeMs: maxAgeMs
+      }));
+      logger.info(`Token age over threshold: ${ageMs}ms > ${maxAgeMs}ms, enforce=${enforceAge}`);
+      if (enforceAge) {
+        throw new CustomError('Invalid token.', 400);
+      }
+    }
+  }
 };
