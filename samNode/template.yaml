@@ -122,6 +122,9 @@ Parameters:
   PublicFrontend:
     Type: String
     Default: 'http://localhost:4300/dayuse'
+  ExpectedHostname:
+    Type: String
+    Default: ''
   S3BucketData:
     Type: String
     Default: 'parks-dup-assets-tools-SAM'
@@ -1361,6 +1364,7 @@ Resources:
           METRICS_TABLE_NAME: !Ref MetricsTableName
           LOG_LEVEL: !Ref LogLevel
           PUBLIC_FRONTEND: !Ref PublicFrontend
+          EXPECTED_HOSTNAME: !Ref ExpectedHostname
       Layers:
         - !Ref BaseLayer
         - !Ref PermissionLayer

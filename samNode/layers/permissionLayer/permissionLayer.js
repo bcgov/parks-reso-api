@@ -250,4 +250,10 @@ exports.validateToken = async function (token, remoteip) {
     logger.info(`Token validation failed: ${codes.join(',') || 'unknown'}`);
     throw new CustomError('Invalid token.', 400);
   }
+
+  const expectedHost = process.env.EXPECTED_HOSTNAME;
+  if (expectedHost && res.data.hostname && res.data.hostname !== expectedHost) {
+    logger.info(`Hostname mismatch: got ${res.data.hostname}, expected ${expectedHost}`);
+    throw new CustomError('Invalid token.', 400);
+  }
 };
