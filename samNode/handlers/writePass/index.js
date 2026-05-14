@@ -86,7 +86,7 @@ exports.handler = async (event, context) => {
     if (newObject.commit) {
       return await handleCommitPass(newObject, permissionObject.isAdmin);
     } else {
-      let value = await handleHoldPass(newObject, permissionObject.isAdmin);
+      let value = await handleHoldPass(newObject, permissionObject.isAdmin, event);
       return value
     }
   } catch (err) {
@@ -297,7 +297,7 @@ function generateCancellationLink(registrationNumber, email, parkOrcs, bookingPS
  * @returns {Promise<Object>} - A promise that resolves to the response object.
  * @throws {CustomError} - If an error occurs during the process.
  */
-async function handleHoldPass(newObject, isAdmin) {
+async function handleHoldPass(newObject, isAdmin, event) {
   logger.debug('newObject:', newObject);
   try {
     let {
@@ -311,7 +311,8 @@ async function handleHoldPass(newObject, isAdmin) {
     } = newObject;
 
     // Validating turnstile token
-    await validateToken(token);
+    const sourceIp = event?.requestContext?.identity?.sourceIp;
+    await validateToken(token, sourceIp);
 
     logger.info('GetFacility');
     logger.debug('parkOrcs:', parkOrcs);
