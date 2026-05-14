@@ -357,6 +357,35 @@ function visibleFilter(queryObj, isAdmin) {
 }
 
 /**
+ * Returns a canonical form of an email for duplicate-detection.
+ *
+ * - Lowercases and trims.
+ * - Strips "+suffix" from the local-part (most providers ignore it for delivery).
+ * - For gmail.com / googlemail.com, also strips dots from the local-part
+ *   (Gmail ignores them, so dot variants all hit the same inbox).
+ *
+ * The original email is still stored on the pass for confirmation delivery; this
+ * value is the index used for "have I seen this person before" checks.
+ *
+ * @param {string} email
+ * @returns {string} canonicalized email, or '' if input is empty/invalid.
+ */
+function canonicalizeEmail(email) {
+  if (!email || typeof email !== 'string') return '';
+  const trimmed = email.trim().toLowerCase();
+  const at = trimmed.lastIndexOf('@');
+  if (at < 1 || at === trimmed.length - 1) return trimmed;
+  let local = trimmed.slice(0, at);
+  const domain = trimmed.slice(at + 1);
+  const plusIdx = local.indexOf('+');
+  if (plusIdx >= 0) local = local.slice(0, plusIdx);
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    local = local.replace(/\./g, '');
+  }
+  return `${local}@${domain}`;
+}
+
+/**
  * Checks if a pass exists for the given parameters.
  *
  * @param {string} facilityName - The name of the facility.
@@ -366,17 +395,21 @@ function visibleFilter(queryObj, isAdmin) {
  * @throws {CustomError} Throws an error if the booking date is invalid or if a reservation already exists.
  */
 async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
+  // emailCanonical isn't projected on the GSI, so we filter on type+passStatus in DDB
+  // and do the canonical/raw email match in JS below. This still catches Gmail dot/+
+  // variants of the same mailbox once records carry emailCanonical, and falls back to
+  // raw email equality for any pre-canonicalization records.
+  const emailCanonical = canonicalizeEmail(email);
   const existingPassCheckObject = {
     TableName: process.env.TABLE_NAME,
     IndexName: 'shortPassDate-index',
     KeyConditionExpression: 'shortPassDate = :shortPassDate AND facilityName = :facilityName',
-    FilterExpression: 'email = :email AND #type = :type AND passStatus IN (:reserved, :active)',
+    FilterExpression: '#type = :type AND passStatus IN (:reserved, :active)',
     ExpressionAttributeNames: {
       '#type': 'type'
     },
     ExpressionAttributeValues: {
       ':facilityName': { S: facilityName },
-      ':email': { S: email },
       ':type': { S: type },
       ':shortPassDate': { S: bookingPSTShortDate },
       ':reserved': { S: 'reserved' },
@@ -401,10 +434,19 @@ async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
     throw new CustomError('Error while running query for existingPassCheckObject', 400);
   }
 
-  if (existingItems.Count > 0) {
+  // Match on canonicalized email (catches Gmail dot/+ variants) OR raw email
+  // (fallback for pre-canonicalization records).
+  const conflict = (existingItems.Items || []).find(item => {
+    const storedEmail = item.email && item.email.S;
+    const storedCanonical = item.emailCanonical && item.emailCanonical.S;
+    return (emailCanonical && storedCanonical === emailCanonical)
+        || (email && storedEmail === email);
+  });
+
+  if (conflict) {
     logger.info(
       `email account already has a reservation. Registration number: ${JSON.stringify(
-        existingItems?.Items[0]?.registrationNumber
+        conflict.registrationNumber
       )}`
     );
     throw new CustomError('This email account already has a reservation for this booking time. A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>', 400);
@@ -426,6 +468,7 @@ async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
  * @throws {CustomError} - If the operation fails.
  */
 async function convertPassToReserved(decodedToken, passStatus, firstName, lastName, email, phoneNumber) {
+  const emailCanonical = canonicalizeEmail(email);
   const updateParams = {
     TableName: process.env.TABLE_NAME,
     Key: {
@@ -439,6 +482,7 @@ async function convertPassToReserved(decodedToken, passStatus, firstName, lastNa
       ':searchFirstName': { S: firstName.toLowerCase() },
       ':searchLastName': { S: lastName.toLowerCase() },
       ':email': { S: email },
+      ':emailCanonical': { S: emailCanonical },
       ':empty_list': { L: [] }, // For pass objects which do not have an audit property.
       ':dateUpdated': { S: DateTime.now().toUTC().toISO() },
       ':audit_val': {
@@ -459,7 +503,7 @@ async function convertPassToReserved(decodedToken, passStatus, firstName, lastNa
         ]
       }
     },
-    UpdateExpression: 'SET passStatus = :statusValue, firstName = :firstName, lastName = :lastName, searchFirstName = :searchFirstName, searchLastName = :searchLastName, email = :email, audit = list_append(if_not_exists(audit, :empty_list), :audit_val), dateUpdated = :dateUpdated',
+    UpdateExpression: 'SET passStatus = :statusValue, firstName = :firstName, lastName = :lastName, searchFirstName = :searchFirstName, searchLastName = :searchLastName, email = :email, emailCanonical = :emailCanonical, audit = list_append(if_not_exists(audit, :empty_list), :audit_val), dateUpdated = :dateUpdated',
     // Fail if the item does not exist in the database.
     ConditionExpression: 'attribute_exists(pk)',
     ReturnValues: 'ALL_NEW'
@@ -698,6 +742,7 @@ module.exports = {
   IS_OFFLINE,
   
   // Functions
+  canonicalizeEmail,
   setStatus,
   runQuery,
   runScan,
