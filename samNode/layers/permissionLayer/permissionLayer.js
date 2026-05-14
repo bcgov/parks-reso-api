@@ -229,26 +229,25 @@ exports.getParkAccess = async function getParkAccess(park, permissionObject) {
   }
 };
 
-exports.validateToken = async function (token) {
-  // Validate the token by calling the
-  // "/siteverify" API endpoint.
-  const body = JSON.stringify({
+exports.validateToken = async function (token, remoteip) {
+  const payload = {
     secret: CF_SECRET_KEY,
     response: token
-  });
+  };
+  if (remoteip) payload.remoteip = remoteip;
 
   const url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
   const res = await axios({
     method: 'post',
     url: url,
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    data: body
+    headers: { 'Content-Type': 'application/json' },
+    data: JSON.stringify(payload)
   });
 
   logger.debug(res.data);
-  if (res.status !== 200 || !res.data.success) {
+  if (res.status !== 200 || !res.data || !res.data.success) {
+    const codes = (res.data && res.data['error-codes']) || [];
+    logger.info(`Token validation failed: ${codes.join(',') || 'unknown'}`);
     throw new CustomError('Invalid token.', 400);
   }
 };
