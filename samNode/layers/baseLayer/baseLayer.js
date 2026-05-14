@@ -395,21 +395,21 @@ function canonicalizeEmail(email) {
  * @throws {CustomError} Throws an error if the booking date is invalid or if a reservation already exists.
  */
 async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
-  // Match by canonical form to catch Gmail dot/+ variants of the same mailbox.
-  // Falls back to comparing against the raw 'email' field for pre-canonicalization records.
+  // emailCanonical isn't projected on the GSI, so we filter on type+passStatus in DDB
+  // and do the canonical/raw email match in JS below. This still catches Gmail dot/+
+  // variants of the same mailbox once records carry emailCanonical, and falls back to
+  // raw email equality for any pre-canonicalization records.
   const emailCanonical = canonicalizeEmail(email);
   const existingPassCheckObject = {
     TableName: process.env.TABLE_NAME,
     IndexName: 'shortPassDate-index',
     KeyConditionExpression: 'shortPassDate = :shortPassDate AND facilityName = :facilityName',
-    FilterExpression: '(emailCanonical = :emailCanonical OR email = :email) AND #type = :type AND passStatus IN (:reserved, :active)',
+    FilterExpression: '#type = :type AND passStatus IN (:reserved, :active)',
     ExpressionAttributeNames: {
       '#type': 'type'
     },
     ExpressionAttributeValues: {
       ':facilityName': { S: facilityName },
-      ':email': { S: email },
-      ':emailCanonical': { S: emailCanonical },
       ':type': { S: type },
       ':shortPassDate': { S: bookingPSTShortDate },
       ':reserved': { S: 'reserved' },
@@ -434,10 +434,19 @@ async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
     throw new CustomError('Error while running query for existingPassCheckObject', 400);
   }
 
-  if (existingItems.Count > 0) {
+  // Match on canonicalized email (catches Gmail dot/+ variants) OR raw email
+  // (fallback for pre-canonicalization records).
+  const conflict = (existingItems.Items || []).find(item => {
+    const storedEmail = item.email && item.email.S;
+    const storedCanonical = item.emailCanonical && item.emailCanonical.S;
+    return (emailCanonical && storedCanonical === emailCanonical)
+        || (email && storedEmail === email);
+  });
+
+  if (conflict) {
     logger.info(
       `email account already has a reservation. Registration number: ${JSON.stringify(
-        existingItems?.Items[0]?.registrationNumber
+        conflict.registrationNumber
       )}`
     );
     throw new CustomError('This email account already has a reservation for this booking time. A reservation associated with this email for this booking time already exists. Please check to see if you already have a reservation for this time. If you do not have an email confirmation of your reservation please contact <a href="mailto:parkinfo@gov.bc.ca">parkinfo@gov.bc.ca</a>', 400);

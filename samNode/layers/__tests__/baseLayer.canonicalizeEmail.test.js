@@ -1,4 +1,4 @@
-const { canonicalizeEmail } = require('../baseLayer/baseLayer');
+const { canonicalizeEmail } = require('/opt/baseLayer');
 
 describe('canonicalizeEmail', () => {
   test('lowercases and trims', () => {
