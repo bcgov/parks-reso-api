@@ -131,6 +131,12 @@ Parameters:
   EnforceTokenAge:
     Type: String
     Default: 'false'
+  MinHoldAgeMs:
+    Type: String
+    Default: '0'
+  EnforceHoldAge:
+    Type: String
+    Default: 'false'
   S3BucketData:
     Type: String
     Default: 'parks-dup-assets-tools-SAM'
@@ -1373,6 +1379,8 @@ Resources:
           EXPECTED_HOSTNAME: !Ref ExpectedHostname
           MAX_TOKEN_AGE_MS: !Ref MaxTokenAgeMs
           ENFORCE_TOKEN_AGE: !Ref EnforceTokenAge
+          MIN_HOLD_AGE_MS: !Ref MinHoldAgeMs
+          ENFORCE_HOLD_AGE: !Ref EnforceHoldAge
       Layers:
         - !Ref BaseLayer
         - !Ref PermissionLayer
