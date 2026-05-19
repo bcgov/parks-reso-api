@@ -137,7 +137,7 @@ async function handleCommitPass(newObject, isAdmin) {
       const enforceHoldAge = (process.env.ENFORCE_HOLD_AGE || 'false').toLowerCase() === 'true';
       if (minHoldAgeMs > 0 && decodedToken.iat) {
         const ageMs = Date.now() - decodedToken.iat * 1000;
-        if (ageMs < minHoldAgeMs) {
+        if (ageMs >= 0 && ageMs < minHoldAgeMs) {
           console.log(JSON.stringify({
             _aws: {
               Timestamp: Date.now(),
@@ -154,6 +154,7 @@ async function handleCommitPass(newObject, isAdmin) {
           }));
           logger.info(`Hold age under threshold: ${ageMs}ms < ${minHoldAgeMs}ms, enforce=${enforceHoldAge}`);
           if (enforceHoldAge) {
+            try { await deleteHoldToken(token); } catch (e) { logger.error(e); }
             throw new CustomError('Invalid token.', 400);
           }
         }
