@@ -133,6 +133,32 @@ async function handleCommitPass(newObject, isAdmin) {
       decodedToken =  verifyHoldToken(token, SECRET);
       logger.info('Decoded Token');
 
+      const minHoldAgeMs = parseInt(process.env.MIN_HOLD_AGE_MS || '0', 10);
+      const enforceHoldAge = (process.env.ENFORCE_HOLD_AGE || 'false').toLowerCase() === 'true';
+      if (minHoldAgeMs > 0 && decodedToken.iat) {
+        const ageMs = Date.now() - decodedToken.iat * 1000;
+        if (ageMs < minHoldAgeMs) {
+          console.log(JSON.stringify({
+            _aws: {
+              Timestamp: Date.now(),
+              CloudWatchMetrics: [{
+                Namespace: 'BotHealth',
+                Dimensions: [['Enforce']],
+                Metrics: [{ Name: 'HoldTooFast', Unit: 'Count' }]
+              }]
+            },
+            HoldTooFast: 1,
+            Enforce: String(enforceHoldAge),
+            ageMs: ageMs,
+            minHoldAgeMs: minHoldAgeMs
+          }));
+          logger.info(`Hold age under threshold: ${ageMs}ms < ${minHoldAgeMs}ms, enforce=${enforceHoldAge}`);
+          if (enforceHoldAge) {
+            throw new CustomError('Invalid token.', 400);
+          }
+        }
+      }
+
       facilityName = decodedToken.facilityName;
 
       bookingPSTDateTime = DateTime.fromISO(decodedToken.date);
