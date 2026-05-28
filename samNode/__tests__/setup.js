@@ -110,6 +110,45 @@ async function createDB(tableName = TABLE_NAME) {
           }
         },
         {
+          IndexName: 'shortPassDate-emailCanonical-index',
+          KeySchema: [
+            {
+              AttributeName: 'shortPassDate',
+              KeyType: 'HASH'
+            },
+            {
+              AttributeName: 'facilityName',
+              KeyType: 'RANGE'
+            }
+          ],
+          Projection: {
+            ProjectionType: 'INCLUDE',
+            NonKeyAttributes: [
+              'firstName',
+              'searchFirstName',
+              'lastName',
+              'searchLastName',
+              'facilityName',
+              'email',
+              'emailCanonical',
+              'date',
+              'shortPassDate',
+              'type',
+              'registrationNumber',
+              'numberOfGuests',
+              'passStatus',
+              'phoneNumber',
+              'facilityType',
+              'creationDate',
+              'isOverbooked'
+            ]
+          },
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1
+          }
+        },
+        {
           IndexName: 'manualLookup-index',
           KeySchema: [
             {
