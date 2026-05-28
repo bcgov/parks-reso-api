@@ -1478,6 +1478,7 @@ Resources:
               - lastName
               - creationDate
               - email
+              - emailCanonical
               - searchLastName
               - firstName
               - numberOfGuests
