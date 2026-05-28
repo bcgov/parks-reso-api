@@ -20,7 +20,7 @@ const LOOK_AHEAD_DAYS = 1;
 // Maximum number of emails sent in a single bulk call (default for GCN is 50000).
 const MAX_BULK_SIZE = 50000;
 // Index of short dates.
-const PASS_SHORTDATE_INDEX = process.env.PASS_SHORTDATE_INDEX || 'shortPassDate-emailCanonical-index';
+const PASS_SHORTDATE_INDEX = process.env.PASS_SHORTDATE_INDEX || 'shortPassDate-index';
 
 exports.handler = async (event, context) => {
 logger.debug('Send Reminder Emails', event);
@@ -37,7 +37,7 @@ try {
   // Determine look-ahead date
   // Done this way to account for rollovers at the end of months & years
   // We have a shortPassDate-index to query the short date, in PT, that the passes are for. 
-  // Using the shortPassDate-emailCanonical-index to query short dates is only valid because all the parks live in PT. 
+  // Using the shortPassDate-index to query short dates is only valid because all the parks live in PT. 
   // If this code is used in other contexts, timezone may have to be considered when querying passes. 
   // As a default: The cronjob will fire at 00:00 UTC
   const todayPST = DateTime.now().setZone(TIMEZONE); // today's datetime in PT
@@ -45,7 +45,7 @@ try {
   const lookAheadPST = futurePST.toISODate() // Look-ahead short date in PT
 
   // Construct query for all passes reserved for the look-ahead date (PT)
-  // Query on index 'shortPassDate-emailCanonical-index' to collect passes for all parks at once
+  // Query on index 'shortPassDate-index' to collect passes for all parks at once
   let queryObj = {
     TableName: TABLE_NAME,
     IndexName: PASS_SHORTDATE_INDEX,
