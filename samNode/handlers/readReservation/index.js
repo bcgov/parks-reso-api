@@ -151,7 +151,7 @@ async function getOverbookedData(date, facility) {
   const shortDate = DateTime.fromISO(date).toISODate();
   let queryObj = {
     TableName: TABLE_NAME,
-    IndexName: 'shortPassDate-index',
+    IndexName: process.env.PASS_SHORTDATE_INDEX || 'shortPassDate-emailCanonical-index',
     ExpressionAttributeValues: {
       ':shortPassDate': { S: shortDate },
       ':facilityName': { S: facility },

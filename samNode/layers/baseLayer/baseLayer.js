@@ -402,7 +402,7 @@ async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
   const emailCanonical = canonicalizeEmail(email);
   const existingPassCheckObject = {
     TableName: process.env.TABLE_NAME,
-    IndexName: 'shortPassDate-index',
+    IndexName: process.env.PASS_SHORTDATE_INDEX || 'shortPassDate-emailCanonical-index',
     KeyConditionExpression: 'shortPassDate = :shortPassDate AND facilityName = :facilityName',
     FilterExpression: '#type = :type AND passStatus IN (:reserved, :active)',
     ExpressionAttributeNames: {

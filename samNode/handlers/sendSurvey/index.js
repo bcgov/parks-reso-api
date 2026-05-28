@@ -17,7 +17,7 @@ const LOOK_BEHIND_DAYS = 1;
 // Maximum number of emails sent in a single bulk call (default for GCN is 50000).
 const MAX_BULK_SIZE = 50000;
 // Index of short dates.
-const PASS_SHORTDATE_INDEX = process.env.PASS_SHORTDATE_INDEX || 'shortPassDate-index';
+const PASS_SHORTDATE_INDEX = process.env.PASS_SHORTDATE_INDEX || 'shortPassDate-emailCanonical-index';
 // Fallback to helpshapebc homepage if no feedback survey provided
 const FEEDBACK_SURVEY_URL = process.env.FEEDBACK_SURVEY_URL || 'https://helpshapebc.gov.bc.ca/';
 const GC_NOTIFY_IS_SENDING_SURVEYS = process.env.GC_NOTIFY_IS_SENDING_SURVEYS || 'false';
@@ -33,7 +33,7 @@ exports.handler = async (event, context) => {
   // Get all passes that are expired for yesterday's sessions
   try {
     // We have a shortPassDate-index to query the short date, in PT, that the passes are for. 
-    // Using the shortPassDate-index to query short dates is only valid because all the parks live in PT. 
+    // Using the shortPassDate-emailCanonical-index to query short dates is only valid because all the parks live in PT. 
     // If this code is used in other contexts, timezone may have to be considered when querying passes. 
     // As a default: The cronjob will fire at 20:00 UTC
     const todayPST = DateTime.now().setZone(TIMEZONE); // today's datetime in PT
@@ -41,7 +41,7 @@ exports.handler = async (event, context) => {
     const yesterdayDatePST = yesterdayPST.toISODate() // Look-ahead short date in PT
 
     // Construct query for all passes reserved for the look-ahead date (PT)
-    // Query on index 'shortPassDate-index' to collect passes for all parks at once
+    // Query on index 'shortPassDate-emailCanonical-index' to collect passes for all parks at once
     // TODO: remove hard-coded Mt. Seymour only query.
     let queryObj = {
       TableName: TABLE_NAME,
