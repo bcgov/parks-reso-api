@@ -118,7 +118,7 @@ Parameters:
     Default: '0.75'
   PassShortDateIndex:
     Type: String
-    Default: 'shortPassDate-index'
+    Default: 'shortPassDate-emailCanonical-index'
   PublicFrontend:
     Type: String
     Default: 'http://localhost:4300/dayuse'
@@ -1464,6 +1464,32 @@ Resources:
               - date
               - type
         - IndexName: shortPassDate-index
+          KeySchema:
+            - AttributeName: shortPassDate
+              KeyType: HASH
+            - AttributeName: facilityName
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - phoneNumber
+              - parkName
+              - facilityType
+              - lastName
+              - creationDate
+              - email
+              - searchLastName
+              - firstName
+              - numberOfGuests
+              - license
+              - date
+              - searchFirstName
+              - pk
+              - registrationNumber
+              - isOverbooked
+              - passStatus
+              - type
+        - IndexName: shortPassDate-emailCanonical-index
           KeySchema:
             - AttributeName: shortPassDate
               KeyType: HASH
