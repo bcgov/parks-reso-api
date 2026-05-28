@@ -1,5 +1,5 @@
 // Backfill emailCanonical on existing pass records that don't have it.
-// Run AFTER deploying the new shortPassDate-emailCanonical-index GSI.
+// Run AFTER deploying the shortPassDate-index projection update that includes emailCanonical.
 // Idempotent — safe to re-run; only updates records missing the field.
 //
 // Usage:

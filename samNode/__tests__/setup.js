@@ -72,7 +72,7 @@ async function createDB(tableName = TABLE_NAME) {
           }
         },
         {
-          IndexName: 'shortPassDate-emailCanonical-index',
+          IndexName: 'shortPassDate-index',
           KeySchema: [
             {
               AttributeName: 'shortPassDate',
@@ -92,7 +92,6 @@ async function createDB(tableName = TABLE_NAME) {
               'searchLastName',
               'facilityName',
               'email',
-              'emailCanonical',
               'date',
               'shortPassDate',
               'type',

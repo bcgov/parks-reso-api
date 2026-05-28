@@ -373,7 +373,7 @@ async function updateReservationsObjectCapacity(pk, sk, type, newBaseCapacity, n
 async function checkForOverbookedPasses(facilityName, shortPassDate, type) {
   const passesQuery = {
     TableName: TABLE_NAME,
-    IndexName: process.env.PASS_SHORTDATE_INDEX || 'shortPassDate-emailCanonical-index',
+    IndexName: 'shortPassDate-index',
     ExpressionAttributeValues: {
       ':shortPassDate': { S: shortPassDate },
       ':facilityName': { S: facilityName },
@@ -441,7 +441,7 @@ async function reverseOverbookedPasses(passes, newResAvailability) {
 async function updatePassObjectsAsOverbooked(facilityName, shortPassDate, type, numberOfPassesOverbooked) {
   const passesQuery = {
     TableName: TABLE_NAME,
-    IndexName: process.env.PASS_SHORTDATE_INDEX || 'shortPassDate-emailCanonical-index',
+    IndexName: 'shortPassDate-index',
     ExpressionAttributeValues: {
       ':shortPassDate': { S: shortPassDate },
       ':facilityName': { S: facilityName },

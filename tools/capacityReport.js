@@ -3,7 +3,7 @@ const fs = require('fs');
 const { DateTime } = require('luxon');
 
 const TABLE_NAME = process.env.TABLE_NAME || 'parksreso';
-const INDEX_NAME = process.env.PASS_SHORTDATE_INDEX || 'shortPassDate-emailCanonical-index';
+const INDEX_NAME = 'shortPassDate-index';
 const FILE_NAME = 'capacityReport';
 let options = {
   region: 'ca-central-1'
