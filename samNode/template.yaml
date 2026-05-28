@@ -1478,6 +1478,32 @@ Resources:
               - lastName
               - creationDate
               - email
+              - searchLastName
+              - firstName
+              - numberOfGuests
+              - license
+              - date
+              - searchFirstName
+              - pk
+              - registrationNumber
+              - isOverbooked
+              - passStatus
+              - type
+        - IndexName: shortPassDate-emailCanonical-index
+          KeySchema:
+            - AttributeName: shortPassDate
+              KeyType: HASH
+            - AttributeName: facilityName
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - phoneNumber
+              - parkName
+              - facilityType
+              - lastName
+              - creationDate
+              - email
               - emailCanonical
               - searchLastName
               - firstName
