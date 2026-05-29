@@ -84,10 +84,13 @@ exports.handler = async (event, context) => {
 
     // If committing to secure the pass
     if (newObject.commit) {
-      return await handleCommitPass(newObject, permissionObject.isAdmin);
+      const response = await handleCommitPass(newObject, permissionObject.isAdmin);
+      console.log(`commit outcome: ${response?.statusCode} ${response?.body}`);
+      return response;
     } else {
-      let value = await handleHoldPass(newObject, permissionObject.isAdmin, event);
-      return value
+      const response = await handleHoldPass(newObject, permissionObject.isAdmin, event);
+      console.log(`hold outcome: ${response?.statusCode} ${response?.body}`);
+      return response;
     }
   } catch (err) {
     logger.info('Operation Failed');
