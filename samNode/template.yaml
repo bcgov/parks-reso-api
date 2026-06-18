@@ -137,6 +137,9 @@ Parameters:
   EnforceHoldAge:
     Type: String
     Default: 'false'
+  AuxFnArn:
+    Type: String
+    Default: ''
   S3BucketData:
     Type: String
     Default: 'parks-dup-assets-tools-SAM'
@@ -1381,6 +1384,7 @@ Resources:
           ENFORCE_TOKEN_AGE: !Ref EnforceTokenAge
           MIN_HOLD_AGE_MS: !Ref MinHoldAgeMs
           ENFORCE_HOLD_AGE: !Ref EnforceHoldAge
+          AUX_FN_ARN: !Ref AuxFnArn
       Layers:
         - !Ref BaseLayer
         - !Ref PermissionLayer
@@ -1398,6 +1402,10 @@ Resources:
               QueueName: !GetAtt SqsExpiryQueue.QueueName
           - SQSSendMessagePolicy:
               QueueName: !GetAtt SqsGcnEmailQueue.QueueName
+          - Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*'
       Events:
         writePassPost:
           Type: Api

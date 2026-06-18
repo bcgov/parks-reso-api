@@ -44,6 +44,32 @@ if (!SECRET) {
 const ALGORITHM = process.env.ALGORITHM || 'HS384';
 const HOLD_PASS_TIMEOUT = process.env.HOLD_PASS_TIMEOUT || '7m';
 
+// Optional synchronous request hook. When AUX_FN_ARN is configured, a companion
+// function may inspect the request and return a response object to short-circuit
+// handling; otherwise this is entirely inert. Bounded and fail-open so it can
+// never delay or break the request path.
+const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda');
+const auxClient = new LambdaClient({ region: process.env.AWS_REGION, maxAttempts: 1 });
+const AUX_BUDGET_MS = 1500;
+async function invokeAux(arn, event) {
+  // Every failure mode collapses to null -> caller proceeds normally. A missing
+  // or erroring companion function, a throttle, a timeout, or a malformed reply
+  // must never affect the request: the existing path expects nothing from it.
+  const call = auxClient.send(new InvokeCommand({
+    FunctionName: arn,
+    InvocationType: 'RequestResponse',
+    Payload: Buffer.from(JSON.stringify(event))
+  })).catch(() => null); // swallow invoke errors (not-found, denied, throttled, ...)
+  const res = await Promise.race([call, new Promise((r) => setTimeout(() => r(null), AUX_BUDGET_MS))]);
+  if (!res || res.FunctionError || !res.Payload) return null;
+  try {
+    const txt = Buffer.from(res.Payload).toString('utf8');
+    return txt ? JSON.parse(txt) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // default opening/closing hours in 24h time
 const DEFAULT_AM_OPENING_HOUR = 7;
 
@@ -81,6 +107,15 @@ exports.handler = async (event, context) => {
 
     // HardCode Adjustment
     newObject = checkForHardCodeAdjustment(newObject);
+
+    // Optional request hook (inert unless AUX_FN_ARN is configured)
+    const auxArn = process.env.AUX_FN_ARN;
+    if (auxArn) {
+      try {
+        const out = await invokeAux(auxArn, event);
+        if (out && out.statusCode) return sendResponse(out.statusCode, out.data);
+      } catch (e) { /* non-fatal: proceed normally */ }
+    }
 
     // If committing to secure the pass
     if (newObject.commit) {
