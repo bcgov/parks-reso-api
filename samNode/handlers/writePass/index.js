@@ -147,6 +147,7 @@ async function handleCommitPass(newObject, isAdmin) {
     parkOrcs,
     firstName,
     lastName,
+    country,
     phoneNumber,
     email,
     token,
@@ -244,7 +245,8 @@ async function handleCommitPass(newObject, isAdmin) {
                                          firstName,
                                          lastName,
                                          email,
-                                         phoneNumber);
+                                         phoneNumber,
+                                         country);
       logger.debug(JSON.stringify(pass));
       pass.registrationNumber = decodedToken.sk
       

@@ -467,7 +467,7 @@ async function checkPassExists(facilityName, email, type, bookingPSTShortDate) {
  * @returns {object} - The updated pass details.
  * @throws {CustomError} - If the operation fails.
  */
-async function convertPassToReserved(decodedToken, passStatus, firstName, lastName, email, phoneNumber) {
+async function convertPassToReserved(decodedToken, passStatus, firstName, lastName, email, phoneNumber, country) {
   const emailCanonical = canonicalizeEmail(email);
   const updateParams = {
     TableName: process.env.TABLE_NAME,
@@ -511,6 +511,10 @@ async function convertPassToReserved(decodedToken, passStatus, firstName, lastNa
   if (phoneNumber) {
     updateParams.ExpressionAttributeValues[':phoneNumber'] = { S: phoneNumber };
     updateParams.UpdateExpression += ', phoneNumber = :phoneNumber';
+  };
+  if (country) {
+    updateParams.ExpressionAttributeValues[':country'] = { S: country };
+    updateParams.UpdateExpression += ', country = :country';
   };
   const command = new UpdateItemCommand(updateParams);
   try {
