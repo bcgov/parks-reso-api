@@ -342,18 +342,22 @@ function checkPassStatusBasedOnCurrentTime(currentPSTDateTime, bookingPSTDateTim
  * @returns {string} - The generated cancellation link.
  */
 function generateCancellationLink(registrationNumber, email, parkOrcs, bookingPSTShortDate, type) {
-  return encodeURI(process.env.PUBLIC_FRONTEND +
+  // Each value is escaped individually. encodeURI() leaves '+' untouched, and a
+  // '+' in a query string decodes to a space — so an address like
+  // "user+tag@gmail.com" reached the cancellation page as "user tag@gmail.com"
+  // and the pass could not be found (Ref bcgov/parks-reso-public#426).
+  return process.env.PUBLIC_FRONTEND +
     process.env.PASS_CANCELLATION_ROUTE +
     '?passId=' +
-    registrationNumber +
+    encodeURIComponent(registrationNumber) +
     '&email=' +
-    email +
+    encodeURIComponent(email) +
     '&park=' +
-    parkOrcs +
+    encodeURIComponent(parkOrcs) +
     '&date=' +
-    bookingPSTShortDate +
+    encodeURIComponent(bookingPSTShortDate) +
     '&type=' +
-    type);
+    encodeURIComponent(type);
 }
 
 /**
@@ -858,3 +862,6 @@ async function putPassHandler(event, permissionObject, passObj) {
     throw new CustomError('Bad Request - invalid query string parameters', 400);
   }
 }
+
+// Exported for unit testing; the Lambda runtime only uses exports.handler.
+exports.generateCancellationLink = generateCancellationLink;
